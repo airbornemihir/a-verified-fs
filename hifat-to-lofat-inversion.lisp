@@ -4118,6 +4118,12 @@
           (< key (len fa-table)))
      (non-free-index-listp x (update-nth key val fa-table))))))
 
+(defthm true-listp-when-non-free-index-listp
+  (implies (non-free-index-listp x fa-table)
+           (true-listp x))
+  :hints (("goal" :in-theory (enable true-listp non-free-index-listp)))
+  :rule-classes :forward-chaining)
+
 (defthm
   free-index-listp-correctness-1
   (implies (and (free-index-listp x fa-table)
@@ -4349,6 +4355,13 @@
                            (intersectp-is-commutative))
            :expand ((intersectp-equal (list key) (car l))
                     (intersectp-equal nil (car l))))))
+
+(defthm non-free-index-list-listp-of-set-difference-1
+  (implies (non-free-index-list-listp l1 fa-table)
+           (non-free-index-list-listp (set-difference-equal l1 l2)
+                                      fa-table))
+  :hints (("goal" :in-theory (enable non-free-index-list-listp
+                                     set-difference-equal))))
 
 (encapsulate
   ()

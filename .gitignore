@@ -5,7 +5,7 @@
 *.cert
 *.lx64fsl
 **/*.dot~
-/Makefile-tmp
+**/Makefile-tmp
 **/*.lsp~
 **/temp-emacs-file.lsp
 **/workxxx.*

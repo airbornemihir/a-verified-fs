@@ -124,3 +124,86 @@
 (defthm not-intersectp-list-of-flatten
   (equal (not-intersectp-list (flatten x) y)
          (not (member-intersectp-equal x y))))
+
+(defthm
+  not-intersectp-list-of-set-difference$-lemma-1
+  (implies (and (intersectp-equal x y)
+                (member-equal y l))
+           (not (not-intersectp-list x l)))
+  :hints
+  (("goal"
+    :in-theory (enable member-equal not-intersectp-list))))
+
+(defthm
+  not-intersectp-list-of-set-difference$-lemma-2
+  (implies (and (subsetp-equal l1 (cons nil l2))
+                (not-intersectp-list x l2))
+           (not-intersectp-list x l1))
+  :hints (("goal" :in-theory (enable subsetp-equal not-intersectp-list)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and
+              (not-intersectp-list x l2)
+              (subsetp-equal l1 (cons nil l2)))
+             (not-intersectp-list x l1)))))
+
+(defthm not-intersectp-list-of-set-difference$-lemma-3
+  (implies (and (not (member-intersectp-equal x y1))
+                (subsetp-equal y2 (cons nil y1)))
+           (not (member-intersectp-equal x y2)))
+  :hints (("goal" :in-theory (enable member-intersectp-equal
+                                     subsetp-equal))))
+
+(defthm
+  not-intersectp-list-of-set-difference$-lemma-4
+  (implies (and (disjoint-list-listp x2)
+                (member-equal x1 x2))
+           (not-intersectp-list x1 (remove-equal x1 x2)))
+  :hints
+  (("goal" :in-theory
+    (e/d (disjoint-list-listp subsetp-equal not-intersectp-list
+                              set-difference$-redefinition)
+         (member-intersectp-is-commutative set-difference-equal)))))
+
+(defthm
+  not-intersectp-list-of-set-difference$
+  (implies (and (disjoint-list-listp y)
+                (disjoint-list-listp x2)
+                (member-equal x1 y)
+                (subsetp-equal y x2))
+           (not-intersectp-list x1 (set-difference-equal x2 y)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (disjoint-list-listp subsetp-equal not-intersectp-list)
+         (member-intersectp-is-commutative))
+    :induct (mv (subsetp-equal y x2)
+                (member-equal x1 y))
+    :expand (:with set-difference$-redefinition
+                   (set-difference-equal x2 y)))))
+
+(defthm
+  not-member-intersectp-of-set-difference$
+  (implies (and (disjoint-list-listp x2)
+                (subsetp-equal x1 y)
+                (subsetp-equal y x2)
+                (disjoint-list-listp y))
+           (not (member-intersectp-equal x1 (set-difference-equal x2 y))))
+  :hints
+  (("goal"
+    :in-theory (e/d (disjoint-list-listp subsetp-equal member-intersectp-equal
+                                         set-difference-equal)
+                    (member-intersectp-is-commutative))
+    :expand
+    ((:with member-intersectp-is-commutative
+            (:free (x)
+                   (member-intersectp-equal x nil)))
+     (:with member-intersectp-is-commutative
+            (:free (x1 x2 y)
+                   (member-intersectp-equal x1 (cons x2 y))))
+     (:with member-intersectp-is-commutative
+            (:free (x y1 y2)
+                   (member-intersectp-equal (set-difference-equal x y1)
+                                            y2)))))))

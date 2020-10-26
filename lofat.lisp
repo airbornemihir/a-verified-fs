@@ -1,6 +1,6 @@
 (in-package "ACL2")
 
-(include-book "flatten-equiv")
+(include-book "utilities/flatten-equiv")
 (include-book "hifat-to-lofat-inversion")
 (include-book "lofat-to-string-inversion")
 
@@ -14099,7 +14099,8 @@ Some (rather awful) testing forms are
                        lofat-to-hifat-inversion-lemma-15
                        good-root-dir-ent-p))))
 
-(defthm lofat-remove-file-correctness-lemma-26
+(defthm
+  lofat-remove-file-correctness-lemma-26
   (implies
    (and
     (good-root-dir-ent-p root-dir-ent fat32-in-memory)
@@ -14120,16 +14121,15 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       (car path)))))
+       name))))
    (good-root-dir-ent-p
     (mv-nth
      0
      (find-dir-ent
       (make-dir-ent-list
-       (mv-nth
-        0
-        (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-      (car path)))
+       (mv-nth 0
+               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+      name))
     fat32-in-memory))
   :hints
   (("goal" :do-not-induct t
@@ -15833,7 +15833,10 @@ Some (rather awful) testing forms are
        ((unless (zp error-code)) (mv fat32-in-memory error-code))
        (new-dir-contents (nats=>string (insert-dir-ent (string=>nats dir-contents) dir-ent)))
        ((unless (<= (length new-dir-contents) *ms-max-dir-size*)) (mv fat32-in-memory *enospc*)))
-    (update-dir-contents fat32-in-memory (dir-ent-first-cluster root-dir-ent) new-dir-contents)))
+    (update-dir-contents
+     fat32-in-memory
+     (dir-ent-first-cluster root-dir-ent)
+     new-dir-contents)))
 
 (defthm
   count-of-clusters-of-lofat-place-file
@@ -25870,36 +25873,6 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (disable lofat-to-hifat-helper-correctness-4)
            :use lofat-to-hifat-helper-correctness-4)))
 
-;; Move and rename later.
-(defthm
-  lofat-place-file-correctness-lemma-102
-  (implies (and (intersectp-equal x y)
-                (member-equal y l))
-           (not (not-intersectp-list x l)))
-  :hints
-  (("goal"
-    :in-theory (enable member-equal not-intersectp-list))))
-(defthm
-  lofat-place-file-correctness-lemma-103
-  (implies (and (subsetp-equal l1 (cons nil l2))
-                (not-intersectp-list x l2))
-           (not-intersectp-list x l1))
-  :hints (("goal" :in-theory (enable subsetp-equal not-intersectp-list)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies (and
-              (not-intersectp-list x l2)
-              (subsetp-equal l1 (cons nil l2)))
-             (not-intersectp-list x l1)))))
-(defthm lofat-place-file-correctness-lemma-105
-  (implies (and (not (member-intersectp-equal x y1))
-                (subsetp-equal y2 (cons nil y1)))
-           (not (member-intersectp-equal x y2)))
-  :hints (("goal" :in-theory (enable member-intersectp-equal
-                                     subsetp-equal))))
-
 (defthm
   lofat-place-file-correctness-lemma-104
   (implies
@@ -28007,7 +27980,6 @@ Some (rather awful) testing forms are
       (:rewrite subsetp-when-atom-right)
       (:rewrite m1-file-p-of-cdar-when-m1-file-alist-p)
       (:rewrite subsetp-car-member)
-      (:rewrite lofat-place-file-correctness-lemma-102)
       (:definition binary-append)
       (:rewrite m1-directory-file-p-when-m1-file-p)
       (:rewrite hifat-to-lofat-inversion-lemma-2)
@@ -28225,8 +28197,6 @@ Some (rather awful) testing forms are
        ((:rewrite lofat-place-file-correctness-1-lemma-17)
         (:rewrite lofat-to-hifat-helper-correctness-4)
         (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
-        (:rewrite lofat-place-file-correctness-lemma-103
-                  . 2)
         (:rewrite lofat-place-file-correctness-1-lemma-15)
         (:rewrite member-intersectp-is-commutative-lemma-2)
         (:rewrite fat32-filename-p-of-car-when-fat32-filename-list-p)
@@ -28238,8 +28208,6 @@ Some (rather awful) testing forms are
         (:rewrite natp-of-car-when-nat-listp)
         (:definition make-list-ac)
         (:rewrite lofat-place-file-correctness-1-lemma-16)
-        (:rewrite lofat-place-file-correctness-lemma-103
-                  . 1)
         (:rewrite free-index-list-listp-of-update-nth-lemma-1)
         (:rewrite member-intersectp-with-subset)
         (:rewrite lofat-place-file-correctness-lemma-79)
@@ -28366,8 +28334,6 @@ Some (rather awful) testing forms are
        ((:rewrite lofat-place-file-correctness-1-lemma-17)
         (:rewrite lofat-to-hifat-helper-correctness-4)
         (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
-        (:rewrite lofat-place-file-correctness-lemma-103
-                  . 2)
         (:rewrite lofat-place-file-correctness-1-lemma-15)
         (:rewrite member-intersectp-is-commutative-lemma-2)
         (:rewrite fat32-filename-p-of-car-when-fat32-filename-list-p)
@@ -28378,8 +28344,6 @@ Some (rather awful) testing forms are
         (:rewrite natp-of-car-when-nat-listp)
         (:definition make-list-ac)
         (:rewrite lofat-place-file-correctness-1-lemma-16)
-        (:rewrite lofat-place-file-correctness-lemma-103
-                  . 1)
         (:rewrite free-index-list-listp-of-update-nth-lemma-1)
         (:rewrite member-intersectp-with-subset)
         (:rewrite lofat-place-file-correctness-lemma-79)
@@ -30056,11 +30020,6 @@ Some (rather awful) testing forms are
             (:rewrite lofat-to-hifat-helper-correctness-4)
             (:rewrite
              lofat-to-hifat-helper-of-clear-clusterchain)
-            ;; (:rewrite not-intersectp-list-of-append-1)
-            ;; (:definition subsetp-equal)
-            (:rewrite
-             lofat-place-file-correctness-lemma-103
-             . 2)
             (:rewrite
              lofat-place-file-correctness-1-lemma-15)
             (:rewrite
@@ -30086,9 +30045,6 @@ Some (rather awful) testing forms are
             (:definition make-list-ac)
             (:rewrite
              lofat-place-file-correctness-1-lemma-16)
-            (:rewrite
-             lofat-place-file-correctness-lemma-103
-             . 1)
             (:rewrite
              free-index-list-listp-of-update-nth-lemma-1)
             (:rewrite member-intersectp-with-subset)
@@ -41399,8 +41355,6 @@ Some (rather awful) testing forms are
       (:rewrite subsetp-append1)
       (:rewrite subsetp-trans2)
       (:rewrite subsetp-trans)
-      (:rewrite lofat-place-file-correctness-lemma-103
-                . 1)
       (:rewrite member-of-binary-append)
       (:rewrite intersectp-member . 3)
       (:rewrite intersect-with-subset . 9)
@@ -41446,8 +41400,6 @@ Some (rather awful) testing forms are
       (:rewrite subsetp-trans2)
       (:rewrite subsetp-trans)
       (:rewrite subsetp-append1)
-      (:rewrite lofat-place-file-correctness-lemma-103
-                . 1)
       (:rewrite intersectp-member . 3)
       (:rewrite member-of-binary-append)
       (:rewrite intersect-with-subset . 5)
@@ -44603,24 +44555,6 @@ Some (rather awful) testing forms are
         268435455)
        fat32-in-memory))))))
 
-;; Move later.
-(defthm true-listp-when-non-free-index-listp
-  (implies (non-free-index-listp x fa-table)
-           (true-listp x))
-  :hints (("goal" :in-theory (enable true-listp non-free-index-listp)))
-  :rule-classes :forward-chaining)
-(defthm
-  true-list-listp-of-set-difference
-  (implies (true-list-listp l1)
-           (true-list-listp (set-difference-equal l1 l2)))
-  :hints (("goal" :in-theory (enable set-difference-equal true-list-listp))))
-(defthm non-free-index-list-listp-of-set-difference-1
-  (implies (non-free-index-list-listp l1 fa-table)
-           (non-free-index-list-listp (set-difference-equal l1 l2)
-                                      fa-table))
-  :hints (("goal" :in-theory (enable non-free-index-list-listp
-                                     set-difference-equal))))
-
 (defthm
   lofat-place-file-correctness-lemma-3
   (implies
@@ -44642,43 +44576,6 @@ Some (rather awful) testing forms are
                                     (dir-ent-file-size dir-ent)
                                     (cluster-size fat32-in-memory))))
   :rule-classes :type-prescription)
-
-(defthm
-  lofat-place-file-correctness-lemma-8
-  (implies (and (disjoint-list-listp y)
-                (disjoint-list-listp x2)
-                (member-equal x1 y)
-                (subsetp-equal y x2))
-           (not-intersectp-list x1 (set-difference-equal x2 y)))
-  :hints
-  (("goal"
-    :in-theory (e/d (disjoint-list-listp subsetp-equal not-intersectp-list
-                                         set-difference-equal)
-                    (member-intersectp-is-commutative)))))
-
-(defthm
-  lofat-place-file-correctness-lemma-50
-  (implies (and (disjoint-list-listp x2)
-                (subsetp-equal x1 y)
-                (subsetp-equal y x2)
-                (disjoint-list-listp y))
-           (not (member-intersectp-equal x1 (set-difference-equal x2 y))))
-  :hints
-  (("goal"
-    :in-theory (e/d (disjoint-list-listp subsetp-equal member-intersectp-equal
-                                         set-difference-equal)
-                    (member-intersectp-is-commutative))
-    :expand
-    ((:with member-intersectp-is-commutative
-            (:free (x)
-                   (member-intersectp-equal x nil)))
-     (:with member-intersectp-is-commutative
-            (:free (x1 x2 y)
-                   (member-intersectp-equal x1 (cons x2 y))))
-     (:with member-intersectp-is-commutative
-            (:free (x y1 y2)
-                   (member-intersectp-equal (set-difference-equal x y1)
-                                            y2)))))))
 
 (defthm
   lofat-place-file-correctness-lemma-60
