@@ -185,7 +185,7 @@
                    (set-difference-equal x2 y)))))
 
 (defthm
-  not-member-intersectp-of-set-difference$
+  not-member-intersectp-of-set-difference$-1
   (implies (and (disjoint-list-listp x2)
                 (subsetp-equal x1 y)
                 (subsetp-equal y x2)
@@ -207,3 +207,34 @@
             (:free (x y1 y2)
                    (member-intersectp-equal (set-difference-equal x y1)
                                             y2)))))))
+
+(defthm
+  member-intersectp-of-set-difference$-lemma-1
+  (equal (member-intersectp-equal x1 (cons x2 y))
+         (or (not (not-intersectp-list x2 x1))
+             (member-intersectp-equal x1 y)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable member-intersectp-is-commutative)
+           :expand ((:with member-intersectp-is-commutative
+                           (member-intersectp-equal x1 (cons x2 y)))
+                    (:with member-intersectp-is-commutative
+                           (member-intersectp-equal y x1))))))
+
+(defthm member-intersectp-of-set-difference$-lemma-2
+  (implies (and (member-equal x y)
+                (case-split (consp x)))
+           (not (not-intersectp-list x y)))
+  :hints (("goal" :in-theory (enable not-intersectp-list))))
+
+(defthm member-intersectp-of-set-difference$-1
+  (implies (not (member-intersectp-equal x y))
+           (equal (member-intersectp-equal (set-difference-equal x y)
+                                           z)
+                  (member-intersectp-equal x z)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (not (member-intersectp-equal x y))
+             (equal (member-intersectp-equal z (set-difference-equal x y))
+                    (member-intersectp-equal z x))))))
