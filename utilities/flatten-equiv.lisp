@@ -154,3 +154,16 @@
       set-equiv-implies-equal-true-list-listp-of-list-fix-1-lemma-1
       (y (true-list-fix x))
       (x (true-list-fix y)))))))
+
+(defthm commutativity-2-of-cons-under-flatten-equiv-lemma-1
+  (set-equiv (list* x y z) (list* y x z))
+  :hints (("goal" :in-theory (enable set-equiv))))
+
+(defthm commutativity-2-of-cons-under-flatten-equiv
+  (flatten-equiv (list* x y z)
+                 (list* y x z))
+  :hints (("goal" :in-theory (enable flatten-equiv))))
+
+(defcong flatten-equiv flatten-equiv (append x y) 2
+  :hints (("goal" :in-theory (e/d (flatten-equiv)
+                                  ()))))
