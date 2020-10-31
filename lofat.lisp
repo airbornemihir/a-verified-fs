@@ -19433,8 +19433,9 @@ Some (rather awful) testing forms are
         (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
        (new-dir-ent
         (if
-         (< 0
-            (len (explode (lofat-file->contents file))))
+         (or (< 0
+                (len (explode (lofat-file->contents file))))
+             (lofat-directory-file-p file))
          (if
           (<=
            2
@@ -19498,7 +19499,9 @@ Some (rather awful) testing forms are
                      (car path))))))
                 0 nil))
               1))
-            (len (explode (lofat-file->contents file))))
+            (if (lofat-directory-file-p file)
+                0
+                (len (explode (lofat-file->contents file)))))
            (dir-ent-set-first-cluster-file-size
             (mv-nth
              0
@@ -19510,7 +19513,9 @@ Some (rather awful) testing forms are
             (nth 0
                  (find-n-free-clusters (effective-fat fat32-in-memory)
                                        1))
-            (len (explode (lofat-file->contents file)))))
+            (if (lofat-directory-file-p file)
+                0
+                (len (explode (lofat-file->contents file))))))
           (if
            (equal
             (mv-nth
@@ -19532,15 +19537,19 @@ Some (rather awful) testing forms are
             (nth 0
                  (find-n-free-clusters (effective-fat fat32-in-memory)
                                        1))
-            (len (explode (lofat-file->contents file))))
+            (if (lofat-directory-file-p file)
+                0
+                (len (explode (lofat-file->contents file)))))
            (dir-ent-set-first-cluster-file-size
             (dir-ent-install-directory-bit
              (make-dir-ent-with-filename (car path))
-             nil)
+             (lofat-directory-file-p file))
             (nth 0
                  (find-n-free-clusters (effective-fat fat32-in-memory)
                                        1))
-            (len (explode (lofat-file->contents file))))))
+            (if (lofat-directory-file-p file)
+                0
+                (len (explode (lofat-file->contents file)))))))
          (if
           (equal
            (mv-nth
@@ -19562,7 +19571,7 @@ Some (rather awful) testing forms are
            0 0)
           (dir-ent-set-first-cluster-file-size
            (dir-ent-install-directory-bit (make-dir-ent-with-filename (car path))
-                                          nil)
+                                          (lofat-directory-file-p file))
            0 0))))
        (new-contents
         (nats=>chars (insert-dir-ent (string=>nats clusterchain-contents)
@@ -19587,20 +19596,10 @@ Some (rather awful) testing forms are
                (lofat-to-hifat-helper fat32-in-memory
                                       (make-dir-ent-list clusterchain-contents)
                                       entry-limit)))
-      (not
-       (<
-        '2097152
-        (binary-+
-         '32
-         (len
-          (explode$inline
-           (mv-nth
-            '0
-            (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))))))
       (equal (mv-nth 1
                      (lofat-place-file fat32-in-memory dir-ent path file))
              0)
-      (lofat-regular-file-p file))
+      (lofat-file-p file))
      (equal
       (dir-ent-clusterchain-contents
        (mv-nth 0
@@ -33210,6 +33209,7 @@ Some (rather awful) testing forms are
     (<= (len (make-clusters (lofat-file->contents file)
                             (cluster-size fat32-in-memory)))
         (count-free-clusters (effective-fat fat32-in-memory)))
+    (consp path)
     (integerp entry-limit)
     (< (hifat-entry-count
         (mv-nth 0
@@ -33261,9 +33261,17 @@ Some (rather awful) testing forms are
                                  path file))
        dir-ent-list entry-limit))
      0)))
-  :hints (("goal" :in-theory (disable lofat-place-file-correctness-lemma-94)
-           :use (:instance lofat-place-file-correctness-lemma-94
-                           (x nil)))))
+  :hints
+  (("goal"
+    :in-theory
+    (disable
+     lofat-place-file-correctness-lemma-94
+     lofat-place-file
+     (:rewrite
+      dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1))
+    :use (:instance lofat-place-file-correctness-lemma-94
+                    (x nil))
+    :do-not-induct t)))
 
 (encapsulate
   ()
