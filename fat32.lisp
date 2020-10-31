@@ -145,6 +145,13 @@
   (if (fat32-masked-entry-p x)
       x 0))
 
+(defthm natp-of-fat32-masked-entry-fix
+  (natp (fat32-masked-entry-fix x))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable fat32-masked-entry-fix
+                              fat32-masked-entry-p)))
+  :rule-classes :type-prescription)
+
 (in-theory (enable fat32-entry-p fat32-entry-fix fat32-masked-entry-p fat32-masked-entry-fix))
 
 (defthm fat32-masked-entry-p-correctness-1

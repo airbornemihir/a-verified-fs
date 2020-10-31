@@ -1996,6 +1996,15 @@
   (local (in-theory (disable min)))
   (defthm painful-debugging-lemma-22
     (implies (< z y) (iff (equal (min x y) z) (equal x z)))
+    :hints (("Goal" :in-theory (enable min))))
+
+  (defthm painful-debugging-lemma-23 (iff (< (min x y) y) (< x y))
+    :hints (("Goal" :in-theory (enable min))))
+
+  (defthm painful-debugging-lemma-24
+    (implies (equal (+ w y) z)
+             (iff (equal (+ w (min x y)) z)
+                  (<= y x)))
     :hints (("Goal" :in-theory (enable min)))))
 
 (defthm member-of-nth-when-not-intersectp

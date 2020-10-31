@@ -950,6 +950,30 @@
    (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
           *enoent*)))
 
+;; Kinda general.
+(defthm
+  dir-ent-filename-of-find-dir-ent
+  (equal (dir-ent-filename (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+         (if (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
+                    0)
+             filename
+             (dir-ent-filename (dir-ent-fix nil)))))
+
+;; Rename later.
+(defthm dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-15
+  (implies (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
+                       0))
+           (equal (mv-nth 0 (find-dir-ent dir-ent-list filename))
+                  (dir-ent-fix nil))))
+
+(defthm
+  not-useless-dir-ent-p-of-find-dir-ent
+  (implies
+   (useful-dir-ent-list-p dir-ent-list)
+   (not (useless-dir-ent-p (mv-nth 0
+                                   (find-dir-ent dir-ent-list filename)))))
+  :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
+
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
 ;; / and /tmp/ were to point to the same cluster as their initial cluster.)
