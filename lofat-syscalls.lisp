@@ -67,11 +67,11 @@
        ((unless (consp file-table-entry))
         (mv "" -1 *ebadf*))
        (path (file-table-element->fid (cdr file-table-entry)))
-       ((mv root-dir-ent-list &) (root-dir-ent-list fat32-in-memory))
+       ((mv root-d-e-list &) (root-d-e-list fat32-in-memory))
        ((mv file error-code)
         (lofat-find-file
          fat32-in-memory
-         root-dir-ent-list
+         root-d-e-list
          path))
        ((unless (lofat-regular-file-p file))
         (mv "" -1 *eisdir*))
@@ -142,23 +142,23 @@
   lofat-pread-refinement-lemma-1
   (implies
    (and
-    (useful-dir-ent-list-p dir-ent-list)
+    (useful-d-e-list-p d-e-list)
     (equal (mv-nth 3
                    (lofat-to-hifat-helper fat32-in-memory
-                                          dir-ent-list entry-limit))
+                                          d-e-list entry-limit))
            0)
     (<=
      (+ 2 (count-of-clusters fat32-in-memory))
-     (dir-ent-first-cluster (mv-nth 0
-                                    (find-dir-ent dir-ent-list filename)))))
-   (not (dir-ent-directory-p (mv-nth 0
-                                     (find-dir-ent dir-ent-list filename)))))
+     (d-e-first-cluster (mv-nth 0
+                                    (find-d-e d-e-list filename)))))
+   (not (d-e-directory-p (mv-nth 0
+                                     (find-d-e d-e-list filename)))))
   :hints
   (("goal"
     :in-theory
-    (e/d (lofat-to-hifat-helper find-dir-ent useful-dir-ent-list-p)
+    (e/d (lofat-to-hifat-helper find-d-e useful-d-e-list-p)
          ((:definition no-duplicatesp-equal)
-          (:rewrite useful-dir-ent-list-p-of-cdr)
+          (:rewrite useful-d-e-list-p-of-cdr)
           (:definition member-equal)
           (:rewrite take-of-len-free)
           (:definition take)
@@ -172,17 +172,17 @@
          (mv-nth
           0
           (lofat-to-hifat-helper fat32-in-memory
-                                 dir-ent-list entry-limit))
+                                 d-e-list entry-limit))
          path)))
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
-      (useful-dir-ent-list-p dir-ent-list)
+      (useful-d-e-list-p d-e-list)
       (equal
        (mv-nth
         3
         (lofat-to-hifat-helper fat32-in-memory
-                               dir-ent-list entry-limit))
+                               d-e-list entry-limit))
        0))
      (equal
       (m1-directory-file-p file)
@@ -190,7 +190,7 @@
        (mv-nth
         0
         (lofat-find-file fat32-in-memory
-                         dir-ent-list path))))))
+                         d-e-list path))))))
   :hints
   (("Goal" :in-theory (enable hifat-find-file))))
 
@@ -211,7 +211,7 @@
                      (:rewrite lofat-directory-file-p-when-lofat-file-p)
                      (:rewrite m1-directory-file-p-when-m1-file-p)
                      (:rewrite lofat-pread-refinement-lemma-2)
-                     (:definition find-dir-ent)
+                     (:definition find-d-e)
                      (:definition lofat-find-file)))
     :use
     ((:instance
@@ -220,7 +220,7 @@
        (file-table-element->fid
         (cdr (assoc-equal (cdr (assoc-equal fd (fd-table-fix fd-table)))
                           (file-table-fix file-table)))))
-      (dir-ent-list (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
+      (d-e-list (mv-nth 0 (root-d-e-list fat32-in-memory)))
       (entry-limit (max-entry-count fat32-in-memory)))
      (:instance
       (:rewrite lofat-directory-file-p-when-lofat-file-p)
@@ -229,7 +229,7 @@
         0
         (lofat-find-file
          fat32-in-memory
-         (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+         (mv-nth 0 (root-d-e-list fat32-in-memory))
          (file-table-element->fid
           (cdr (assoc-equal (cdr (assoc-equal fd (fd-table-fix fd-table)))
                             (file-table-fix file-table))))))))
@@ -242,7 +242,7 @@
          (mv-nth 0
                  (lofat-to-hifat-helper
                   fat32-in-memory
-                  (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+                  (mv-nth 0 (root-d-e-list fat32-in-memory))
                   (max-entry-count fat32-in-memory)))
          (file-table-element->fid
           (cdr (assoc-equal (cdr (assoc-equal fd (fd-table-fix fd-table)))
@@ -254,7 +254,7 @@
         (cdr (assoc-equal (cdr (assoc-equal fd (fd-table-fix fd-table)))
                           (file-table-fix file-table)))))
       (entry-limit (max-entry-count fat32-in-memory))
-      (dir-ent-list (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
+      (d-e-list (mv-nth 0 (root-d-e-list fat32-in-memory)))
       (fat32-in-memory fat32-in-memory))))))
 
 (defund lofat-lstat (fat32-in-memory path)
@@ -262,13 +262,13 @@
                               (fat32-filename-list-p path))
                   :stobjs fat32-in-memory))
   (b*
-      (((mv root-dir-ent-list &)
-        (root-dir-ent-list
+      (((mv root-d-e-list &)
+        (root-d-e-list
          fat32-in-memory))
        ((mv file errno)
         (lofat-find-file
          fat32-in-memory
-         root-dir-ent-list
+         root-d-e-list
          path))
        ((when (not (equal errno 0)))
         (mv (make-struct-stat) -1 errno))
@@ -318,15 +318,15 @@
     :use
     ((:instance
       (:rewrite lofat-find-file-correctness-1)
-      (dir-ent-list
-       (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
+      (d-e-list
+       (mv-nth 0 (root-d-e-list fat32-in-memory)))
       (entry-limit (max-entry-count fat32-in-memory)))
      (:instance
       (:rewrite lofat-pread-refinement-lemma-2)
       (path path)
       (entry-limit (max-entry-count fat32-in-memory))
-      (dir-ent-list
-       (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
+      (d-e-list
+       (mv-nth 0 (root-d-e-list fat32-in-memory)))
       (fat32-in-memory fat32-in-memory))
      (:instance
       (:rewrite m1-directory-file-p-when-m1-file-p)
@@ -338,7 +338,7 @@
           0
           (lofat-to-hifat-helper
            fat32-in-memory
-           (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+           (mv-nth 0 (root-d-e-list fat32-in-memory))
            (max-entry-count fat32-in-memory)))
          path))))))))
 
@@ -348,18 +348,18 @@
    (xargs :stobjs fat32-in-memory
           :guard (and (lofat-fs-p fat32-in-memory)
                       (fat32-filename-list-p path))))
-  (b* (((mv root-dir-ent-list &)
-        (root-dir-ent-list fat32-in-memory))
+  (b* (((mv root-d-e-list &)
+        (root-d-e-list fat32-in-memory))
        ((mv file error-code)
         (lofat-find-file fat32-in-memory
-                         root-dir-ent-list path))
+                         root-d-e-list path))
        ((unless (equal error-code 0))
         (mv fat32-in-memory -1 *enoent*))
        ((unless (lofat-regular-file-p file))
         (mv fat32-in-memory -1 *eisdir*))
        ((mv fat32-in-memory error-code)
         (lofat-remove-file fat32-in-memory
-                           (pseudo-root-dir-ent fat32-in-memory)
+                           (pseudo-root-d-e fat32-in-memory)
                            path))
        ((unless (equal error-code 0))
         (mv fat32-in-memory -1 error-code)))
@@ -415,24 +415,24 @@
   lofat-unlink-refinement-lemma-4
   (implies
    (and (lofat-fs-p fat32-in-memory)
-        (useful-dir-ent-list-p dir-ent-list)
+        (useful-d-e-list-p d-e-list)
         (equal (mv-nth 3
                        (lofat-to-hifat-helper fat32-in-memory
-                                              dir-ent-list entry-limit))
+                                              d-e-list entry-limit))
                0))
    (equal
     (lofat-regular-file-p
      (mv-nth 0
-             (lofat-find-file fat32-in-memory dir-ent-list path)))
+             (lofat-find-file fat32-in-memory d-e-list path)))
     (m1-regular-file-p
      (mv-nth 0
              (hifat-find-file
               (mv-nth 0
                       (lofat-to-hifat-helper fat32-in-memory
-                                             dir-ent-list entry-limit))
+                                             d-e-list entry-limit))
               path)))))
   :hints
-  (("goal" :induct (lofat-find-file fat32-in-memory dir-ent-list path)
+  (("goal" :induct (lofat-find-file fat32-in-memory d-e-list path)
     :in-theory (enable lofat-find-file hifat-find-file))))
 
 (defthm
@@ -490,58 +490,58 @@
   lofat-unlink-refinement-lemma-6
   (implies
    (and
-    (dir-ent-p dir-ent)
-    (<= 2 (dir-ent-first-cluster dir-ent))
+    (d-e-p d-e)
+    (<= 2 (d-e-first-cluster d-e))
     (consp (cdr path))
     (lofat-fs-p fat32-in-memory)
     (fat32-filename-list-p path)
     (equal (mv-nth 1
-                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
+                   (d-e-clusterchain-contents fat32-in-memory d-e))
            0)
     (not-intersectp-list
      (mv-nth 0
-             (dir-ent-clusterchain fat32-in-memory dir-ent))
+             (d-e-clusterchain fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
-       (make-dir-ent-list
+       (make-d-e-list
         (mv-nth 0
-                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                (d-e-clusterchain-contents fat32-in-memory d-e)))
        (max-entry-count fat32-in-memory))))
     (equal
      (mv-nth
       3
       (lofat-to-hifat-helper
        fat32-in-memory
-       (make-dir-ent-list
+       (make-d-e-list
         (mv-nth 0
-                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                (d-e-clusterchain-contents fat32-in-memory d-e)))
        (max-entry-count fat32-in-memory)))
      0))
-   (equal (dir-ent-clusterchain
+   (equal (d-e-clusterchain
            (mv-nth 0
-                   (lofat-remove-file fat32-in-memory dir-ent path))
-           dir-ent)
-          (dir-ent-clusterchain fat32-in-memory dir-ent)))
+                   (lofat-remove-file fat32-in-memory d-e path))
+           d-e)
+          (d-e-clusterchain fat32-in-memory d-e)))
   :hints
   (("goal"
     :do-not-induct t
-    :expand (lofat-remove-file fat32-in-memory dir-ent path)
+    :expand (lofat-remove-file fat32-in-memory d-e path)
     :in-theory
-    (disable (:rewrite dir-ent-clusterchain-of-lofat-remove-file-disjoint))
+    (disable (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint))
     :use
     (:instance
-     (:rewrite dir-ent-clusterchain-of-lofat-remove-file-disjoint)
+     (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint)
      (entry-limit (max-entry-count fat32-in-memory))
      (path (cdr path))
-     (root-dir-ent
+     (root-d-e
       (mv-nth
        0
-       (find-dir-ent
-        (make-dir-ent-list
+       (find-d-e
+        (make-d-e-list
          (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                 (d-e-clusterchain-contents fat32-in-memory d-e)))
         (car path))))))))
 
 (defthm
@@ -554,52 +554,52 @@
     (equal
      (mv-nth
       1
-      (dir-ent-clusterchain-contents fat32-in-memory
-                                     (pseudo-root-dir-ent fat32-in-memory)))
+      (d-e-clusterchain-contents fat32-in-memory
+                                     (pseudo-root-d-e fat32-in-memory)))
      0)
     (no-duplicatesp-equal
      (mv-nth 0
-             (dir-ent-clusterchain fat32-in-memory
-                                   (pseudo-root-dir-ent fat32-in-memory))))
+             (d-e-clusterchain fat32-in-memory
+                                   (pseudo-root-d-e fat32-in-memory))))
     (not-intersectp-list
      (mv-nth 0
-             (dir-ent-clusterchain fat32-in-memory
-                                   (pseudo-root-dir-ent fat32-in-memory)))
+             (d-e-clusterchain fat32-in-memory
+                                   (pseudo-root-d-e fat32-in-memory)))
      (mv-nth 2
              (lofat-to-hifat-helper
               fat32-in-memory
-              (make-dir-ent-list
+              (make-d-e-list
                (mv-nth 0
-                       (dir-ent-clusterchain-contents
+                       (d-e-clusterchain-contents
                         fat32-in-memory
-                        (pseudo-root-dir-ent fat32-in-memory))))
+                        (pseudo-root-d-e fat32-in-memory))))
               (max-entry-count fat32-in-memory))))
     (equal
      (mv-nth 3
              (lofat-to-hifat-helper
               fat32-in-memory
-              (make-dir-ent-list
+              (make-d-e-list
                (mv-nth 0
-                       (dir-ent-clusterchain-contents
+                       (d-e-clusterchain-contents
                         fat32-in-memory
-                        (pseudo-root-dir-ent fat32-in-memory))))
+                        (pseudo-root-d-e fat32-in-memory))))
               (max-entry-count fat32-in-memory)))
      0))
    (not-intersectp-list
     (mv-nth 0
-            (dir-ent-clusterchain fat32-in-memory
-                                  (pseudo-root-dir-ent fat32-in-memory)))
+            (d-e-clusterchain fat32-in-memory
+                                  (pseudo-root-d-e fat32-in-memory)))
     (mv-nth
      2
      (lofat-to-hifat-helper
       (mv-nth 0
               (lofat-remove-file fat32-in-memory
-                                 (pseudo-root-dir-ent fat32-in-memory)
+                                 (pseudo-root-d-e fat32-in-memory)
                                  path))
-      (make-dir-ent-list (mv-nth 0
-                                 (dir-ent-clusterchain-contents
+      (make-d-e-list (mv-nth 0
+                                 (d-e-clusterchain-contents
                                   fat32-in-memory
-                                  (pseudo-root-dir-ent fat32-in-memory))))
+                                  (pseudo-root-d-e fat32-in-memory))))
       (max-entry-count fat32-in-memory)))))
   :hints
   (("goal"
@@ -615,38 +615,38 @@
         0
         (lofat-remove-file
          fat32-in-memory
-         (pseudo-root-dir-ent
+         (pseudo-root-d-e
           (mv-nth 0
                   (lofat-remove-file fat32-in-memory
-                                     (pseudo-root-dir-ent fat32-in-memory)
+                                     (pseudo-root-d-e fat32-in-memory)
                                      path)))
          path))))
      (path path)
-     (root-dir-ent
-      (pseudo-root-dir-ent
+     (root-d-e
+      (pseudo-root-d-e
        (mv-nth 0
                (lofat-remove-file fat32-in-memory
-                                  (pseudo-root-dir-ent fat32-in-memory)
+                                  (pseudo-root-d-e fat32-in-memory)
                                   path))))
      (fat32-in-memory fat32-in-memory)
      (x
       (mv-nth
        0
-       (dir-ent-clusterchain
+       (d-e-clusterchain
         (mv-nth
          0
          (lofat-remove-file
           fat32-in-memory
-          (pseudo-root-dir-ent
+          (pseudo-root-d-e
            (mv-nth 0
                    (lofat-remove-file fat32-in-memory
-                                      (pseudo-root-dir-ent fat32-in-memory)
+                                      (pseudo-root-d-e fat32-in-memory)
                                       path)))
           path))
-        (pseudo-root-dir-ent
+        (pseudo-root-d-e
          (mv-nth 0
                  (lofat-remove-file fat32-in-memory
-                                    (pseudo-root-dir-ent fat32-in-memory)
+                                    (pseudo-root-d-e fat32-in-memory)
                                     path))))))))))
 
 (defthm
@@ -678,7 +678,7 @@
                                  path)))))
   :hints
   (("goal"
-    :in-theory (e/d (lofat-unlink lofat-to-hifat root-dir-ent-list
+    :in-theory (e/d (lofat-unlink lofat-to-hifat root-d-e-list
                                   update-dir-contents-correctness-1
                                   (:rewrite lofat-remove-file-correctness-lemma-14))
                     ((:rewrite lofat-remove-file-correctness-1)
@@ -686,24 +686,24 @@
                      (:rewrite lofat-find-file-correctness-1)
                      lofat-unlink-refinement-lemma-1
                      (:rewrite
-                      dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-15)
+                      d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-15)
                      (:linear
-                      dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-12)))
+                      d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-12)))
     :do-not-induct t
     :use
     ((:instance (:rewrite lofat-remove-file-correctness-1)
                 (entry-limit (max-entry-count fat32-in-memory))
                 (path path)
-                (root-dir-ent (pseudo-root-dir-ent fat32-in-memory))
+                (root-d-e (pseudo-root-d-e fat32-in-memory))
                 (fat32-in-memory fat32-in-memory))
      (:instance
       (:rewrite lofat-find-file-correctness-1)
-      (dir-ent-list
-       (make-dir-ent-list
+      (d-e-list
+       (make-d-e-list
         (mv-nth 0
-                (dir-ent-clusterchain-contents
+                (d-e-clusterchain-contents
                  fat32-in-memory
-                 (pseudo-root-dir-ent fat32-in-memory)))))
+                 (pseudo-root-d-e fat32-in-memory)))))
       (entry-limit (max-entry-count fat32-in-memory)))
      (:instance
       (:rewrite lofat-unlink-refinement-lemma-3)
@@ -711,11 +711,11 @@
        (mv-nth 0
                (lofat-to-hifat-helper
                 fat32-in-memory
-                (make-dir-ent-list
+                (make-d-e-list
                  (mv-nth 0
-                         (dir-ent-clusterchain-contents
+                         (d-e-clusterchain-contents
                           fat32-in-memory
-                          (pseudo-root-dir-ent fat32-in-memory))))
+                          (pseudo-root-d-e fat32-in-memory))))
                 (max-entry-count fat32-in-memory)))))
      (:instance
       (:rewrite lofat-unlink-refinement-lemma-2)
@@ -723,11 +723,11 @@
        (mv-nth 0
                (lofat-to-hifat-helper
                 fat32-in-memory
-                (make-dir-ent-list
+                (make-d-e-list
                  (mv-nth 0
-                         (dir-ent-clusterchain-contents
+                         (d-e-clusterchain-contents
                           fat32-in-memory
-                          (pseudo-root-dir-ent fat32-in-memory))))
+                          (pseudo-root-d-e fat32-in-memory))))
                 (max-entry-count fat32-in-memory)))))
      (:instance
       lofat-unlink-refinement-lemma-1
@@ -735,11 +735,11 @@
        (mv-nth 0
                (lofat-to-hifat-helper
                 fat32-in-memory
-                (make-dir-ent-list
+                (make-d-e-list
                  (mv-nth 0
-                         (dir-ent-clusterchain-contents
+                         (d-e-clusterchain-contents
                           fat32-in-memory
-                          (pseudo-root-dir-ent fat32-in-memory))))
+                          (pseudo-root-d-e fat32-in-memory))))
                 (max-entry-count fat32-in-memory))))))))
   :otf-flg t)
 
@@ -866,7 +866,7 @@
 (fty::defalist
  dirstream-table
  :key-type nat
- :val-type dir-ent-list
+ :val-type d-e-list
  :true-listp t)
 
 (defthm dirstream-table-p-correctness-1
@@ -883,9 +883,9 @@
   (b*
       ((dirstream-table (mbe :exec dirstream-table
                              :logic (dirstream-table-fix dirstream-table)))
-       ((mv root-dir-ent-list &) (root-dir-ent-list fat32-in-memory))
+       ((mv root-d-e-list &) (root-d-e-list fat32-in-memory))
        ((mv file error-code)
-        (lofat-find-file fat32-in-memory root-dir-ent-list path))
+        (lofat-find-file fat32-in-memory root-d-e-list path))
        ((unless (zp error-code)) (mv dirstream-table -1 error-code))
        ((unless (lofat-directory-file-p file)) (mv dirstream-table -1 *ENOTDIR*))
        (dirstream-table-index

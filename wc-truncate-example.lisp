@@ -230,7 +230,7 @@
        (mv-nth 0 (lofat-to-hifat fat32-in-memory))
        (path-to-fat32-path (explode (car path-list)))
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (mv-nth
           0
           (hifat-find-file
@@ -296,7 +296,7 @@
                (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                (path-to-fat32-path (explode (car path-list)))
                (m1-file
-                (m1-file->dir-ent
+                (m1-file->d-e
                  (mv-nth 0
                          (hifat-find-file
                           (mv-nth 0 (lofat-to-hifat fat32-in-memory))
@@ -343,7 +343,7 @@
         (mv-nth 0 (lofat-to-hifat fat32-in-memory))
         (path-to-fat32-path (explode (car path-list)))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (mv-nth
            0
            (hifat-find-file
@@ -484,7 +484,7 @@
        (mv-nth 0 (lofat-to-hifat fat32-in-memory))
        (path-to-fat32-path (explode (car path-list)))
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (mv-nth
           0
           (hifat-find-file
@@ -508,7 +508,7 @@
        (mv-nth 0 (lofat-to-hifat fat32-in-memory))
        (path-to-fat32-path (explode (car path-list)))
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (mv-nth
           0
           (hifat-find-file
@@ -532,7 +532,7 @@
         (mv-nth 0 (lofat-to-hifat fat32-in-memory))
         (path-to-fat32-path (explode (car path-list)))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (mv-nth
            0
            (hifat-find-file
@@ -560,7 +560,7 @@
          (mv-nth 0 (lofat-to-hifat fat32-in-memory))
          (path-to-fat32-path (explode (car path-list)))
          (m1-file
-          (m1-file->dir-ent
+          (m1-file->d-e
            (mv-nth
             0
             (hifat-find-file
@@ -590,7 +590,7 @@
           (mv-nth 0 (lofat-to-hifat fat32-in-memory))
           (path-to-fat32-path (explode (car path-list)))
           (m1-file
-           (m1-file->dir-ent
+           (m1-file->d-e
             (mv-nth
              0
              (hifat-find-file
@@ -629,7 +629,7 @@
                (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                (path-to-fat32-path (explode (car path-list)))
                (m1-file
-                (m1-file->dir-ent
+                (m1-file->d-e
                  (mv-nth 0
                          (hifat-find-file
                           (mv-nth 0 (lofat-to-hifat fat32-in-memory))
@@ -669,7 +669,7 @@
                (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                (path-to-fat32-path (explode (car path-list)))
                (m1-file
-                (m1-file->dir-ent
+                (m1-file->d-e
                  (mv-nth 0
                          (hifat-find-file
                           (mv-nth 0 (lofat-to-hifat fat32-in-memory))
@@ -711,7 +711,7 @@
                   (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                   (path-to-fat32-path (explode (car path-list)))
                   (m1-file
-                   (m1-file->dir-ent
+                   (m1-file->d-e
                     (mv-nth 0
                             (hifat-find-file
                              (mv-nth 0 (lofat-to-hifat fat32-in-memory))

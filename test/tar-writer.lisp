@@ -68,12 +68,12 @@
       'string))))
 
 (defund
-  tar-dir-ent-list-string
-  (fat32-in-memory path dir-ent-list)
+  tar-d-e-list-string
+  (fat32-in-memory path d-e-list)
   (declare
    (xargs
     :guard (and (lofat-fs-p fat32-in-memory)
-                (useful-dir-ent-list-p dir-ent-list)
+                (useful-d-e-list-p d-e-list)
                 (stringp path))
     :stobjs fat32-in-memory
     :guard-debug t
@@ -86,48 +86,48 @@
     :measure
     (mv-nth
      1
-     (lofat-to-hifat-helper fat32-in-memory dir-ent-list
+     (lofat-to-hifat-helper fat32-in-memory d-e-list
                             (max-entry-count fat32-in-memory)))
     :hints
     (("goal"
       :expand
-      (lofat-to-hifat-helper fat32-in-memory dir-ent-list
+      (lofat-to-hifat-helper fat32-in-memory d-e-list
                              (max-entry-count fat32-in-memory))
       :in-theory
       (enable lofat-to-hifat-helper-correctness-4)))))
   (b*
       (((unless
-         (mbe :exec (consp dir-ent-list)
-              :logic (and (consp dir-ent-list)
-                          (useful-dir-ent-list-p dir-ent-list))))
+         (mbe :exec (consp d-e-list)
+              :logic (and (consp d-e-list)
+                          (useful-d-e-list-p d-e-list))))
         "")
        ((mv & & & error-code)
-        (lofat-to-hifat-helper fat32-in-memory dir-ent-list
+        (lofat-to-hifat-helper fat32-in-memory d-e-list
                                (max-entry-count fat32-in-memory)))
        ((unless (zp error-code)) "")
-       (head (car dir-ent-list))
+       (head (car d-e-list))
        (head-path
         (concatenate
          'string path "/"
          (coerce
-          (fat32-name-to-name (coerce (dir-ent-filename head) 'list))
+          (fat32-name-to-name (coerce (d-e-filename head) 'list))
           'string)))
-       ((unless (dir-ent-directory-p head))
+       ((unless (d-e-directory-p head))
         (concatenate
          'string
          (tar-reg-file-string fat32-in-memory head-path)
-         (tar-dir-ent-list-string fat32-in-memory
-                                  path (cdr dir-ent-list))))
+         (tar-d-e-list-string fat32-in-memory
+                                  path (cdr d-e-list))))
        ((mv head-clusterchain-contents &)
-        (dir-ent-clusterchain-contents fat32-in-memory head)))
+        (d-e-clusterchain-contents fat32-in-memory head)))
     (concatenate
      'string
      (tar-header-block head-path 0 *tar-dirtype*)
-     (tar-dir-ent-list-string
+     (tar-d-e-list-string
       fat32-in-memory head-path
-      (make-dir-ent-list head-clusterchain-contents))
-     (tar-dir-ent-list-string fat32-in-memory
-                              path (cdr dir-ent-list)))))
+      (make-d-e-list head-clusterchain-contents))
+     (tar-d-e-list-string fat32-in-memory
+                              path (cdr d-e-list)))))
 
 (b*
     (((mv & disk-image-location state)
@@ -140,9 +140,9 @@
      ((mv & val state)
       (getenv$ "TAR_OUTPUT" state))
      (output-path (path-to-fat32-path (coerce val 'list)))
-     ((mv root-dir-ent-list &) (root-dir-ent-list fat32-in-memory))
+     ((mv root-d-e-list &) (root-d-e-list fat32-in-memory))
      ((mv file error-code)
-      (lofat-find-file fat32-in-memory root-dir-ent-list
+      (lofat-find-file fat32-in-memory root-d-e-list
                        (path-to-fat32-path (coerce input-path 'list))))
      ((unless (zp error-code))
       (mv fat32-in-memory state))
@@ -153,7 +153,7 @@
         (concatenate
          'string
          (tar-header-block input-path 0 *tar-dirtype*)
-         (tar-dir-ent-list-string
+         (tar-d-e-list-string
           fat32-in-memory input-path (lofat-file->contents file)))))
      ((mv fd-table file-table fd &)
       (lofat-open output-path nil nil))

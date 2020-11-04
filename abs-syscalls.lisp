@@ -98,7 +98,7 @@
     (:type-prescription
      final-val-seq-of-collapse-this-lemma-6)
     (:rewrite
-     dir-ent-p-when-member-equal-of-dir-ent-list-p)
+     d-e-p-when-member-equal-of-d-e-list-p)
     (:rewrite
      1st-complete-under-path-of-frame->frame-of-partial-collapse-lemma-69)
     (:rewrite take-when-atom)
@@ -162,7 +162,7 @@
 
 (defthm abs-no-dups-file-p-of-m1-file-when-stringp-1
   (implies (stringp contents)
-           (abs-no-dups-file-p (m1-file dir-ent contents)))
+           (abs-no-dups-file-p (m1-file d-e contents)))
   :hints (("goal" :in-theory (enable abs-no-dups-file-p
                                      m1-file-contents-fix))))
 
@@ -194,16 +194,16 @@
         (mv fs *enotdir*))
        ((when (not (or (abs-directory-file-p (cdr alist-elem))
                        (consp (cdr path)) (abs-directory-file-p file)
-                       (and (atom alist-elem) (>= (len fs) *ms-max-dir-ent-count*)))))
+                       (and (atom alist-elem) (>= (len fs) *ms-max-d-e-count*)))))
         (mv (abs-put-assoc name file fs) 0))
        ((when (not (or (m1-regular-file-p (cdr alist-elem))
                        (consp (cdr path)) (m1-regular-file-p file)
-                       (and (atom alist-elem) (>= (len fs) *ms-max-dir-ent-count*)))))
+                       (and (atom alist-elem) (>= (len fs) *ms-max-d-e-count*)))))
         (mv (abs-put-assoc name file fs) 0))
-       ((when (and (atom alist-elem) (>= (len fs) *ms-max-dir-ent-count*))) (mv fs *enospc*))
+       ((when (and (atom alist-elem) (>= (len fs) *ms-max-d-e-count*))) (mv fs *enospc*))
        ((mv new-contents error-code) (abs-place-file-helper (abs-file->contents (cdr alist-elem))
                                                             (cdr path) file)))
-    (mv (abs-put-assoc name (make-abs-file :dir-ent (abs-file->dir-ent (cdr alist-elem))
+    (mv (abs-put-assoc name (make-abs-file :d-e (abs-file->d-e (cdr alist-elem))
                                            :contents new-contents)
                        fs)
         error-code)))
@@ -481,7 +481,7 @@
       (hifat-place-file
        fs nil
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (mv-nth
           0
           (hifat-find-file
@@ -530,7 +530,7 @@
      (hifat-place-file
       fs nil
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -560,7 +560,7 @@
 
 (defthm
   m1-file-p-of-abs-file
-  (equal (m1-file-p (abs-file dir-ent contents))
+  (equal (m1-file-p (abs-file d-e contents))
          (or (stringp (abs-file-contents-fix contents))
              (m1-file-alist-p contents)))
   :hints (("goal" :do-not-induct t
@@ -603,8 +603,8 @@
      :hints
      (("goal"
        :in-theory (enable abs-place-file-helper hifat-place-file
-                          abs-file m1-file abs-file->dir-ent
-                          m1-file->dir-ent abs-fs-p)
+                          abs-file m1-file abs-file->d-e
+                          m1-file->d-e abs-fs-p)
        :induct (abs-place-file-helper fs path file)))))
 
   (defthm
@@ -669,7 +669,7 @@
       (put-assoc-equal
        (fat32-filename-fix (car path))
        (abs-file
-        (abs-file->dir-ent
+        (abs-file->d-e
          (cdr (assoc-equal (fat32-filename-fix (car path))
                            fs)))
         (mv-nth
@@ -1031,8 +1031,8 @@
                                frame))
        (new-var (abs-put-assoc (basename path)
                                (make-abs-file :contents nil
-                                              :dir-ent (dir-ent-install-directory-bit
-                                                        (dir-ent-fix nil) t))
+                                              :d-e (d-e-install-directory-bit
+                                                        (d-e-fix nil) t))
                                var))
        (frame
         (frame-with-root (frame->root frame)
@@ -1060,14 +1060,14 @@
   '(T
     T 0 0
     (("TMP        "
-      (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+      (D-E 0 0 0 0 0 0 0 0 0 0 0 0
                0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
       (CONTENTS
        ("DOCS       "
-        (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 16
+        (D-E 0 0 0 0 0 0 0 0 0 0 0 16
                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
         (CONTENTS
-         ("PDF-DOCS   " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 16
+         ("PDF-DOCS   " (D-E 0 0 0 0 0 0 0 0 0 0 0 16
                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
           (CONTENTS)))))))
     T)))
@@ -1083,14 +1083,14 @@
                      (path-to-fat32-path (explode "/tmp/docs/pdf-docs")))))
     (list fs))
   '((("TMP        "
-      (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+      (D-E 0 0 0 0 0 0 0 0 0 0 0 0
                0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
       (CONTENTS
        ("DOCS       "
-        (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 16
+        (D-E 0 0 0 0 0 0 0 0 0 0 0 16
                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
         (CONTENTS
-         ("PDF-DOCS   " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 16
+         ("PDF-DOCS   " (D-E 0 0 0 0 0 0 0 0 0 0 0 16
                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
           (CONTENTS))))))))))
 
@@ -1556,7 +1556,7 @@
       (equal
        (put-assoc-equal
         (car path)
-        (abs-file (abs-file->dir-ent (cdr (assoc-equal (car path) fs)))
+        (abs-file (abs-file->d-e (cdr (assoc-equal (car path) fs)))
                   (list (nfix new-index)))
         fs)
        fs))
@@ -1971,7 +1971,7 @@
     (put-assoc-equal
      (fat32-filename-fix (car path))
      (abs-file
-      (abs-file->dir-ent
+      (abs-file->d-e
        (cdr (assoc-equal (fat32-filename-fix (car path))
                          fs2)))
       (mv-nth
@@ -2939,7 +2939,7 @@
      (abs-find-file
       (frame->frame (partial-collapse frame (dirname path)))
       (dirname path))
-     '(((dir-ent 0 0 0 0 0 0 0 0 0 0 0 0
+     '(((d-e 0 0 0 0 0 0 0 0 0 0 0 0
                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
         (contents))
        2))
@@ -3288,7 +3288,7 @@
              (m1-file-equiv
               file
               (make-m1-file
-               :dir-ent (dir-ent-install-directory-bit (dir-ent-fix nil)
+               :d-e (d-e-install-directory-bit (d-e-fix nil)
                                                        t))))))))
   :hints
   (("goal" :in-theory (e/d (abs-mkdir abs-find-file abs-find-file-helper
@@ -3342,7 +3342,7 @@
       (equal
        (put-assoc-equal
         (car path)
-        (abs-file (abs-file->dir-ent (cdr (assoc-equal (car path) fs)))
+        (abs-file (abs-file->d-e (cdr (assoc-equal (car path) fs)))
                   (list (nfix new-index)))
         fs)
        fs))
@@ -3364,11 +3364,11 @@
      0
      (hifat-place-file (frame->root frame)
                        path
-                       '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                       '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                          (contents))))
     (put-assoc-equal (basename path)
-                     '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                     '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                        (contents))
                      (frame-val->dir (cdr (assoc-equal 0 frame))))))
@@ -3639,7 +3639,7 @@
    (equal
     (hifat-place-file (mv-nth 0 (collapse frame))
                       path
-                      '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                      '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                         (contents)))
     (mv
@@ -3649,7 +3649,7 @@
        (mv-nth 0 (collapse frame))
        (dirname path)
        (m1-file
-        (m1-file->dir-ent (mv-nth 0
+        (m1-file->d-e (mv-nth 0
                                   (hifat-find-file (mv-nth 0 (collapse frame))
                                                    (dirname path))))
         (mv-nth 0
@@ -3659,7 +3659,7 @@
                           (hifat-find-file (mv-nth 0 (collapse frame))
                                            (dirname path))))
                  (list (basename path))
-                 '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                 '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                    (contents)))))))
      (mv-nth
@@ -3669,14 +3669,14 @@
                                   (hifat-find-file (mv-nth 0 (collapse frame))
                                                    (dirname path))))
        (list (basename path))
-       '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+       '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
          (contents)))))))
   :hints
   (("goal"
     :in-theory (disable (:rewrite hifat-place-file-of-append-1))
     :use (:instance (:rewrite hifat-place-file-of-append-1)
-                    (file '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                    (file '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                             (contents)))
                     (y (list (basename path)))
@@ -3882,7 +3882,7 @@
     (put-assoc-equal
      (fat32-filename-fix (car path))
      (m1-file
-      (m1-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car path))
+      (m1-file->d-e (cdr (assoc-equal (fat32-filename-fix (car path))
                                           (hifat-file-alist-fix fs))))
       (mv-nth
        0
@@ -3895,7 +3895,7 @@
     (put-assoc-equal
      (fat32-filename-fix (car path))
      (m1-file
-      (m1-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car path))
+      (m1-file->d-e (cdr (assoc-equal (fat32-filename-fix (car path))
                                           (hifat-file-alist-fix fs))))
       (mv-nth
        0
@@ -3914,7 +3914,7 @@
      (fs (hifat-file-alist-fix fs))
      (file1
       (m1-file
-       (m1-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car path))
+       (m1-file->d-e (cdr (assoc-equal (fat32-filename-fix (car path))
                                            (hifat-file-alist-fix fs))))
        (mv-nth
         0
@@ -3925,7 +3925,7 @@
          file1))))
      (file2
       (m1-file
-       (m1-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car path))
+       (m1-file->d-e (cdr (assoc-equal (fat32-filename-fix (car path))
                                            (hifat-file-alist-fix fs))))
        (mv-nth
         0
@@ -4205,7 +4205,7 @@
           ctx-app-ok-of-abs-place-file-helper-1
           true-listp-when-string-list
           m1-regular-file-p-of-m1-file
-          dir-ent-p-when-member-equal-of-dir-ent-list-p
+          d-e-p-when-member-equal-of-d-e-list-p
           abs-mkdir-correctness-lemma-64
           (:rewrite hifat-place-file-of-append-1)
           (:type-prescription
@@ -4231,7 +4231,7 @@
            member-equal-of-strip-cars-when-m1-file-alist-p)
           (:rewrite hifat-file-alist-fix-guard-lemma-1)
           (:rewrite abs-addrs-of-put-assoc-lemma-2)
-          (:rewrite true-listp-when-dir-ent-p)))))
+          (:rewrite true-listp-when-d-e-p)))))
 
   (defthm
     abs-mkdir-correctness-lemma-162
@@ -4271,7 +4271,7 @@
                    frame))))
                (dirname path))
               (list (basename path)))
-             '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+             '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                (contents))))
            (frame-val->src
@@ -4318,7 +4318,7 @@
                   frame))))
               (dirname path))
              (list (basename path)))
-            '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+            '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
               (contents))))
           (frame-val->src
@@ -4465,7 +4465,7 @@
                               (partial-collapse frame (dirname path)))))
            (frame->frame (partial-collapse frame (dirname path))))))
         path
-        '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+        '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
           (contents))))
       (mv-nth
@@ -4474,12 +4474,12 @@
         (mv-nth 0 (collapse frame))
         (dirname path)
         (m1-file
-         (m1-file->dir-ent (mv-nth 0
+         (m1-file->d-e (mv-nth 0
                                    (hifat-find-file (mv-nth 0 (collapse frame))
                                                     (dirname path))))
          (put-assoc-equal
           (basename path)
-          '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+          '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
             (contents))
           (m1-file->contents
@@ -4507,12 +4507,12 @@
       hifat-place-file-when-hifat-equiv-1
       ((file2
         (m1-file
-         (m1-file->dir-ent (mv-nth 0
+         (m1-file->d-e (mv-nth 0
                                    (hifat-find-file (mv-nth 0 (collapse frame))
                                                     (dirname path))))
          (put-assoc-equal
           (basename path)
-          '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+          '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
             (contents))
           (m1-file->contents
@@ -4601,7 +4601,7 @@
                                      (dirname path))
                   frame))))
               path)
-             '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+             '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                (contents))))
            (frame-val->src
@@ -4645,7 +4645,7 @@
                                     (dirname path))
                  frame))))
              path)
-            '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+            '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
               (contents))))
           (frame-val->src
@@ -4704,7 +4704,7 @@
                    frame))))
                (dirname path))
               (list (basename path)))
-             '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+             '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                (contents))))
            (frame-val->src
@@ -4747,7 +4747,7 @@
                    frame))))
                (dirname path))
               (list (basename path)))
-             '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+             '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                (contents))))
            (frame-val->src
@@ -4984,7 +4984,7 @@
      (hifat-equiv
       (put-assoc-equal
        (basename path)
-       '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+       '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
          (contents))
        (m1-file->contents
@@ -4995,7 +4995,7 @@
                  (dirname path)))))
       (put-assoc-equal
        (basename path)
-       '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+       '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
          (contents))
        (m1-file->contents (mv-nth 0
@@ -5015,7 +5015,7 @@
            (mv-nth 0
                    (collapse (partial-collapse frame (dirname path))))
            (dirname path)))))
-       (val '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+       (val '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
               (contents)))
        (key (basename path))
@@ -5046,7 +5046,7 @@
         (mv-nth 0 (collapse frame))
         (dirname path)
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (mv-nth
            0
            (hifat-find-file
@@ -5055,7 +5055,7 @@
             (dirname path))))
          (put-assoc-equal
           (basename path)
-          '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+          '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
             (contents))
           (m1-file->contents
@@ -5071,12 +5071,12 @@
         (mv-nth 0 (collapse frame))
         (dirname path)
         (m1-file
-         (m1-file->dir-ent (mv-nth 0
+         (m1-file->d-e (mv-nth 0
                                    (hifat-find-file (mv-nth 0 (collapse frame))
                                                     (dirname path))))
          (put-assoc-equal
           (basename path)
-          '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+          '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
             (contents))
           (m1-file->contents
@@ -5092,7 +5092,7 @@
        (:rewrite hifat-place-file-when-hifat-equiv-1)
        (file1
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (mv-nth
            0
            (hifat-find-file
@@ -5101,7 +5101,7 @@
             (dirname path))))
          (put-assoc-equal
           (basename path)
-          '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+          '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
             (contents))
           (m1-file->contents
@@ -5114,13 +5114,13 @@
        (path (dirname path))
        (fs (mv-nth 0 (collapse frame)))
        (file2
-        (m1-file (m1-file->dir-ent$inline
+        (m1-file (m1-file->d-e$inline
                   (mv-nth '0
                           (hifat-find-file (mv-nth '0 (collapse frame))
                                            (dirname path))))
                  (put-assoc-equal
                   (basename path)
-                  '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                  '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                     (contents))
                   (m1-file->contents$inline
@@ -5438,7 +5438,7 @@
                   frame))))
           (dirname path))
          (list (basename path)))
-        '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+        '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
           (contents))))
       (mv-nth
@@ -5447,12 +5447,12 @@
         (mv-nth 0 (collapse frame))
         (dirname path)
         (m1-file
-         (m1-file->dir-ent (mv-nth 0
+         (m1-file->d-e (mv-nth 0
                                    (hifat-find-file (mv-nth 0 (collapse frame))
                                                     (dirname path))))
          (put-assoc-equal
           (basename path)
-          '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+          '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
             (contents))
           (m1-file->contents
@@ -5572,7 +5572,7 @@
                     frame))))
             (dirname path))
            (list (basename path)))
-          '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+          '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
             (contents))))
         (mv-nth
@@ -5581,12 +5581,12 @@
           (mv-nth 0 (collapse frame))
           (dirname path)
           (m1-file
-           (m1-file->dir-ent (mv-nth 0
+           (m1-file->d-e (mv-nth 0
                                      (hifat-find-file (mv-nth 0 (collapse frame))
                                                       (dirname path))))
            (put-assoc-equal
             (basename path)
-            '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+            '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
               (contents))
             (m1-file->contents
@@ -5736,12 +5736,12 @@
       (abs-fs-p fs))
      (hifat-equiv
       (put-assoc-equal (basename path)
-                       '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                       '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                          (contents))
                        (mv-nth 0 (collapse frame)))
       (put-assoc-equal (basename path)
-                       '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                       '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                          (contents))
                        fs)))
@@ -5871,7 +5871,7 @@
                    frame))))
                (dirname path))
               (list (basename path)))
-             '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+             '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                (contents))))
            (frame-val->src
@@ -5902,7 +5902,7 @@
                 frame))))
             (dirname path))
            (list (basename path)))
-          '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+          '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
             (contents))))
         '(t)))
@@ -5969,7 +5969,7 @@
                    frame))))
                (dirname path))
               (list (basename path)))
-             '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+             '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                (contents))))
            (frame-val->src
@@ -5981,7 +5981,7 @@
       (mv-nth
        0
        (hifat-place-file fs path
-                         '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                         '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                            (contents))))))
     :instructions
@@ -6062,7 +6062,7 @@
                           (cons name nil))
     (if
         (abs-directory-file-p (abs-file-fix file))
-        (mv (abs-file (abs-file->dir-ent file)
+        (mv (abs-file (abs-file->d-e file)
                       (abs-fs-fix (abs-file->contents file)))
             0)
       (mv (abs-file-fix file) 0))))
@@ -6087,7 +6087,7 @@
      (cons name nil))
     (if (not (abs-directory-file-p (abs-file-fix file)))
         (mv (abs-file-fix file) 0)
-      (mv (abs-file (abs-file->dir-ent file)
+      (mv (abs-file (abs-file->d-e file)
                     (list n2))
           0))))
   :hints (("goal" :in-theory (enable abs-mkdir partial-collapse
@@ -6114,7 +6114,7 @@
                           (cons name nil))
     (if (not (abs-directory-file-p (abs-file-fix file)))
         (mv (abs-file-fix file) 0)
-        (mv (abs-file (abs-file->dir-ent file)
+        (mv (abs-file (abs-file->d-e file)
                       (list n))
             0))))
   :hints (("goal" :in-theory (enable abs-fs-fix
@@ -6378,7 +6378,7 @@
     :EXPAND
     (ABS-DIRECTORY-FILE-P
      (ABS-FILE
-      (ABS-FILE->DIR-ENT
+      (ABS-FILE->D-E
        (CDR
         (ASSOC-EQUAL
          "TMP        "
@@ -6460,7 +6460,7 @@
                                frame))
        (new-var (abs-put-assoc (basename path)
                                (make-abs-file :contents ""
-                                              :dir-ent (dir-ent-set-filename (dir-ent-fix nil)
+                                              :d-e (d-e-set-filename (d-e-fix nil)
                                                                              (basename path)))
                                var))
        (frame
@@ -6507,16 +6507,16 @@
        ((mv file error-code) (if (consp (abs-assoc (basename path) var))
                                  (mv (cdr (abs-assoc (basename path) var)) 0)
                                (mv (make-abs-file) *enoent*)))
-       ((mv oldtext dir-ent) (if (and (equal error-code 0) (m1-regular-file-p file))
+       ((mv oldtext d-e) (if (and (equal error-code 0) (m1-regular-file-p file))
                                  (mv (coerce (m1-file->contents file) 'list)
-                                     (m1-file->dir-ent file))
-                               (mv nil (dir-ent-fix nil))))
+                                     (m1-file->d-e file))
+                               (mv nil (d-e-fix nil))))
        ((when (and (consp (abs-assoc (basename path) var)) (m1-directory-file-p file)))
         (mv frame -1 *enoent*))
        (frame (put-assoc-equal src (change-frame-val (cdr (assoc-equal src frame))
                                                      :dir new-src-dir)
                                frame))
-       (file (make-m1-file :dir-ent dir-ent
+       (file (make-m1-file :d-e d-e
                            :contents (coerce (insert-text oldtext offset buf) 'string)))
        (new-var (abs-put-assoc (basename path) file var))
        (frame (frame-with-root (frame->root frame)
@@ -6903,7 +6903,7 @@
         (hifat-place-file
          fs (dirname path)
          (m1-file
-          (m1-file->dir-ent (mv-nth 0 (hifat-find-file fs (dirname path))))
+          (m1-file->d-e (mv-nth 0 (hifat-find-file fs (dirname path))))
           (mv-nth
            0
            (hifat-place-file
@@ -6944,7 +6944,7 @@
          (hifat-place-file
           fs (dirname path)
           (m1-file
-           (m1-file->dir-ent (mv-nth 0 (hifat-find-file fs (dirname path))))
+           (m1-file->d-e (mv-nth 0 (hifat-find-file fs (dirname path))))
            (mv-nth
             0
             (hifat-place-file
@@ -6988,7 +6988,7 @@
     (put-assoc-equal
      (basename path)
      (m1-file
-      (m1-file->dir-ent$inline
+      (m1-file->d-e$inline
        (cdr
         (assoc-equal
          (basename path)
@@ -7883,7 +7883,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr
         (assoc-equal
          (basename (file-table-element->fid
@@ -7992,7 +7992,7 @@
                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                          file-table)))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (cdr
          (assoc-equal
           (basename (file-table-element->fid
@@ -8894,7 +8894,7 @@
                                            file-table)))))))
       (file
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (cdr
           (assoc-equal
            (basename (file-table-element->fid
@@ -9618,7 +9618,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr
         (assoc-equal
          (basename (file-table-element->fid
@@ -9670,7 +9670,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr
         (assoc-equal
          (basename (file-table-element->fid
@@ -9736,7 +9736,7 @@
                                      file-table))))))))
      (val
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (cdr
          (assoc-equal
           (basename (file-table-element->fid
@@ -9871,7 +9871,7 @@
        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                          file-table))))
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr
         (assoc-equal
          (basename
@@ -9991,7 +9991,7 @@
        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                          file-table))))
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr
         (assoc-equal
          (basename
@@ -10091,7 +10091,7 @@
                               file-table))))))))
       (file1
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (cdr
           (assoc-equal
            (basename
@@ -10198,7 +10198,7 @@
                            file-table)))))
       (file2
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (cdr
           (assoc-equal
            (basename
@@ -10321,7 +10321,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -10341,7 +10341,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -10450,7 +10450,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -10463,7 +10463,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -10513,7 +10513,7 @@
      (:rewrite hifat-place-file-when-hifat-equiv-1)
      (file1
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -10533,7 +10533,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -10640,7 +10640,7 @@
      (fs (mv-nth 0 (collapse frame)))
      (file2
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -10653,7 +10653,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -10742,7 +10742,7 @@
      (hifat-place-file
       fs x
       (m1-file
-       (m1-file->dir-ent (mv-nth 0 (hifat-find-file fs x)))
+       (m1-file->d-e (mv-nth 0 (hifat-find-file fs x)))
        (mv-nth 0
                (hifat-place-file
                 (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
@@ -10968,7 +10968,7 @@
        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                          file-table))))
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr
         (assoc-equal
          (basename
@@ -11127,7 +11127,7 @@
        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                          file-table))))
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr
         (assoc-equal
          (basename
@@ -11183,7 +11183,7 @@
      (:rewrite put-assoc-under-hifat-equiv-3)
      (file2
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (cdr
          (assoc-equal
           (basename
@@ -11242,7 +11242,7 @@
                              file-table))))))))
      (file1
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (cdr
          (assoc-equal
           (basename
@@ -11497,7 +11497,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -11517,7 +11517,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -11660,7 +11660,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -11673,7 +11673,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -11723,7 +11723,7 @@
      (:rewrite hifat-place-file-when-hifat-equiv-1)
      (file1
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -11743,7 +11743,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -11884,7 +11884,7 @@
      (fs (mv-nth 0 (collapse frame)))
      (file2
       (m1-file
-       (m1-file->dir-ent$inline
+       (m1-file->d-e$inline
         (mv-nth
          '0
          (hifat-find-file
@@ -11897,7 +11897,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent$inline
+         (m1-file->d-e$inline
           (cdr
            (assoc-equal
             (basename (file-table-element->fid$inline
@@ -12137,7 +12137,7 @@
                (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                  file-table))))
     (m1-file
-     (m1-file->dir-ent
+     (m1-file->d-e
       (cdr
        (assoc-equal
         (basename (file-table-element->fid
@@ -12196,7 +12196,7 @@
                (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                  file-table))))
     (m1-file
-     (m1-file->dir-ent
+     (m1-file->d-e
       (cdr
        (assoc-equal
         (basename (file-table-element->fid
@@ -12276,7 +12276,7 @@
                                       file-table))))))))
       (file1
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (cdr
           (assoc-equal
            (basename (file-table-element->fid
@@ -12330,7 +12330,7 @@
                                          file-table)))))
       (file2
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (cdr
           (assoc-equal
            (basename (file-table-element->fid
@@ -12372,7 +12372,7 @@
                (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                  file-table))))
     (m1-file
-     (m1-file->dir-ent
+     (m1-file->d-e
       (cdr
        (assoc-equal
         (basename (file-table-element->fid
@@ -12424,7 +12424,7 @@
                (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                  file-table))))
     (m1-file
-     (m1-file->dir-ent
+     (m1-file->d-e
       (cdr
        (assoc-equal
         (basename (file-table-element->fid
@@ -12481,7 +12481,7 @@
                                      file-table))))))))
      (file1
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (cdr
          (assoc-equal
           (basename (file-table-element->fid
@@ -12527,7 +12527,7 @@
                                         file-table)))))
      (file2
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (cdr
          (assoc-equal
           (basename (file-table-element->fid
@@ -12650,7 +12650,7 @@
        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                          file-table))))
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr
         (assoc-equal
          (basename
@@ -12738,7 +12738,7 @@
        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                          file-table))))
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr
         (assoc-equal
          (basename
@@ -12919,7 +12919,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -12932,7 +12932,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -13014,7 +13014,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -13027,7 +13027,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -13078,7 +13078,7 @@
      (:rewrite hifat-place-file-when-hifat-equiv-1)
      (file1
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -13093,7 +13093,7 @@
           (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                             file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename
@@ -13184,7 +13184,7 @@
      (fs (mv-nth 0 (collapse frame)))
      (file2
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -13197,7 +13197,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -13322,7 +13322,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -13335,7 +13335,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -13471,7 +13471,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -13484,7 +13484,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -13533,7 +13533,7 @@
     hifat-place-file-when-hifat-equiv-1
     ((file2
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -13546,7 +13546,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -13829,7 +13829,7 @@
              (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                file-table))))
            (m1-file
-            (m1-file->dir-ent
+            (m1-file->d-e
              (cdr
               (assoc-equal
                (basename
@@ -14049,7 +14049,7 @@
               (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                 file-table))))
             (m1-file
-             (m1-file->dir-ent
+             (m1-file->d-e
               (cdr
                (assoc-equal
                 (basename
@@ -14199,7 +14199,7 @@
                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                    file-table))))
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (mv-nth
           0
           (hifat-find-file
@@ -14212,7 +14212,7 @@
                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                       file-table))))
          (m1-file
-          (m1-file->dir-ent
+          (m1-file->d-e
            (cdr
             (assoc-equal
              (basename (file-table-element->fid
@@ -14341,7 +14341,7 @@
                                            file-table)))))))
       (file
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (cdr
           (assoc-equal
            (basename (file-table-element->fid
@@ -14531,7 +14531,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr
         (assoc-equal
          (basename (file-table-element->fid
@@ -14628,7 +14628,7 @@
                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                          file-table)))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (cdr
          (assoc-equal
           (basename (file-table-element->fid
@@ -14699,7 +14699,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -14712,7 +14712,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -14778,7 +14778,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -14791,7 +14791,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -14840,7 +14840,7 @@
     hifat-place-file-when-hifat-equiv-1
     ((file2
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -14853,7 +14853,7 @@
                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                      file-table))))
         (m1-file
-         (m1-file->dir-ent
+         (m1-file->d-e
           (cdr
            (assoc-equal
             (basename (file-table-element->fid
@@ -15391,7 +15391,7 @@
   (implies
    (and
     (equal
-     '(((dir-ent 0 0 0 0 0 0 0 0 0 0 0 0
+     '(((d-e 0 0 0 0 0 0 0 0 0 0 0 0
                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
         (contents))
        2)
@@ -15903,7 +15903,7 @@
     (put-assoc-equal
      (basename path)
      (m1-file
-      (m1-file->dir-ent (cdr (assoc-equal (basename path)
+      (m1-file->d-e (cdr (assoc-equal (basename path)
                                           (mv-nth 0 (collapse frame)))))
       (implode
        (insert-text
@@ -15915,7 +15915,7 @@
     (put-assoc-equal
      (basename path)
      (m1-file
-      (m1-file->dir-ent (mv-nth 0
+      (m1-file->d-e (mv-nth 0
                                 (hifat-find-file (mv-nth 0 (collapse frame))
                                                  path)))
       (implode
@@ -15975,7 +15975,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
      (m1-file
-      (m1-file->dir-ent$inline
+      (m1-file->d-e$inline
        (cdr
         (assoc-equal
          (basename (file-table-element->fid$inline
@@ -16185,7 +16185,7 @@
     (put-assoc-equal
      (basename path)
      (m1-file
-      (m1-file->dir-ent
+      (m1-file->d-e
        (cdr (assoc-equal (basename path)
                          (frame-val->dir (cdr (assoc-equal 0 frame))))))
       (implode
@@ -16202,7 +16202,7 @@
       (frame->root frame)
       path
       (m1-file
-       (m1-file->dir-ent (mv-nth 0
+       (m1-file->d-e (mv-nth 0
                                  (hifat-find-file (frame->root frame)
                                                   path)))
        (implode
@@ -16483,7 +16483,7 @@
                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                   file-table))))
      (m1-file
-      (m1-file->dir-ent$inline
+      (m1-file->d-e$inline
        (cdr
         (assoc-equal
          (basename (file-table-element->fid$inline
@@ -16695,7 +16695,7 @@
                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                          file-table)))))
       (m1-file
-       (m1-file->dir-ent$inline
+       (m1-file->d-e$inline
         (cdr
          (assoc-equal
           (basename (file-table-element->fid$inline
@@ -17261,7 +17261,7 @@
                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                    file-table))))
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (mv-nth
           0
           (hifat-find-file
@@ -17478,7 +17478,7 @@
                                            file-table)))))))
       (file
        (m1-file
-        (m1-file->dir-ent
+        (m1-file->d-e
          (cdr
           (assoc-equal
            (basename (file-table-element->fid
@@ -19166,7 +19166,7 @@
    (abs-complete
     (put-assoc-equal
      (basename path)
-     '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+     '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
        (contents))
      (mv-nth
@@ -19328,7 +19328,7 @@
                                   (dirname path))
                frame))))
            path)
-          '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+          '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
             (contents))))
         (frame-val->src
@@ -19358,7 +19358,7 @@
                 frame))))
         (dirname path))
        (list (basename path))))
-     (file '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+     (file '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
              (contents)))
      (root (frame->root (partial-collapse frame (dirname path))))))))
@@ -19418,7 +19418,7 @@
     :expand
     (hifat-place-file (frame-val->dir (cdr (assoc-equal 0 frame)))
                       path
-                      '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                      '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                         (contents))))))
 
@@ -19511,7 +19511,7 @@
    (hifat-equiv
     (put-assoc-equal
      (basename path)
-     '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+     '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
        (contents))
      (m1-file->contents
@@ -19522,7 +19522,7 @@
                (dirname path)))))
     (put-assoc-equal
      (basename path)
-     '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+     '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
        (contents))
      (m1-file->contents (mv-nth 0
@@ -19564,7 +19564,7 @@
       (mv-nth 0 (collapse frame))
       (dirname path)
       (m1-file
-       (m1-file->dir-ent
+       (m1-file->d-e
         (mv-nth
          0
          (hifat-find-file
@@ -19573,7 +19573,7 @@
           (dirname path))))
        (put-assoc-equal
         (basename path)
-        '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+        '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
           (contents))
         (m1-file->contents
@@ -19589,12 +19589,12 @@
       (mv-nth 0 (collapse frame))
       (dirname path)
       (m1-file
-       (m1-file->dir-ent (mv-nth 0
+       (m1-file->d-e (mv-nth 0
                                  (hifat-find-file (mv-nth 0 (collapse frame))
                                                   (dirname path))))
        (put-assoc-equal
         (basename path)
-        '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+        '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
           (contents))
         (m1-file->contents
@@ -19608,12 +19608,12 @@
     hifat-place-file-when-hifat-equiv-1
     ((file2
       (m1-file
-       (m1-file->dir-ent (mv-nth 0
+       (m1-file->d-e (mv-nth 0
                                  (hifat-find-file (mv-nth 0 (collapse frame))
                                                   (dirname path))))
        (put-assoc-equal
         (basename path)
-        '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+        '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
           (contents))
         (m1-file->contents
@@ -19699,7 +19699,7 @@
                                    (dirname path))
                 frame))))
             path)
-           '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+           '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
              (contents))))
          (frame-val->src
@@ -19714,12 +19714,12 @@
       (mv-nth 0 (collapse frame))
       (dirname path)
       (m1-file
-       (m1-file->dir-ent (mv-nth 0
+       (m1-file->d-e (mv-nth 0
                                  (hifat-find-file (mv-nth 0 (collapse frame))
                                                   (dirname path))))
        (put-assoc-equal
         (basename path)
-        '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+        '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
           (contents))
         (m1-file->contents
@@ -19734,7 +19734,7 @@
     :use
     (:instance
      (:rewrite collapse-hifat-place-file-2)
-     (file '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+     (file '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
              (contents)))
      (path
@@ -19927,7 +19927,7 @@
                      (:free (file)
                             (hifat-place-file (mv-nth 0 (collapse frame))
                                               path
-                                              '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                                              '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
                                                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                                                 (contents)))))
               ;; This hint will probably work!
@@ -20093,7 +20093,7 @@
       (mv-nth 0 (collapse frame))
       (dirname path)
       (m1-file
-       (m1-file->dir-ent (mv-nth 0
+       (m1-file->d-e (mv-nth 0
                                  (hifat-find-file (mv-nth 0 (collapse frame))
                                                   (dirname path))))
        (put-assoc-equal
@@ -20210,7 +20210,7 @@
       (mv-nth 0 (collapse frame))
       (dirname path)
       (m1-file
-       (m1-file->dir-ent (mv-nth 0
+       (m1-file->d-e (mv-nth 0
                                  (hifat-find-file (mv-nth 0 (collapse frame))
                                                   (dirname path))))
        (put-assoc-equal

@@ -214,7 +214,7 @@
   (implies
    (m1-file-p file)
    (equal (m1-directory-file-p
-           (m1-file dir-ent (m1-file->contents file)))
+           (m1-file d-e (m1-file->contents file)))
           (m1-directory-file-p file)))
   :hints (("goal" :in-theory (enable m1-directory-file-p))))
 
@@ -285,14 +285,14 @@
         (hifat-no-dups-p fs)
         (m1-regular-file-p (cdar fs)))
    (hifat-equiv (cons (cons (caar fs)
-                            (m1-file dir-ent (m1-file->contents (cdar fs))))
+                            (m1-file d-e (m1-file->contents (cdar fs))))
                       (cdr fs))
                 fs))
   :hints
   (("goal"
     :expand
     (hifat-equiv (cons (cons (caar fs)
-                             (m1-file dir-ent (m1-file->contents (cdar fs))))
+                             (m1-file d-e (m1-file->contents (cdar fs))))
                        (cdr fs))
                  fs)
     :in-theory (e/d (hifat-no-dups-p hifat-subsetp)
@@ -300,7 +300,7 @@
     :use
     ((:instance hifat-subsetp-reflexive-lemma-4
                 (x (list (cons (car (car fs))
-                               (m1-file dir-ent
+                               (m1-file d-e
                                         (m1-file->contents (cdr (car fs)))))))
                 (y (cdr fs)))
      (:instance hifat-subsetp-reflexive-lemma-4
@@ -315,7 +315,7 @@
                 (m1-file-alist-p tail)
                 (hifat-no-dups-p (cons head tail)))
            (hifat-equiv (cons (cons (car head)
-                                    (m1-file dir-ent contents))
+                                    (m1-file d-e contents))
                               tail)
                         (cons head tail)))
   :hints
@@ -335,13 +335,13 @@
                              contents)
                 (m1-file-alist-p contents))
            (hifat-equiv (cons (cons (car head)
-                                    (m1-file dir-ent contents))
+                                    (m1-file d-e contents))
                               tail)
                         (cons head tail)))
   :hints
   (("goal"
     :expand ((hifat-equiv (cons (cons (car head)
-                                      (m1-file dir-ent contents))
+                                      (m1-file d-e contents))
                                 tail)
                           (cons head tail))
              (hifat-equiv (m1-file->contents (cdr head))
@@ -354,11 +354,11 @@
                      (y tail))
           (:instance hifat-subsetp-reflexive-lemma-4
                      (x (list (cons (car head)
-                                    (m1-file dir-ent contents))))
+                                    (m1-file d-e contents))))
                      (y tail))
           (:instance m1-directory-file-p-of-m1-file
                      (contents contents)
-                     (dir-ent dir-ent))))))
+                     (d-e d-e))))))
 
 (local
  (defthm hifat-equiv-of-cons-lemma-4
@@ -449,7 +449,7 @@
      (x
       (list
        (cons (fat32-filename-fix (car (car fs)))
-             (m1-file (m1-file->dir-ent file1)
+             (m1-file (m1-file->d-e file1)
                       (hifat-file-alist-fix (m1-file->contents file1))))))
      (y (hifat-file-alist-fix (cdr fs)))))))
 
@@ -477,7 +477,7 @@
      (x
       (list
        (cons (fat32-filename-fix (car (car fs)))
-             (m1-file (m1-file->dir-ent file1)
+             (m1-file (m1-file->d-e file1)
                       (hifat-file-alist-fix (m1-file->contents file1))))))
      (y (hifat-file-alist-fix (cdr fs)))))))
 

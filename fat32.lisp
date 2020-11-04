@@ -45,7 +45,7 @@
                                        128
                                        (- *ms-bad-cluster* 2)))
 
-(defconst *ms-dir-ent-length* 32)
+(defconst *ms-d-e-length* 32)
 
 ;; observed
 (defconst *current-dir-fat32-name* ".          ")
@@ -65,14 +65,14 @@
 (defconst *parent-dir-name* "..")
 
 ;; Page 36 of the FAT specification states that a directory shouldn't have more
-;; than 65536 entries. However, *ms-max-dir-ent-count* below is used for the
+;; than 65536 entries. However, *ms-max-d-e-count* below is used for the
 ;; definition of hifat-bounded-file-alist-p, and since that's applicable to our
 ;; internal representation of the filesystem, we need to leave room for two
 ;; entries (dot and dotdot) to be added when we store a directory in the stobj
 ;; representation. However, *ms-max-dir-size* is applicable to extracting
 ;; directory contents from the disk, and therefore it needs to be 2097152 as
 ;; stipulated.
-(defconst *ms-max-dir-ent-count* (- (ash 1 16) 2))
+(defconst *ms-max-d-e-count* (- (ash 1 16) 2))
 (defconst *ms-max-dir-size* (ash 1 21))
 
 ;; from include/uapi/asm-generic/errno-base.h in the linux kernel sources

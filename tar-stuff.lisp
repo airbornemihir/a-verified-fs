@@ -14,11 +14,6 @@
                     (:rewrite <<-sort-consp)
                     (:rewrite
                      hifat-find-file-correctness-3-lemma-2)
-                    (:linear
-                     dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-4
-                     . 1)
-                    (:linear
-                     dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-10)
                     (:rewrite no-duplicatesp-of-member)
                     (:linear getopt::defoptions-lemma-8)
                     (:rewrite assoc-of-car-when-member)

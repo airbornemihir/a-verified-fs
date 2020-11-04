@@ -214,7 +214,7 @@
                                  fat32-in-memory))
          ((unless (and
                    (equal (mod (cluster-size fat32-in-memory)
-                               *ms-dir-ent-length*)
+                               *ms-d-e-length*)
                           0)
                    (equal (mod *ms-max-dir-size*
                                (cluster-size fat32-in-memory))

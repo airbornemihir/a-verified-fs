@@ -277,7 +277,7 @@
          ;; thanks to the lower bounds on bpb_bytspersec and bpb_secperclus
          ;; above.
          (equal (mod (cluster-size fat32-in-memory)
-                     *ms-dir-ent-length*)
+                     *ms-d-e-length*)
                 0)
          (equal (mod *ms-max-dir-size*
                      (cluster-size fat32-in-memory))
@@ -316,7 +316,7 @@
                   (>= (count-of-clusters fat32-in-memory)
                       *ms-min-count-of-clusters*)
                   (equal (mod (cluster-size fat32-in-memory)
-                              *ms-dir-ent-length*)
+                              *ms-d-e-length*)
                          0)
                   (equal (mod *ms-max-dir-size*
                               (cluster-size fat32-in-memory))
@@ -370,7 +370,7 @@
                (and (fat32-in-memoryp fat32-in-memory)
                     (integerp (cluster-size fat32-in-memory))
                     (equal (mod (cluster-size fat32-in-memory)
-                                *ms-dir-ent-length*)
+                                *ms-d-e-length*)
                            0)
                     (equal (mod *ms-max-dir-size*
                                 (cluster-size fat32-in-memory))
