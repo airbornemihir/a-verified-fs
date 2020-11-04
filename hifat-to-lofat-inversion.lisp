@@ -59,7 +59,7 @@
   :hints (("Goal" :in-theory (e/d (not-intersectp-list)))))
 
 (defund
-  get-clusterchain
+  get-cc
   (fat32-in-memory masked-current-cluster length)
   (declare
    (xargs
@@ -102,20 +102,20 @@
                                *ms-first-data-cluster*))))))
         (mv (list masked-current-cluster) 0))
        ((mv tail-index-list tail-error)
-        (get-clusterchain fat32-in-memory masked-next-cluster
+        (get-cc fat32-in-memory masked-next-cluster
                           (nfix (- length cluster-size)))))
     (mv (list* masked-current-cluster tail-index-list)
         tail-error)))
 
 (defthm
-  get-clusterchain-alt
-  (equal (get-clusterchain fat32-in-memory
+  get-cc-alt
+  (equal (get-cc fat32-in-memory
                            masked-current-cluster length)
          (fat32-build-index-list (effective-fat fat32-in-memory)
                                  masked-current-cluster
                                  length (cluster-size fat32-in-memory)))
   :rule-classes :definition
-  :hints (("goal" :in-theory (enable get-clusterchain fat32-build-index-list
+  :hints (("goal" :in-theory (enable get-cc fat32-build-index-list
                                      fati fat-length effective-fat nth))))
 
 (encapsulate
@@ -124,8 +124,8 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defun
-      get-contents-from-clusterchain
-      (fat32-in-memory clusterchain file-size)
+      get-contents-from-cc
+      (fat32-in-memory cc file-size)
     (declare
      (xargs
       :stobjs (fat32-in-memory)
@@ -134,22 +134,22 @@
        (lofat-fs-p fat32-in-memory)
        (equal (data-region-length fat32-in-memory)
               (count-of-clusters fat32-in-memory))
-       (fat32-masked-entry-list-p clusterchain)
+       (fat32-masked-entry-list-p cc)
        (natp file-size)
        ;; A bug was here for a long time - the bound was set to
        ;; (count-of-clusters fat32-in-memory), giving away the last two
        ;; clusters.
-       (bounded-nat-listp clusterchain
+       (bounded-nat-listp cc
                           (+ *ms-first-data-cluster*
                              (count-of-clusters fat32-in-memory)))
        (lower-bounded-integer-listp
-        clusterchain *ms-first-data-cluster*))))
+        cc *ms-first-data-cluster*))))
     (if
-        (atom clusterchain)
+        (atom cc)
         ""
       (let*
           ((cluster-size (cluster-size fat32-in-memory))
-           (masked-current-cluster (car clusterchain)))
+           (masked-current-cluster (car cc)))
         (concatenate
          'string
          (subseq
@@ -158,19 +158,19 @@
            fat32-in-memory)
           0
           (min file-size cluster-size))
-         (get-contents-from-clusterchain
-          fat32-in-memory (cdr clusterchain)
+         (get-contents-from-cc
+          fat32-in-memory (cdr cc)
           (nfix (- file-size cluster-size)))))))
 
   (defthm
-    stringp-of-get-contents-from-clusterchain
+    stringp-of-get-contents-from-cc
     (stringp
-     (get-contents-from-clusterchain
-      fat32-in-memory clusterchain file-size))
+     (get-contents-from-cc
+      fat32-in-memory cc file-size))
     :rule-classes :type-prescription)
 
   (defund
-    get-clusterchain-contents
+    get-cc-contents
     (fat32-in-memory masked-current-cluster length)
     (declare
      (xargs
@@ -199,7 +199,7 @@
           (fat32-entry-mask
            ;; This mbt (must be true) form was inserted in order to comport
            ;; with our current definition of effective-fat, which is implicitly
-           ;; used in the rule get-clusterchain-contents-correctness-1.
+           ;; used in the rule get-cc-contents-correctness-1.
            (if (mbt (< (nfix masked-current-cluster)
                        (nfix (+ (count-of-clusters fat32-in-memory)
                                 *ms-first-data-cluster*))))
@@ -215,7 +215,7 @@
                              *ms-first-data-cluster*))))
           (mv (subseq current-cluster-contents 0 (min length cluster-size)) 0))
          ((mv tail-string tail-error)
-          (get-clusterchain-contents
+          (get-cc-contents
            fat32-in-memory masked-next-cluster
            (nfix (- length cluster-size))))
          ((unless (equal tail-error 0))
@@ -226,37 +226,37 @@
           0)))
 
   (defthm
-    integerp-of-get-clusterchain-contents
+    integerp-of-get-cc-contents
     (and
      (integerp (mv-nth 1
-                       (get-clusterchain-contents
+                       (get-cc-contents
                         fat32-in-memory
                         masked-current-cluster length)))
      (>= 0
          (mv-nth 1
-                 (get-clusterchain-contents
+                 (get-cc-contents
                   fat32-in-memory
                   masked-current-cluster length))))
     :rule-classes
     :type-prescription
     :hints
-    (("goal" :in-theory (enable get-clusterchain-contents)))))
+    (("goal" :in-theory (enable get-cc-contents)))))
 
 (defthm
-  stringp-of-get-clusterchain-contents
+  stringp-of-get-cc-contents
   (stringp
    (mv-nth
     0
-    (get-clusterchain-contents fat32-in-memory
+    (get-cc-contents fat32-in-memory
                                masked-current-cluster length)))
   :rule-classes :type-prescription
   :hints
-  (("goal" :in-theory (enable get-clusterchain-contents))))
+  (("goal" :in-theory (enable get-cc-contents))))
 
-(verify-guards get-clusterchain-contents)
+(verify-guards get-cc-contents)
 
 (defthm
-  get-clusterchain-contents-correctness-2
+  get-cc-contents-correctness-2
   (implies
    (>= masked-current-cluster
        *ms-first-data-cluster*)
@@ -266,14 +266,14 @@
                                     masked-current-cluster
                                     length (cluster-size fat32-in-memory)))
     (mv-nth 1
-            (get-clusterchain-contents fat32-in-memory
+            (get-cc-contents fat32-in-memory
                                        masked-current-cluster length))))
   :hints (("goal" :in-theory (enable fat-length fati
                                      effective-fat fat32-build-index-list
-                                     nth get-clusterchain-contents))))
+                                     nth get-cc-contents))))
 
 (defthm
-  get-contents-from-clusterchain-of-update-data-regioni
+  get-contents-from-cc-of-update-data-regioni
   (implies
    (and (integerp file-size)
         (lofat-fs-p fat32-in-memory)
@@ -281,36 +281,36 @@
                (count-of-clusters fat32-in-memory))
         (natp i)
         (not (member-equal (+ i *ms-first-data-cluster*)
-                           clusterchain))
+                           cc))
         (lower-bounded-integer-listp
-         clusterchain *ms-first-data-cluster*))
+         cc *ms-first-data-cluster*))
    (equal
-    (get-contents-from-clusterchain
+    (get-contents-from-cc
      (update-data-regioni i v fat32-in-memory)
-     clusterchain file-size)
-    (get-contents-from-clusterchain fat32-in-memory
-                                    clusterchain file-size))))
+     cc file-size)
+    (get-contents-from-cc fat32-in-memory
+                                    cc file-size))))
 
 (defthm
-  get-clusterchain-contents-correctness-1
+  get-cc-contents-correctness-1
   (implies
    (and
     (fat32-masked-entry-p masked-current-cluster)
     (lofat-fs-p fat32-in-memory)
     (equal (mv-nth 1
-                   (get-clusterchain-contents fat32-in-memory
+                   (get-cc-contents fat32-in-memory
                                               masked-current-cluster length))
            0))
-   (equal (get-contents-from-clusterchain
+   (equal (get-contents-from-cc
            fat32-in-memory
            (mv-nth 0
-                   (get-clusterchain fat32-in-memory
+                   (get-cc fat32-in-memory
                                      masked-current-cluster length))
            length)
           (mv-nth 0
-                  (get-clusterchain-contents fat32-in-memory
+                  (get-cc-contents fat32-in-memory
                                              masked-current-cluster length))))
-  :hints (("goal" :in-theory (enable get-clusterchain-contents
+  :hints (("goal" :in-theory (enable get-cc-contents
                                      fat32-build-index-list)))
   :rule-classes
   ((:rewrite
@@ -328,7 +328,7 @@
                                        length (cluster-size fat32-in-memory)))
        0))
      (equal
-      (get-contents-from-clusterchain
+      (get-contents-from-cc
        fat32-in-memory
        (mv-nth 0
                (fat32-build-index-list (effective-fat fat32-in-memory)
@@ -336,27 +336,27 @@
                                        length (cluster-size fat32-in-memory)))
        length)
       (mv-nth 0
-              (get-clusterchain-contents fat32-in-memory
+              (get-cc-contents fat32-in-memory
                                          masked-current-cluster length)))))))
 
 (defthm
-  get-clusterchain-contents-correctness-3
+  get-cc-contents-correctness-3
   (equal
    (mv
     (mv-nth
      0
-     (get-clusterchain-contents fat32-in-memory
+     (get-cc-contents fat32-in-memory
                                 masked-current-cluster length))
     (mv-nth
      1
-     (get-clusterchain-contents fat32-in-memory
+     (get-cc-contents fat32-in-memory
                                 masked-current-cluster length)))
-   (get-clusterchain-contents fat32-in-memory
+   (get-cc-contents fat32-in-memory
                               masked-current-cluster length))
-  :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
+  :hints (("Goal" :in-theory (enable get-cc-contents)) ))
 
 (defthm
-  length-of-get-clusterchain-contents
+  length-of-get-cc-contents
   t
   :rule-classes
   ((:linear
@@ -366,16 +366,16 @@
           (natp length))
      (<=
       (len (explode (mv-nth 0
-                            (get-clusterchain-contents
+                            (get-cc-contents
                              fat32-in-memory
                              masked-current-cluster length))))
       length))
-    :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
+    :hints (("Goal" :in-theory (enable get-cc-contents)) ))
    (:linear
     :corollary
     (implies
      (equal (mv-nth 1
-                    (get-clusterchain-contents fat32-in-memory
+                    (get-cc-contents fat32-in-memory
                                                masked-current-cluster length))
             0)
      (<
@@ -383,12 +383,12 @@
       (len
        (explode
         (mv-nth 0
-                (get-clusterchain-contents fat32-in-memory
+                (get-cc-contents fat32-in-memory
                                            masked-current-cluster length))))))
-    :hints (("goal" :in-theory (enable get-clusterchain-contents))))))
+    :hints (("goal" :in-theory (enable get-cc-contents))))))
 
 (defthm
-  get-clusterchain-contents-of-update-fati
+  get-cc-contents-of-update-fati
   (implies
    (and
     (integerp masked-current-cluster)
@@ -399,27 +399,27 @@
               (fat32-build-index-list (effective-fat fat32-in-memory)
                                       masked-current-cluster length
                                       (cluster-size fat32-in-memory))))))
-   (equal (get-clusterchain-contents (update-fati i v fat32-in-memory)
+   (equal (get-cc-contents (update-fati i v fat32-in-memory)
                                      masked-current-cluster length)
-          (get-clusterchain-contents fat32-in-memory
+          (get-cc-contents fat32-in-memory
                                      masked-current-cluster length)))
   :hints
   (("goal"
-    :in-theory (enable get-clusterchain-contents
+    :in-theory (enable get-cc-contents
                        fat32-build-index-list)
-    :induct (get-clusterchain-contents fat32-in-memory
+    :induct (get-cc-contents fat32-in-memory
                                        masked-current-cluster length)
-    :expand ((get-clusterchain-contents (update-fati i v fat32-in-memory)
+    :expand ((get-cc-contents (update-fati i v fat32-in-memory)
                                         masked-current-cluster length)))))
 
 ;; The following is not a theorem, because we took our error codes, more or
 ;; less, from fs/fat/cache.c, and there the length is not taken into account
 ;; while returning error codes (or not). Thus, it's possible to return an error
 ;; code of 0 without conforming to the length.
-;; (defthm len-of-get-clusterchain-contents
+;; (defthm len-of-get-cc-contents
 ;;   (b*
 ;;       (((mv contents error-code)
-;;         (get-clusterchain-contents fat32-in-memory masked-current-cluster length)))
+;;         (get-cc-contents fat32-in-memory masked-current-cluster length)))
 ;;     (implies
 ;;      (equal error-code 0)
 ;;      (equal (length contents) length))))
@@ -597,7 +597,7 @@
                                      fat32-filename-p useless-d-e-p))))
 
 (defund
-  d-e-clusterchain
+  d-e-cc
   (fat32-in-memory d-e)
   (declare
    (xargs
@@ -610,25 +610,25 @@
                    (+ *ms-first-data-cluster*
                       (count-of-clusters fat32-in-memory))))))
   (if (d-e-directory-p d-e)
-      (get-clusterchain fat32-in-memory
+      (get-cc fat32-in-memory
                         (d-e-first-cluster d-e)
                         *ms-max-dir-size*)
-    (get-clusterchain fat32-in-memory
+    (get-cc fat32-in-memory
                       (d-e-first-cluster d-e)
                       (d-e-file-size d-e))))
 
 (defthm
-  true-listp-of-d-e-clusterchain
+  true-listp-of-d-e-cc
   (true-listp
    (mv-nth
     0
-    (d-e-clusterchain fat32-in-memory d-e)))
+    (d-e-cc fat32-in-memory d-e)))
   :hints
-  (("goal" :in-theory (enable d-e-clusterchain)))
+  (("goal" :in-theory (enable d-e-cc)))
   :rule-classes (:rewrite :type-prescription))
 
 (defthm
-  fat32-masked-entry-list-p-of-d-e-clusterchain
+  fat32-masked-entry-list-p-of-d-e-cc
   (implies (and (d-e-p d-e)
                 (<= *ms-first-data-cluster*
                     (d-e-first-cluster d-e))
@@ -637,25 +637,25 @@
                       (count-of-clusters fat32-in-memory))))
            (fat32-masked-entry-list-p
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory d-e))))
-  :hints (("goal" :in-theory (enable d-e-clusterchain))))
+                    (d-e-cc fat32-in-memory d-e))))
+  :hints (("goal" :in-theory (enable d-e-cc))))
 
 (defthm
-  d-e-clusterchain-of-update-fati
+  d-e-cc-of-update-fati
   (implies
    (and (d-e-p d-e)
         (<= *ms-first-data-cluster* (d-e-first-cluster d-e))
         (not
          (member-equal i
                        (mv-nth 0
-                               (d-e-clusterchain fat32-in-memory d-e)))))
-   (equal (d-e-clusterchain (update-fati i v fat32-in-memory)
+                               (d-e-cc fat32-in-memory d-e)))))
+   (equal (d-e-cc (update-fati i v fat32-in-memory)
                                 d-e)
-          (d-e-clusterchain fat32-in-memory d-e)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain))))
+          (d-e-cc fat32-in-memory d-e)))
+  :hints (("goal" :in-theory (enable d-e-cc))))
 
 (defund
-  d-e-clusterchain-contents
+  d-e-cc-contents
   (fat32-in-memory d-e)
   (declare
    (xargs
@@ -668,25 +668,25 @@
                    (+ *ms-first-data-cluster*
                       (count-of-clusters fat32-in-memory))))))
   (if (d-e-directory-p d-e)
-      (get-clusterchain-contents fat32-in-memory
+      (get-cc-contents fat32-in-memory
                                  (d-e-first-cluster d-e)
                                  *ms-max-dir-size*)
-    (get-clusterchain-contents fat32-in-memory
+    (get-cc-contents fat32-in-memory
                                (d-e-first-cluster d-e)
                                (d-e-file-size d-e))))
 
 (defthm
-  stringp-of-d-e-clusterchain-contents
+  stringp-of-d-e-cc-contents
   (stringp
    (mv-nth
     0
-    (d-e-clusterchain-contents fat32-in-memory d-e)))
+    (d-e-cc-contents fat32-in-memory d-e)))
   :rule-classes :type-prescription
   :hints
-  (("goal" :in-theory (enable d-e-clusterchain-contents))))
+  (("goal" :in-theory (enable d-e-cc-contents))))
 
 (defthm
-  length-of-d-e-clusterchain-contents
+  length-of-d-e-cc-contents
   t
   :rule-classes
   ((:linear
@@ -695,80 +695,80 @@
      (and (lofat-fs-p fat32-in-memory)
           (not (d-e-directory-p d-e)))
      (<= (len (explode (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory d-e))))
          (d-e-file-size d-e)))
     :hints
     (("goal"
-      :in-theory (enable d-e-clusterchain-contents))))
+      :in-theory (enable d-e-cc-contents))))
    (:linear
     :corollary
     (implies
      (and (lofat-fs-p fat32-in-memory)
           (d-e-directory-p d-e))
      (<= (len (explode (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory d-e))))
          *ms-max-dir-size*))
     :hints
     (("goal"
-      :in-theory (enable d-e-clusterchain-contents))))
+      :in-theory (enable d-e-cc-contents))))
    (:linear
     :corollary
     (implies
      (equal
       (mv-nth 1
-              (d-e-clusterchain-contents
+              (d-e-cc-contents
                fat32-in-memory d-e))
       0)
      (< 0
         (len (explode (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory d-e))))))
     :hints
     (("goal"
-      :in-theory (enable d-e-clusterchain-contents))))))
+      :in-theory (enable d-e-cc-contents))))))
 
-;; After the fashion of get-clusterchain-contents-correctness-2, we're going to
-;; rewrite instances of (mv-nth 1 (d-e-clusterchain ...))
-;; We're adding a return value for collecting all these clusterchains, to help
+;; After the fashion of get-cc-contents-correctness-2, we're going to
+;; rewrite instances of (mv-nth 1 (d-e-cc ...))
+;; We're adding a return value for collecting all these ccs, to help
 ;; us ensure the separation properties we want. We're also adding a return
 ;; value, to signal an error when we run out of entries.
 (defthm
-  d-e-clusterchain-correctness-1
+  d-e-cc-correctness-1
   (implies
    (<= *ms-first-data-cluster*
        (d-e-first-cluster d-e))
    (equal (mv-nth 1
-                  (d-e-clusterchain fat32-in-memory d-e))
+                  (d-e-cc fat32-in-memory d-e))
           (mv-nth 1
-                  (d-e-clusterchain-contents fat32-in-memory d-e))))
-  :hints (("goal" :in-theory (enable d-e-clusterchain
-                                     d-e-clusterchain-contents))))
+                  (d-e-cc-contents fat32-in-memory d-e))))
+  :hints (("goal" :in-theory (enable d-e-cc
+                                     d-e-cc-contents))))
 
 (defthm
-  d-e-clusterchain-contents-of-update-fati
+  d-e-cc-contents-of-update-fati
   (implies
    (not
     (member-equal i
                   (mv-nth 0
-                          (d-e-clusterchain fat32-in-memory d-e))))
-   (equal (d-e-clusterchain-contents (update-fati i v fat32-in-memory)
+                          (d-e-cc fat32-in-memory d-e))))
+   (equal (d-e-cc-contents (update-fati i v fat32-in-memory)
                                          d-e)
-          (d-e-clusterchain-contents fat32-in-memory d-e)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain-contents
-                                     d-e-clusterchain))))
+          (d-e-cc-contents fat32-in-memory d-e)))
+  :hints (("goal" :in-theory (enable d-e-cc-contents
+                                     d-e-cc))))
 
 (defthm
-  integerp-of-d-e-clusterchain-contents
+  integerp-of-d-e-cc-contents
   (and
    (integerp (mv-nth 1
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
    (>= 0
        (mv-nth 1
-               (d-e-clusterchain-contents fat32-in-memory d-e))))
+               (d-e-cc-contents fat32-in-memory d-e))))
   :rule-classes :type-prescription
-  :hints (("goal" :in-theory (enable d-e-clusterchain-contents))))
+  :hints (("goal" :in-theory (enable d-e-cc-contents))))
 
 (defund
   d-e-list-from-first-cluster
@@ -783,7 +783,7 @@
                             *ms-first-data-cluster*)))))
   (mv-let
     (contents error-code)
-    (get-clusterchain-contents fat32-in-memory
+    (get-cc-contents fat32-in-memory
                                first-cluster *ms-max-dir-size*)
     (mv (make-d-e-list contents) error-code)))
 
@@ -826,7 +826,7 @@
       (d-e-directory-p d-e)
       (subdir-contents-p
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory d-e))))
+               (d-e-cc-contents fat32-in-memory d-e))))
      (<=
       (len
        (mv-nth
@@ -838,7 +838,7 @@
     (("goal"
       :in-theory (enable d-e-list-from-first-cluster
                          subdir-contents-p
-                         d-e-clusterchain-contents)
+                         d-e-cc-contents)
       :use
       ((:instance
         (:linear len-of-make-d-e-list)
@@ -846,7 +846,7 @@
          (remove1-d-e
           (remove1-d-e
            (mv-nth 0
-                   (get-clusterchain-contents fat32-in-memory
+                   (get-cc-contents fat32-in-memory
                                               (d-e-first-cluster d-e)
                                               *ms-max-dir-size*))
            *current-dir-fat32-name*)
@@ -858,7 +858,7 @@
           (remove1-d-e
            (remove1-d-e
             (mv-nth 0
-                    (get-clusterchain-contents fat32-in-memory
+                    (get-cc-contents fat32-in-memory
                                                (d-e-first-cluster d-e)
                                                *ms-max-dir-size*))
             *current-dir-fat32-name*)
@@ -875,17 +875,17 @@
         (d-e-directory-p d-e)
         (subdir-contents-p
          (mv-nth 0
-                 (d-e-clusterchain-contents fat32-in-memory d-e))))
+                 (d-e-cc-contents fat32-in-memory d-e))))
        (<=
         (len
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory d-e))))
+                  (d-e-cc-contents fat32-in-memory d-e))))
         *ms-max-d-e-count*))
       :hints
       (("goal"
         :in-theory (enable d-e-list-from-first-cluster
-                           d-e-clusterchain-contents))))
+                           d-e-cc-contents))))
      (:linear
       :corollary
       (implies
@@ -893,14 +893,14 @@
             (d-e-directory-p d-e)
             (subdir-contents-p
              (mv-nth 0
-                     (get-clusterchain-contents
+                     (get-cc-contents
                       fat32-in-memory
                       (d-e-first-cluster d-e)
                       *ms-max-dir-size*))))
        (<=
         (len
          (make-d-e-list (mv-nth 0
-                                    (get-clusterchain-contents
+                                    (get-cc-contents
                                      fat32-in-memory
                                      (d-e-first-cluster d-e)
                                      *ms-max-dir-size*))))
@@ -908,8 +908,8 @@
       :hints
       (("goal"
         :in-theory (enable d-e-list-from-first-cluster
-                           d-e-clusterchain-contents
-                           get-clusterchain-contents)))))))
+                           d-e-cc-contents
+                           get-cc-contents)))))))
 
 (defun
     find-d-e (d-e-list filename)
@@ -960,7 +960,7 @@
              (d-e-filename (d-e-fix nil)))))
 
 ;; Rename later.
-(defthm d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-15
+(defthm d-e-cc-contents-of-lofat-place-file-coincident-lemma-15
   (implies (not (equal (mv-nth 1 (find-d-e d-e-list filename))
                        0))
            (equal (mv-nth 0 (find-d-e d-e-list filename))
@@ -1005,7 +1005,7 @@
                   :stobjs (fat32-in-memory)))
   (b*
       (;; entry-limit is the loop stopper, kind of - we know that in a
-       ;; filesystem instance without any looping clusterchains (where, for
+       ;; filesystem instance without any looping ccs (where, for
        ;; instance, 2 points to 3 and 3 points to 2), we can't have more
        ;; entries than the total number of entries possible if the data region
        ;; was fully packed with directory entries. So, we begin with that
@@ -1033,8 +1033,8 @@
                  (+ (count-of-clusters fat32-in-memory)
                     *ms-first-data-cluster*)))
             (mv "" 0)
-          (d-e-clusterchain-contents fat32-in-memory d-e)))
-       ((mv clusterchain &)
+          (d-e-cc-contents fat32-in-memory d-e)))
+       ((mv cc &)
         (if
             ;; This clause is intended to make sure we don't try to explore the
             ;; contents of an empty file; that would cause a guard
@@ -1045,11 +1045,11 @@
                     (+ (count-of-clusters fat32-in-memory)
                        *ms-first-data-cluster*)))
             (mv nil 0)
-          (d-e-clusterchain fat32-in-memory d-e)))
-       ;; head-entry-count and head-clusterchain-list, here, do not include the
-       ;; entry or clusterchain respectively for the head itself. Those will be
+          (d-e-cc fat32-in-memory d-e)))
+       ;; head-entry-count and head-cc-list, here, do not include the
+       ;; entry or cc respectively for the head itself. Those will be
        ;; added at the end.
-       ((mv head head-entry-count head-clusterchain-list head-error-code)
+       ((mv head head-entry-count head-cc-list head-error-code)
         (if directory-p
             (lofat-to-hifat-helper
              fat32-in-memory
@@ -1059,12 +1059,12 @@
        ;; we want entry-limit to serve both as a measure and an upper
        ;; bound on how many entries are found.
        (tail-entry-limit (- entry-limit (+ 1 (nfix head-entry-count))))
-       ((mv tail tail-entry-count tail-clusterchain-list tail-error-code)
+       ((mv tail tail-entry-count tail-cc-list tail-error-code)
         (lofat-to-hifat-helper fat32-in-memory
                                (cdr d-e-list)
                                tail-entry-limit))
        (error-code
-        (if (and ;; get-clusterchain-contents returns an error code of 0.
+        (if (and ;; get-cc-contents returns an error code of 0.
              (equal error-code 0)
              (equal head-error-code 0)
              (equal tail-error-code 0)
@@ -1075,32 +1075,32 @@
               (and directory-p (not (subdir-contents-p contents))))
              ;; The three following clauses come around to the point that
              ;; the whole expression
-             ;; (append (list clusterchain) head-clusterchain-list
-             ;;         tail-clusterchain-list)
+             ;; (append (list cc) head-cc-list
+             ;;         tail-cc-list)
              ;; should satisfy disjoint-list-listp and
              ;; no-duplicates-listp. See the flatten-disjoint-lists
              ;; theorem to understand what this means.
-             (no-duplicatesp clusterchain)
-             (not-intersectp-list clusterchain
-                                  (append head-clusterchain-list
-                                          tail-clusterchain-list))
-             (not (member-intersectp-equal head-clusterchain-list
-                                           tail-clusterchain-list)))
+             (no-duplicatesp cc)
+             (not-intersectp-list cc
+                                  (append head-cc-list
+                                          tail-cc-list))
+             (not (member-intersectp-equal head-cc-list
+                                           tail-cc-list)))
             0
           *EIO*))
        ((mv & find-d-e-error-code)
         (find-d-e (cdr d-e-list) (d-e-filename d-e))))
     (if
         (equal find-d-e-error-code 0)
-        (mv tail tail-entry-count tail-clusterchain-list *EIO*)
+        (mv tail tail-entry-count tail-cc-list *EIO*)
       ;; We add the file to this m1 instance, having made sure it isn't a
       ;; duplicate.
       (mv (list* (cons filename (make-m1-file :d-e d-e
                                               :contents head))
                  tail)
           (+ 1 head-entry-count tail-entry-count)
-          (append (list clusterchain) head-clusterchain-list
-                  tail-clusterchain-list)
+          (append (list cc) head-cc-list
+                  tail-cc-list)
           error-code))))
 
 (defthm lofat-to-hifat-helper-correctness-1-lemma-1
@@ -1110,7 +1110,7 @@
 (defthm
   lofat-to-hifat-helper-correctness-1
   (b* (((mv m1-file-alist entry-count
-            clusterchain-list error-code)
+            cc-list error-code)
         (lofat-to-hifat-helper fat32-in-memory
                                d-e-list entry-limit)))
     (and (natp entry-count)
@@ -1118,7 +1118,7 @@
          (<= (len m1-file-alist)
              (len d-e-list))
          (alistp m1-file-alist)
-         (true-list-listp clusterchain-list)
+         (true-list-listp cc-list)
          (natp error-code)))
   :hints
   (("goal" :in-theory
@@ -1142,12 +1142,12 @@
                           (len d-e-list)))))
    (:rewrite
     :corollary (b* (((mv m1-file-alist
-                         & clusterchain-list error-code)
+                         & cc-list error-code)
                      (lofat-to-hifat-helper fat32-in-memory
                                             d-e-list entry-limit)))
                  (and (alistp m1-file-alist)
                       (integerp error-code)
-                      (true-list-listp clusterchain-list))))
+                      (true-list-listp cc-list))))
    (:type-prescription
     :corollary (b* (((mv m1-file-alist &)
                      (lofat-to-hifat-helper fat32-in-memory
@@ -1379,17 +1379,17 @@
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+           (d-e-cc-contents fat32-in-memory (car d-e-list))))
          (+ -1 entry-limit)))
        (len
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))))
       (subdir-contents-p
        (mv-nth
         0
-        (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+        (d-e-cc-contents fat32-in-memory (car d-e-list))))
       (lofat-fs-p fat32-in-memory))
      (hifat-bounded-file-alist-p-helper
       (mv-nth
@@ -1399,7 +1399,7 @@
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))
         (+ -1 entry-limit)))
       *ms-max-d-e-count*))
     :hints
@@ -1411,7 +1411,7 @@
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))))
+           (d-e-cc-contents fat32-in-memory (car d-e-list)))))
         *ms-max-d-e-count*))))))
 
 (defthm
@@ -1434,11 +1434,11 @@
 
 (defthm
   no-duplicates-listp-of-lofat-to-hifat-helper
-  (b* (((mv & & clusterchain-list error-code)
+  (b* (((mv & & cc-list error-code)
         (lofat-to-hifat-helper fat32-in-memory
                                d-e-list entry-limit)))
     (implies (equal error-code 0)
-             (no-duplicates-listp clusterchain-list)))
+             (no-duplicates-listp cc-list)))
   :hints
   (("goal" :in-theory (enable lofat-to-hifat-helper)
     :induct (lofat-to-hifat-helper fat32-in-memory
@@ -1446,11 +1446,11 @@
 
 (defthm
   disjoint-list-listp-of-lofat-to-hifat-helper
-  (b* (((mv & & clusterchain-list error-code)
+  (b* (((mv & & cc-list error-code)
         (lofat-to-hifat-helper fat32-in-memory
                                d-e-list entry-limit)))
     (implies (equal error-code 0)
-             (disjoint-list-listp clusterchain-list)))
+             (disjoint-list-listp cc-list)))
   :hints
   (("goal" :in-theory (enable lofat-to-hifat-helper)
     :induct (lofat-to-hifat-helper fat32-in-memory
@@ -1458,12 +1458,12 @@
 
 (defthm
   no-duplicatesp-of-flatten-of-lofat-to-hifat-helper
-  (b* (((mv & & clusterchain-list error-code)
+  (b* (((mv & & cc-list error-code)
         (lofat-to-hifat-helper fat32-in-memory
                                d-e-list entry-limit)))
     (implies
      (equal error-code 0)
-     (no-duplicatesp-equal (flatten clusterchain-list)))))
+     (no-duplicatesp-equal (flatten cc-list)))))
 
 (defthm
   data-region-length-of-update-fati
@@ -1541,7 +1541,7 @@
                   :guard (lofat-fs-p fat32-in-memory)))
   (mv-let
     (root-dir-contents error-code)
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      fat32-in-memory
      (pseudo-root-d-e fat32-in-memory))
     (mv
@@ -1622,15 +1622,15 @@
           :guard (lofat-fs-p fat32-in-memory)
           :guard-hints
           (("Goal" :in-theory (enable root-d-e-list pseudo-root-d-e
-                                      d-e-clusterchain-contents
-                                      d-e-clusterchain)))))
+                                      d-e-cc-contents
+                                      d-e-cc)))))
   (b*
       (((unless
             (mbt (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                      *ms-first-data-cluster*)))
         (mv nil *eio*))
-       ((mv root-dir-clusterchain error-code)
-        (d-e-clusterchain
+       ((mv root-dir-cc error-code)
+        (d-e-cc
          fat32-in-memory
          (pseudo-root-d-e fat32-in-memory)))
        ;; We're gradually trying to have more of the pattern where we
@@ -1643,7 +1643,7 @@
        ;; *eio*).
        ((unless
             (and (equal error-code 0)
-                 (no-duplicatesp-equal root-dir-clusterchain)))
+                 (no-duplicatesp-equal root-dir-cc)))
         (mv nil *eio*))
        ;; If at all there are performance problems after this point, this mbe
        ;; should be checked...
@@ -1653,9 +1653,9 @@
          (root-d-e-list fat32-in-memory)
          :exec
          (mv (make-d-e-list
-              (get-contents-from-clusterchain
+              (get-contents-from-cc
                fat32-in-memory
-               root-dir-clusterchain
+               root-dir-cc
                *ms-max-dir-size*))
              error-code)))
        ;; This clause might be a problem, since the root directory is not
@@ -1664,11 +1664,11 @@
        ;; it can have 2^16.
        ((unless (<= (len root-d-e-list) *ms-max-d-e-count*))
         (mv nil *eio*))
-       ((mv m1-file-alist & clusterchain-list error-code)
+       ((mv m1-file-alist & cc-list error-code)
         (lofat-to-hifat-helper
          fat32-in-memory root-d-e-list
          (max-entry-count fat32-in-memory)))
-       ((unless (not-intersectp-list root-dir-clusterchain clusterchain-list))
+       ((unless (not-intersectp-list root-dir-cc cc-list))
         (mv m1-file-alist *eio*)))
     (mv m1-file-alist error-code)))
 
@@ -1686,10 +1686,10 @@
     (e/d
      (lofat-to-hifat)
      (m1-file-p
-      (:rewrite get-clusterchain-contents-correctness-2)))
+      (:rewrite get-cc-contents-correctness-2)))
     :use
     (:instance
-     (:rewrite get-clusterchain-contents-correctness-2)
+     (:rewrite get-cc-contents-correctness-2)
      (length *ms-max-dir-size*)
      (masked-current-cluster
       (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
@@ -1724,7 +1724,7 @@
   lofat-to-hifat-correctness-2
   (implies
    (equal (mv-nth 0
-                  (get-clusterchain-contents
+                  (get-cc-contents
                    fat32-in-memory
                    (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                    *ms-max-dir-size*))
@@ -1735,7 +1735,7 @@
                                      lofat-to-hifat-helper
                                      root-d-e-list
                                      pseudo-root-d-e
-                                     d-e-clusterchain-contents))))
+                                     d-e-cc-contents))))
 
 (defthm
   hifat-entry-count-of-lofat-to-hifat
@@ -2007,7 +2007,7 @@
   :hints (("goal" :in-theory (enable pseudo-root-d-e))))
 
 (defthm
-  get-clusterchain-contents-of-stobj-set-indices-in-fa-table-disjoint
+  get-cc-contents-of-stobj-set-indices-in-fa-table-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -2024,19 +2024,19 @@
            (len value-list))
     (nat-listp index-list))
    (equal
-    (get-clusterchain-contents
+    (get-cc-contents
      (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
      masked-current-cluster length)
-    (get-clusterchain-contents fat32-in-memory
+    (get-cc-contents fat32-in-memory
                                masked-current-cluster length)))
   :hints
   (("goal"
-    :induct (get-clusterchain-contents fat32-in-memory
+    :induct (get-cc-contents fat32-in-memory
                                        masked-current-cluster length)
-    :in-theory (e/d (get-clusterchain-contents fat32-build-index-list)
+    :in-theory (e/d (get-cc-contents fat32-build-index-list)
                     (intersectp-is-commutative))
     :expand
-    ((get-clusterchain-contents
+    ((get-cc-contents
       (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
       masked-current-cluster length)
      (:free (y)
@@ -2044,17 +2044,17 @@
                               index-list))))))
 
 (defthm
-  get-contents-from-clusterchain-of-stobj-set-indices-in-fa-table
+  get-contents-from-cc-of-stobj-set-indices-in-fa-table
   (equal
-   (get-contents-from-clusterchain
+   (get-contents-from-cc
     (stobj-set-indices-in-fa-table
      fat32-in-memory index-list value-list)
-    clusterchain file-size)
-   (get-contents-from-clusterchain fat32-in-memory
-                                   clusterchain file-size)))
+    cc file-size)
+   (get-contents-from-cc fat32-in-memory
+                                   cc file-size)))
 
 (defthm
-  d-e-clusterchain-of-stobj-set-indices-in-fa-table-disjoint
+  d-e-cc-of-stobj-set-indices-in-fa-table-disjoint
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (nat-listp index-list)
@@ -2064,34 +2064,34 @@
         (not (intersectp-equal
               index-list
               (mv-nth '0
-                      (d-e-clusterchain fat32-in-memory d-e)))))
+                      (d-e-cc fat32-in-memory d-e)))))
    (equal
-    (d-e-clusterchain
+    (d-e-cc
      (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
      d-e)
-    (d-e-clusterchain fat32-in-memory d-e)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain))))
+    (d-e-cc fat32-in-memory d-e)))
+  :hints (("goal" :in-theory (enable d-e-cc))))
 
 (defthm
-  d-e-clusterchain-contents-of-stobj-set-indices-in-fa-table-disjoint
+  d-e-cc-contents-of-stobj-set-indices-in-fa-table-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
     (not
      (intersectp-equal (mv-nth 0
-                               (d-e-clusterchain fat32-in-memory d-e))
+                               (d-e-cc fat32-in-memory d-e))
                        index-list))
     (fat32-masked-entry-list-p value-list)
     (equal (len index-list)
            (len value-list))
     (nat-listp index-list))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
      d-e)
-    (d-e-clusterchain-contents fat32-in-memory d-e)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain-contents
-                                     d-e-clusterchain))))
+    (d-e-cc-contents fat32-in-memory d-e)))
+  :hints (("goal" :in-theory (enable d-e-cc-contents
+                                     d-e-cc))))
 
 (defthmd
   lofat-to-hifat-helper-of-stobj-set-indices-in-fa-table
@@ -2391,11 +2391,11 @@
 
   (local
    (defthm
-     get-contents-from-clusterchain-of-stobj-set-clusters-coincident-lemma-1
+     get-contents-from-cc-of-stobj-set-clusters-coincident-lemma-1
      (iff (equal (+ 1 (len x)) 1) (atom x))))
 
   (defthm
-    get-contents-from-clusterchain-of-stobj-set-clusters-coincident
+    get-contents-from-cc-of-stobj-set-clusters-coincident
     (implies
      (and (stringp text)
           (equal (len (make-clusters text (cluster-size fat32-in-memory)))
@@ -2408,7 +2408,7 @@
           (lofat-fs-p fat32-in-memory)
           (no-duplicatesp-equal index-list))
      (equal
-      (get-contents-from-clusterchain
+      (get-contents-from-cc
        (stobj-set-clusters (make-clusters text (cluster-size fat32-in-memory))
                            index-list fat32-in-memory)
        index-list length)
@@ -2426,7 +2426,7 @@
       :expand
       ((:free
         (fat32-in-memory length)
-        (get-contents-from-clusterchain fat32-in-memory index-list length))
+        (get-contents-from-cc fat32-in-memory index-list length))
        (make-clusters text (cluster-size fat32-in-memory)))
       :in-theory (e/d (make-clusters)
                       ((:rewrite associativity-of-append))))
@@ -2460,7 +2460,7 @@
 ;; This function needs to return an mv containing the fat32-in-memory stobj,
 ;; the new directory entry, and an errno value (either 0 or ENOSPC).
 ;;
-;; One idea we tried was setting first-cluster to *ms-end-of-clusterchain*
+;; One idea we tried was setting first-cluster to *ms-end-of-cc*
 ;; (basically, marking it used) inside the body of this function. This would
 ;; have made some proofs more modular... but it doesn't work, because when
 ;; we're placing the contents of a directory (inside hifat-to-lofat-helper), we
@@ -2503,7 +2503,7 @@
         (stobj-set-indices-in-fa-table
          fat32-in-memory indices
          (binary-append (cdr indices)
-                        (list *ms-end-of-clusterchain*)))))
+                        (list *ms-end-of-cc*)))))
     (mv
      fat32-in-memory
      (d-e-set-first-cluster-file-size d-e (car indices)
@@ -2629,7 +2629,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    get-clusterchain-contents-of-place-contents-coincident-lemma-1
+    get-cc-contents-of-place-contents-coincident-lemma-1
     (implies (not (zp x))
              (<= (* x
                     (len (find-n-free-clusters fa-table n)))
@@ -2637,7 +2637,7 @@
     :rule-classes :linear))
 
 (defthm
-  get-clusterchain-contents-of-place-contents-coincident
+  get-cc-contents-of-place-contents-coincident
   (implies
    (and
     (equal
@@ -2660,7 +2660,7 @@
        (+ 2 (count-of-clusters fat32-in-memory)))
     (fat32-masked-entry-p first-cluster))
    (equal
-    (get-clusterchain-contents
+    (get-cc-contents
      (mv-nth
       0
       (place-contents fat32-in-memory d-e
@@ -2685,12 +2685,12 @@
   (("goal" :in-theory (e/d (place-contents)
                            ((:rewrite
                              fat32-build-index-list-of-set-indices-in-fa-table-coincident)
-                            (:rewrite get-clusterchain-contents-correctness-3)
-                            (:rewrite get-clusterchain-contents-correctness-2)
-                            (:rewrite get-clusterchain-contents-correctness-1)))
+                            (:rewrite get-cc-contents-correctness-3)
+                            (:rewrite get-cc-contents-correctness-2)
+                            (:rewrite get-cc-contents-correctness-1)))
     :use
     ((:instance
-      (:rewrite get-clusterchain-contents-correctness-1)
+      (:rewrite get-cc-contents-correctness-1)
       (length length)
       (masked-current-cluster first-cluster)
       (fat32-in-memory
@@ -2738,7 +2738,7 @@
                               (cluster-size fat32-in-memory)))))))
       (fa-table (effective-fat fat32-in-memory)))
      (:instance
-      (:rewrite get-clusterchain-contents-correctness-3)
+      (:rewrite get-cc-contents-correctness-3)
       (length length)
       (masked-current-cluster first-cluster)
       (fat32-in-memory
@@ -2772,7 +2772,7 @@
                                (cluster-size fat32-in-memory)))))
          '(268435455)))))
      (:instance
-      (:rewrite get-clusterchain-contents-correctness-2)
+      (:rewrite get-cc-contents-correctness-2)
       (length length)
       (masked-current-cluster first-cluster)
       (fat32-in-memory
@@ -2807,7 +2807,7 @@
          '(268435455)))))))))
 
 (defthm
-  d-e-clusterchain-contents-of-place-contents-coincident-1
+  d-e-cc-contents-of-place-contents-coincident-1
   (implies
    (and (d-e-directory-p d-e2)
         (equal (mv-nth 2
@@ -2827,7 +2827,7 @@
            (+ 2 (count-of-clusters fat32-in-memory)))
         (fat32-masked-entry-p first-cluster))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth 0
              (place-contents fat32-in-memory
                              d-e1 contents 0 first-cluster))
@@ -2844,10 +2844,10 @@
            (- (length contents)))
         :initial-element (code-char 0))))
      0)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain-contents))))
+  :hints (("goal" :in-theory (enable d-e-cc-contents))))
 
 (defthm
-  d-e-clusterchain-contents-of-place-contents-coincident-2
+  d-e-cc-contents-of-place-contents-coincident-2
   (implies
    (and (not (d-e-directory-p d-e2))
         (equal (mv-nth 2
@@ -2868,7 +2868,7 @@
            (+ 2 (count-of-clusters fat32-in-memory)))
         (fat32-masked-entry-p first-cluster))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth 0
              (place-contents fat32-in-memory d-e1
                              contents file-length first-cluster))
@@ -2885,7 +2885,7 @@
            (- (length contents)))
         :initial-element (code-char 0))))
      0)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain-contents))))
+  :hints (("goal" :in-theory (enable d-e-cc-contents))))
 
 (defthm
   fati-of-place-contents-disjoint
@@ -3019,7 +3019,7 @@
   (("goal" :in-theory (enable max-entry-count place-contents))))
 
 (defthm
-  get-clusterchain-contents-of-place-contents-disjoint
+  get-cc-contents-of-place-contents-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3028,7 +3028,7 @@
     (<= 2 first-cluster)
     (fat32-masked-entry-p masked-current-cluster)
     (equal (mv-nth 1
-                   (get-clusterchain-contents fat32-in-memory
+                   (get-cc-contents fat32-in-memory
                                               masked-current-cluster length))
            0)
     (not
@@ -3038,17 +3038,17 @@
               (fat32-build-index-list (effective-fat fat32-in-memory)
                                       masked-current-cluster length
                                       (cluster-size fat32-in-memory))))))
-   (equal (get-clusterchain-contents
+   (equal (get-cc-contents
            (mv-nth 0
                    (place-contents fat32-in-memory d-e
                                    contents file-length first-cluster))
            masked-current-cluster length)
-          (get-clusterchain-contents fat32-in-memory
+          (get-cc-contents fat32-in-memory
                                      masked-current-cluster length)))
   :hints
   (("goal"
     :in-theory (e/d (place-contents intersectp-equal fat32-build-index-list
-                                    get-clusterchain-contents)
+                                    get-cc-contents)
                     (intersectp-is-commutative)))))
 
 (defthm
@@ -3111,7 +3111,7 @@
                                          length cluster-size))))))))
 
 (defthm
-  d-e-clusterchain-of-place-contents-disjoint
+  d-e-cc-of-place-contents-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3122,20 +3122,20 @@
     (not
      (member-equal first-cluster
                    (mv-nth 0
-                           (d-e-clusterchain fat32-in-memory d-e1))))
+                           (d-e-cc fat32-in-memory d-e1))))
     (equal (mv-nth 1
-                   (d-e-clusterchain fat32-in-memory d-e1))
+                   (d-e-cc fat32-in-memory d-e1))
            0))
-   (equal (d-e-clusterchain
+   (equal (d-e-cc
            (mv-nth 0
                    (place-contents fat32-in-memory d-e2
                                    contents file-length first-cluster))
            d-e1)
-          (d-e-clusterchain fat32-in-memory d-e1)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain))))
+          (d-e-cc fat32-in-memory d-e1)))
+  :hints (("goal" :in-theory (enable d-e-cc))))
 
 (defthm
-  d-e-clusterchain-contents-of-place-contents-disjoint
+  d-e-cc-contents-of-place-contents-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3146,18 +3146,18 @@
     (not
      (member-equal first-cluster
                    (mv-nth 0
-                           (d-e-clusterchain fat32-in-memory d-e1))))
+                           (d-e-cc fat32-in-memory d-e1))))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e1))
+                   (d-e-cc-contents fat32-in-memory d-e1))
            0))
-   (equal (d-e-clusterchain-contents
+   (equal (d-e-cc-contents
            (mv-nth 0
                    (place-contents fat32-in-memory d-e2
                                    contents file-length first-cluster))
            d-e1)
-          (d-e-clusterchain-contents fat32-in-memory d-e1)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain-contents
-                                     d-e-clusterchain))))
+          (d-e-cc-contents fat32-in-memory d-e1)))
+  :hints (("goal" :in-theory (enable d-e-cc-contents
+                                     d-e-cc))))
 
 (defthm
   lofat-to-hifat-helper-of-place-contents
@@ -3254,7 +3254,7 @@
       (fa-table (effective-fat fat32-in-memory)))))))
 
 (defthm
-  d-e-clusterchain-of-place-contents-coincident-1
+  d-e-cc-of-place-contents-coincident-1
   (implies
    (and (d-e-directory-p d-e1)
         (equal first-cluster
@@ -3269,7 +3269,7 @@
            (+ 2 (count-of-clusters fat32-in-memory)))
         (fat32-masked-entry-p first-cluster))
    (equal
-    (d-e-clusterchain
+    (d-e-cc
      (mv-nth 0
              (place-contents fat32-in-memory d-e2
                              contents file-length first-cluster))
@@ -3286,11 +3286,11 @@
                    (len (make-clusters contents
                                        (cluster-size fat32-in-memory))))))
          0)
-     (d-e-clusterchain fat32-in-memory d-e1))))
-  :hints (("goal" :in-theory (enable d-e-clusterchain))))
+     (d-e-cc fat32-in-memory d-e1))))
+  :hints (("goal" :in-theory (enable d-e-cc))))
 
 (defthm
-  d-e-clusterchain-of-place-contents-coincident-2
+  d-e-cc-of-place-contents-coincident-2
   (implies
    (and (not (d-e-directory-p d-e1))
         (equal first-cluster
@@ -3306,7 +3306,7 @@
            (+ 2 (count-of-clusters fat32-in-memory)))
         (fat32-masked-entry-p first-cluster))
    (equal
-    (d-e-clusterchain
+    (d-e-cc
      (mv-nth 0
              (place-contents fat32-in-memory d-e2
                              contents file-length first-cluster))
@@ -3323,8 +3323,8 @@
                    (len (make-clusters contents
                                        (cluster-size fat32-in-memory))))))
          0)
-     (d-e-clusterchain fat32-in-memory d-e1))))
-  :hints (("goal" :in-theory (enable d-e-clusterchain))))
+     (d-e-cc fat32-in-memory d-e1))))
+  :hints (("goal" :in-theory (enable d-e-cc))))
 
 ;; OK, this function needs to return a list of directory entries, so that when
 ;; it is called recursively to take care of all the entries in a subdirectory,
@@ -3404,12 +3404,12 @@
        ((unless (mbt (< first-cluster (fat-length fat32-in-memory))))
         (mv fat32-in-memory tail-list *enospc* tail-index-list))
        ;; Mark this cluster as used, without possibly interfering with any
-       ;; existing clusterchains.
+       ;; existing ccs.
        (fat32-in-memory
         (update-fati
          first-cluster
          (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
-                                *ms-end-of-clusterchain*)
+                                *ms-end-of-cc*)
          fat32-in-memory)))
     (if
         (m1-regular-file-p (cdr head))
@@ -3742,7 +3742,7 @@
                                       (fati
                                        (fat32-entry-mask rootclus)
                                        fat32-in-memory)
-                                      *ms-end-of-clusterchain*)
+                                      *ms-end-of-cc*)
                                      fat32-in-memory))
        ((mv fat32-in-memory
             root-d-e-list errno &)
@@ -4320,29 +4320,29 @@
               (non-free-index-list-listp y fa-table))))
 
 (defthm
-  non-free-index-listp-of-d-e-clusterchain
+  non-free-index-listp-of-d-e-cc
   (implies (and (<= *ms-first-data-cluster*
                     (d-e-first-cluster d-e))
                 (equal (mv-nth 1
-                               (d-e-clusterchain fat32-in-memory d-e))
+                               (d-e-cc fat32-in-memory d-e))
                        0)
                 (< (d-e-first-cluster d-e)
                    (+ *ms-first-data-cluster*
                       (count-of-clusters fat32-in-memory))))
            (non-free-index-listp
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory d-e))
+                    (d-e-cc fat32-in-memory d-e))
             (effective-fat fat32-in-memory)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain))))
+  :hints (("goal" :in-theory (enable d-e-cc))))
 
 (defthm
   non-free-index-list-listp-of-lofat-to-hifat-helper
-  (b* (((mv & & clusterchain-list error-code)
+  (b* (((mv & & cc-list error-code)
         (lofat-to-hifat-helper fat32-in-memory
                                d-e-list entry-limit)))
     (implies (equal error-code 0)
              (non-free-index-list-listp
-              clusterchain-list
+              cc-list
               (effective-fat fat32-in-memory))))
   :hints
   (("goal"
@@ -4431,14 +4431,14 @@
 (defthm
   not-intersectp-list-of-lofat-to-hifat-helper
   (b*
-      (((mv & & clusterchain-list error-code)
+      (((mv & & cc-list error-code)
         (lofat-to-hifat-helper fat32-in-memory
                                d-e-list entry-limit)))
     (implies
      (and (equal error-code 0)
           (free-index-listp index-list
                             (effective-fat fat32-in-memory)))
-     (not-intersectp-list index-list clusterchain-list)))
+     (not-intersectp-list index-list cc-list)))
   :hints
   (("goal"
     :do-not-induct t
@@ -4762,11 +4762,11 @@
      0)))
   :hints
   (("goal"
-    :in-theory (e/d (root-d-e-list pseudo-root-d-e d-e-clusterchain-contents)
-                    (get-clusterchain-contents-of-place-contents-coincident))
+    :in-theory (e/d (root-d-e-list pseudo-root-d-e d-e-cc-contents)
+                    (get-cc-contents-of-place-contents-coincident))
     :use
     (:instance
-     get-clusterchain-contents-of-place-contents-coincident
+     get-cc-contents-of-place-contents-coincident
      (first-cluster (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
      (length *ms-max-dir-size*)))))
 
@@ -7396,7 +7396,7 @@
            (update-fati first-cluster
                         (fat32-update-lower-28
                          (fati first-cluster fat32-in-memory)
-                         *ms-end-of-clusterchain*)
+                         *ms-end-of-cc*)
                         fat32-in-memory)))
        (if
            (m1-regular-file-p (cdr head))
@@ -8613,13 +8613,13 @@
    (equal
     (len (explode$inline
           (mv-nth '0
-                  (get-clusterchain-contents
+                  (get-cc-contents
                    fat32-in-memory
                    masked-current-cluster file-size))))
     0))
   :hints
   (("goal" :in-theory (enable fat32-build-index-list
-                              get-clusterchain-contents))))
+                              get-cc-contents))))
 
 (defthm
   lofat-to-hifat-helper-correctness-5-lemma-3
@@ -8628,11 +8628,11 @@
         (unsigned-byte-p 32 length))
    (equal (m1-file-contents-fix
            (mv-nth '0
-                   (get-clusterchain-contents
+                   (get-cc-contents
                     fat32-in-memory
                     masked-current-cluster length)))
           (mv-nth '0
-                  (get-clusterchain-contents
+                  (get-cc-contents
                    fat32-in-memory
                    masked-current-cluster length))))
   :hints
@@ -8644,7 +8644,7 @@
     (:instance
      (:rewrite m1-file-contents-fix-when-m1-file-contents-p)
      (x (mv-nth 0
-                (get-clusterchain-contents
+                (get-cc-contents
                  fat32-in-memory
                  masked-current-cluster length)))))))
 
@@ -8665,7 +8665,7 @@
     (len
      (make-clusters
       (mv-nth 0
-              (get-clusterchain-contents fat32-in-memory
+              (get-cc-contents fat32-in-memory
                                          masked-current-cluster length))
       (cluster-size fat32-in-memory)))
     (len (mv-nth 0
@@ -8674,9 +8674,9 @@
                                          (cluster-size fat32-in-memory))))))
   :hints
   (("goal"
-    :in-theory (enable get-clusterchain-contents
+    :in-theory (enable get-cc-contents
                        make-clusters fat32-build-index-list)
-    :induct (get-clusterchain-contents fat32-in-memory
+    :induct (get-cc-contents fat32-in-memory
                                        masked-current-cluster length)
     :expand
     ((make-clusters
@@ -8695,7 +8695,7 @@
         (explode
          (mv-nth
           0
-          (get-clusterchain-contents
+          (get-cc-contents
            fat32-in-memory
            (fat32-entry-mask (fati masked-current-cluster fat32-in-memory))
            (+ length
@@ -8741,7 +8741,7 @@
      (and
       (lofat-fs-p fat32-in-memory)
       (equal (mv-nth 1
-                     (get-clusterchain-contents fat32-in-memory
+                     (get-cc-contents fat32-in-memory
                                                 masked-current-cluster length))
              0))
      (equal
@@ -8753,14 +8753,14 @@
        (len
         (explode
          (mv-nth 0
-                 (get-clusterchain-contents fat32-in-memory
+                 (get-cc-contents fat32-in-memory
                                             masked-current-cluster length))))
        (cluster-size fat32-in-memory))))
     :hints
     (("goal"
-      :in-theory (enable get-clusterchain-contents
+      :in-theory (enable get-cc-contents
                          fat32-build-index-list)
-      :induct (get-clusterchain-contents fat32-in-memory
+      :induct (get-cc-contents fat32-in-memory
                                          masked-current-cluster length))))
 
   (defthm
@@ -8775,7 +8775,7 @@
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (get-clusterchain-contents
+                   (get-cc-contents
                     fat32-in-memory
                     (d-e-first-cluster (car d-e-list))
                     2097152)))
@@ -8789,7 +8789,7 @@
            fat32-in-memory
            (make-d-e-list
             (mv-nth 0
-                    (get-clusterchain-contents
+                    (get-cc-contents
                      fat32-in-memory
                      (d-e-first-cluster (car d-e-list))
                      2097152)))
@@ -8810,7 +8810,7 @@
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (get-clusterchain-contents
+                        (get-cc-contents
                          fat32-in-memory
                          (d-e-first-cluster (car d-e-list))
                          2097152)))
@@ -8832,7 +8832,7 @@
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (get-clusterchain-contents
+                         (get-cc-contents
                           fat32-in-memory
                           (d-e-first-cluster (car d-e-list))
                           2097152)))
@@ -8840,14 +8840,14 @@
       (equal
        (mv-nth
         1
-        (get-clusterchain-contents fat32-in-memory
+        (get-cc-contents fat32-in-memory
                                    (d-e-first-cluster (car d-e-list))
                                    2097152))
        0)
       (subdir-contents-p
        (mv-nth
         0
-        (get-clusterchain-contents fat32-in-memory
+        (get-cc-contents fat32-in-memory
                                    (d-e-first-cluster (car d-e-list))
                                    2097152)))
       (lofat-fs-p fat32-in-memory))
@@ -8858,7 +8858,7 @@
            (* 32
               (len (make-d-e-list
                     (mv-nth 0
-                            (get-clusterchain-contents
+                            (get-cc-contents
                              fat32-in-memory
                              (d-e-first-cluster (car d-e-list))
                              2097152))))))
@@ -8870,7 +8870,7 @@
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (get-clusterchain-contents
+                   (get-cc-contents
                     fat32-in-memory
                     (d-e-first-cluster (car d-e-list))
                     2097152)))
@@ -8891,7 +8891,7 @@
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (get-clusterchain-contents
+                        (get-cc-contents
                          fat32-in-memory
                          (d-e-first-cluster (car d-e-list))
                          2097152)))
@@ -8913,7 +8913,7 @@
            fat32-in-memory
            (make-d-e-list
             (mv-nth 0
-                    (get-clusterchain-contents
+                    (get-cc-contents
                      fat32-in-memory
                      (d-e-first-cluster (car d-e-list))
                      2097152)))
@@ -8934,7 +8934,7 @@
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (get-clusterchain-contents
+                         (get-cc-contents
                           fat32-in-memory
                           (d-e-first-cluster (car d-e-list))
                           2097152)))
@@ -8950,7 +8950,7 @@
          (remove1-d-e
           (remove1-d-e
            (mv-nth 0
-                   (get-clusterchain-contents
+                   (get-cc-contents
                     fat32-in-memory
                     (d-e-first-cluster (car d-e-list))
                     *ms-max-dir-size*))
@@ -8959,7 +8959,7 @@
        (:instance
         painful-debugging-lemma-16
         (i2 (- (length (mv-nth 0
-                               (get-clusterchain-contents
+                               (get-cc-contents
                                 fat32-in-memory
                                 (d-e-first-cluster (car d-e-list))
                                 *ms-max-dir-size*)))
@@ -8969,7 +8969,7 @@
           (remove1-d-e
            (remove1-d-e
             (mv-nth 0
-                    (get-clusterchain-contents
+                    (get-cc-contents
                      fat32-in-memory
                      (d-e-first-cluster (car d-e-list))
                      *ms-max-dir-size*))
@@ -8993,7 +8993,7 @@
              (remove1-d-e
               (remove1-d-e
                (mv-nth 0
-                       (get-clusterchain-contents
+                       (get-cc-contents
                         fat32-in-memory
                         (d-e-first-cluster (car d-e-list))
                         *ms-max-dir-size*))
@@ -9001,7 +9001,7 @@
               *parent-dir-fat32-name*))))))
         (i2
          (len (explode (mv-nth 0
-                               (get-clusterchain-contents
+                               (get-cc-contents
                                 fat32-in-memory
                                 (d-e-first-cluster (car d-e-list))
                                 *ms-max-dir-size*)))))
@@ -9010,7 +9010,7 @@
 (defthm
   lofat-to-hifat-helper-correctness-5
   (b* (((mv m1-file-alist
-            & clusterchain-list error-code)
+            & cc-list error-code)
         (lofat-to-hifat-helper fat32-in-memory
                                d-e-list entry-limit)))
     (implies (and (lofat-fs-p fat32-in-memory)
@@ -9018,14 +9018,14 @@
                   (equal error-code 0))
              (<= (hifat-cluster-count m1-file-alist
                                       (cluster-size fat32-in-memory))
-                 (len (flatten clusterchain-list)))))
+                 (len (flatten cc-list)))))
   :rule-classes :linear
   :hints
   (("goal" :in-theory (enable lofat-to-hifat-helper
                               hifat-cluster-count
                               lofat-to-hifat-helper-correctness-5-lemma-2
-                              d-e-clusterchain
-                              d-e-clusterchain-contents
+                              d-e-cc
+                              d-e-cc-contents
                               lofat-to-hifat-helper-correctness-5-lemma-5)
     :induct (lofat-to-hifat-helper fat32-in-memory
                                    d-e-list entry-limit)
@@ -9145,7 +9145,7 @@
              (generate-index-list 2 (count-of-clusters fat32-in-memory))
              (make-list-ac (count-of-clusters fat32-in-memory)
                            0 nil)))
-           *ms-end-of-clusterchain*)
+           *ms-end-of-cc*)
           (stobj-set-indices-in-fa-table
            fat32-in-memory
            (generate-index-list 2 (count-of-clusters fat32-in-memory))
@@ -9288,20 +9288,20 @@
    (and
     (lofat-fs-p fat32-in-memory)
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0))
    (equal
     (len (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory d-e)))
+                 (d-e-cc fat32-in-memory d-e)))
     (ceiling
      (len
       (explode
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory d-e))))
+               (d-e-cc-contents fat32-in-memory d-e))))
      (cluster-size fat32-in-memory))))
   :hints
   (("goal"
-    :in-theory (enable d-e-clusterchain-contents d-e-clusterchain
+    :in-theory (enable d-e-cc-contents d-e-cc
                        lofat-to-hifat-helper-correctness-5-lemma-6))))
 
 (encapsulate
@@ -9331,7 +9331,7 @@
       ((and
         (lofat-fs-p fat32-in-memory)
         (equal (mv-nth 1
-                       (get-clusterchain-contents
+                       (get-cc-contents
                         fat32-in-memory
                         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                         2097152))
@@ -9340,20 +9340,20 @@
          (len
           (explode
            (mv-nth 0
-                   (get-clusterchain-contents
+                   (get-cc-contents
                     fat32-in-memory
                     (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                     2097152))))
          0)))
       :in-theory
       (e/d (root-d-e-list lofat-to-hifat-helper-correctness-5-lemma-2
-                              pseudo-root-d-e d-e-clusterchain-contents
+                              pseudo-root-d-e d-e-cc-contents
                               lofat-to-hifat-helper-correctness-5-lemma-6))
       :use
       (:instance
        length-of-empty-list
        (x (mv-nth 0
-                  (get-clusterchain-contents
+                  (get-cc-contents
                    fat32-in-memory
                    (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                    2097152)))))))
@@ -9395,7 +9395,7 @@
        (count-of-clusters fat32-in-memory))
       (lofat-fs-p fat32-in-memory)
       (equal (mv-nth 1
-                     (get-clusterchain-contents
+                     (get-cc-contents
                       fat32-in-memory
                       (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                       *ms-max-dir-size*))
@@ -9426,14 +9426,14 @@
     :hints
     (("goal"
       :in-theory (e/d (root-d-e-list pseudo-root-d-e
-                                         d-e-clusterchain-contents
+                                         d-e-cc-contents
                                          lofat-to-hifat-helper-correctness-5-lemma-6))
       :use
       (:instance
        len-of-make-d-e-list
        (dir-contents
         (mv-nth 0
-                (get-clusterchain-contents
+                (get-cc-contents
                  fat32-in-memory
                  (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                  *ms-max-dir-size*))))))))
@@ -9456,7 +9456,7 @@
      (lofat-to-hifat hifat-to-lofat
                      lofat-to-hifat-inversion-lemma-4
                      lofat-to-hifat-helper-correctness-5-lemma-5
-                     d-e-clusterchain pseudo-root-d-e)
+                     d-e-cc pseudo-root-d-e)
      (lofat-to-hifat-inversion-lemma-3 generate-index-list
                                        non-free-index-listp-correctness-6))
     :use
@@ -9557,7 +9557,7 @@
 ;; duplicate entries in any directory and no directories with more than
 ;; 2^16 - 2 useful entries. What about directories which blow past 2^16
 ;; entries altogether? Those will be caught thanks to the error code of
-;; get-clusterchain-contents.
+;; get-cc-contents.
 (defthm
   lofat-to-hifat-inversion
   (implies

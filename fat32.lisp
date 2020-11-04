@@ -19,7 +19,7 @@
 (defconst *expt-2-28* (expt 2 28))
 
 ;; from page 18 of the FAT specification
-(defconst *ms-end-of-clusterchain* (- *expt-2-28* 1))
+(defconst *ms-end-of-cc* (- *expt-2-28* 1))
 
 ;; from page 14 of the FAT specification
 (defconst *ms-first-data-cluster* 2)
@@ -1184,7 +1184,7 @@
              (set-indices-in-fa-table
               fa-table file-index-list
               (append (cdr file-index-list)
-                      (list *ms-end-of-clusterchain*)))
+                      (list *ms-end-of-cc*)))
              (car file-index-list)
              file-length cluster-size)
             (mv file-index-list 0)))

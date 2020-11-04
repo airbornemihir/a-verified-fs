@@ -446,7 +446,7 @@
     (<= (len (explode dir-contents))
         *ms-max-dir-size*)
     (equal (mv-nth 1
-                   (get-clusterchain-contents
+                   (get-cc-contents
                     fat32-in-memory
                     first-cluster *ms-max-dir-size*))
            0)
@@ -476,13 +476,13 @@
     (e/d
      (update-dir-contents-correctness-1)
      (no-duplicatesp-of-fat32-build-index-list-of-effective-fat-of-update-dir-contents
-      (:rewrite get-clusterchain-contents-correctness-2)))
-    :expand (get-clusterchain-contents
+      (:rewrite get-cc-contents-correctness-2)))
+    :expand (get-cc-contents
              fat32-in-memory first-cluster 2097152)
     :use
     (no-duplicatesp-of-fat32-build-index-list-of-effective-fat-of-update-dir-contents
      (:instance
-      (:rewrite get-clusterchain-contents-correctness-2)
+      (:rewrite get-cc-contents-correctness-2)
       (length 2097152)
       (masked-current-cluster first-cluster))))))
 
@@ -496,18 +496,18 @@
     (lofat-fs-p fat32-in-memory)
     (fat32-filename-list-p path)
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        (max-entry-count fat32-in-memory))))
     (equal
      (mv-nth
@@ -516,23 +516,23 @@
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        (max-entry-count fat32-in-memory)))
      0))
-   (equal (d-e-clusterchain
+   (equal (d-e-cc
            (mv-nth 0
                    (lofat-remove-file fat32-in-memory d-e path))
            d-e)
-          (d-e-clusterchain fat32-in-memory d-e)))
+          (d-e-cc fat32-in-memory d-e)))
   :hints
   (("goal"
     :do-not-induct t
     :expand (lofat-remove-file fat32-in-memory d-e path)
     :in-theory
-    (disable (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint))
+    (disable (:rewrite d-e-cc-of-lofat-remove-file-disjoint))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint)
+     (:rewrite d-e-cc-of-lofat-remove-file-disjoint)
      (entry-limit (max-entry-count fat32-in-memory))
      (path (cdr path))
      (root-d-e
@@ -541,7 +541,7 @@
        (find-d-e
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents fat32-in-memory d-e)))
+                 (d-e-cc-contents fat32-in-memory d-e)))
         (car path))))))))
 
 (defthm
@@ -554,23 +554,23 @@
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory
+      (d-e-cc-contents fat32-in-memory
                                      (pseudo-root-d-e fat32-in-memory)))
      0)
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (pseudo-root-d-e fat32-in-memory))))
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (pseudo-root-d-e fat32-in-memory)))
      (mv-nth 2
              (lofat-to-hifat-helper
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (pseudo-root-d-e fat32-in-memory))))
               (max-entry-count fat32-in-memory))))
@@ -580,14 +580,14 @@
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (pseudo-root-d-e fat32-in-memory))))
               (max-entry-count fat32-in-memory)))
      0))
    (not-intersectp-list
     (mv-nth 0
-            (d-e-clusterchain fat32-in-memory
+            (d-e-cc fat32-in-memory
                                   (pseudo-root-d-e fat32-in-memory)))
     (mv-nth
      2
@@ -597,7 +597,7 @@
                                  (pseudo-root-d-e fat32-in-memory)
                                  path))
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (pseudo-root-d-e fat32-in-memory))))
       (max-entry-count fat32-in-memory)))))
@@ -632,7 +632,7 @@
      (x
       (mv-nth
        0
-       (d-e-clusterchain
+       (d-e-cc
         (mv-nth
          0
          (lofat-remove-file
@@ -686,9 +686,9 @@
                      (:rewrite lofat-find-file-correctness-1)
                      lofat-unlink-refinement-lemma-1
                      (:rewrite
-                      d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-15)
+                      d-e-cc-contents-of-lofat-place-file-coincident-lemma-15)
                      (:linear
-                      d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-12)))
+                      d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-12)))
     :do-not-induct t
     :use
     ((:instance (:rewrite lofat-remove-file-correctness-1)
@@ -701,7 +701,7 @@
       (d-e-list
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (pseudo-root-d-e fat32-in-memory)))))
       (entry-limit (max-entry-count fat32-in-memory)))
@@ -713,7 +713,7 @@
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (pseudo-root-d-e fat32-in-memory))))
                 (max-entry-count fat32-in-memory)))))
@@ -725,7 +725,7 @@
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (pseudo-root-d-e fat32-in-memory))))
                 (max-entry-count fat32-in-memory)))))
@@ -737,7 +737,7 @@
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (pseudo-root-d-e fat32-in-memory))))
                 (max-entry-count fat32-in-memory))))))))

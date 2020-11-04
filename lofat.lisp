@@ -20,7 +20,7 @@
 (local
  (in-theory (disable nth update-nth ceiling floor mod true-listp take member-equal)))
 
-;; get-clusterchain-alt really should be disabled here if it can!
+;; get-cc-alt really should be disabled here if it can!
 (local
  (in-theory (e/d (hifat-equiv-of-cons-lemma-5)
                  (non-free-index-list-listp-correctness-1
@@ -257,29 +257,29 @@
 #|
 Some (rather awful) testing forms are
 (b* (((mv contents &)
-      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*)))
+      (get-cc-contents fat32-in-memory 2 *ms-max-dir-size*)))
   (get-dir-filenames fat32-in-memory contents *ms-max-dir-size*))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*)))
+      (get-cc-contents fat32-in-memory 2 *ms-max-dir-size*)))
   (lofat-to-hifat fat32-in-memory))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
+      (get-cc-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (lofat-to-hifat fat32-in-memory)))
   (hifat-open (list "INITRD  IMG") nil nil))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
+      (get-cc-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (lofat-to-hifat fat32-in-memory))
      ((mv fd-table file-table & &)
       (hifat-open (list "INITRD  IMG") nil nil)))
   (hifat-pread 0 6 49 fs fd-table file-table))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
+      (get-cc-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (lofat-to-hifat fat32-in-memory))
      ((mv fd-table file-table & &)
       (hifat-open (list "INITRD  IMG") nil nil)))
   (hifat-pwrite 0 "ornery" 49 fs fd-table file-table))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
+      (get-cc-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (lofat-to-hifat fat32-in-memory))
      ((mv fd-table file-table & &)
       (hifat-open (list "INITRD  IMG") nil nil))
@@ -289,7 +289,7 @@ Some (rather awful) testing forms are
       (hifat-to-lofat-helper fat32-in-memory fs)))
   (mv fat32-in-memory d-e-list))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
+      (get-cc-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (lofat-to-hifat fat32-in-memory))
      ((mv fd-table file-table & &)
       (hifat-open (list "INITRD  IMG") nil nil))
@@ -358,7 +358,7 @@ Some (rather awful) testing forms are
        (close-output-channel channel state)))
    (mv fat32-in-memory state)))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
+      (get-cc-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (lofat-to-hifat fat32-in-memory))
      ((mv fs & &)
       (hifat-mkdir fs (list "" "TMP        "))))
@@ -492,7 +492,7 @@ Some (rather awful) testing forms are
                  (+ (count-of-clusters fat32-in-memory)
                     *ms-first-data-cluster*)))
             (mv "" 0)
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory d-e)))
        ((unless directory-p)
         (if (consp (cdr path))
@@ -587,7 +587,7 @@ Some (rather awful) testing forms are
      :contents
      (mv-nth
       0
-      (d-e-clusterchain-contents
+      (d-e-cc-contents
        fat32-in-memory
        (mv-nth 0 (find-d-e d-e-list name))))
      :d-e (mv-nth 0 (find-d-e d-e-list name)))))
@@ -637,7 +637,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0 (find-d-e d-e-list name)))))
        entry-limit))
@@ -650,7 +650,7 @@ Some (rather awful) testing forms are
         fat32-in-memory
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0 (find-d-e d-e-list name)))))
         entry-limit)))
@@ -684,7 +684,7 @@ Some (rather awful) testing forms are
         fat32-in-memory
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0 (find-d-e d-e-list name)))))
         entry-limit))
@@ -706,7 +706,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0 (find-d-e d-e-list name)))))
          entry-limit)))
@@ -727,7 +727,7 @@ Some (rather awful) testing forms are
         fat32-in-memory
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0 (find-d-e d-e-list name)))))
         entry-limit))
@@ -737,7 +737,7 @@ Some (rather awful) testing forms are
       fat32-in-memory
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 fat32-in-memory
                 (mv-nth 0 (find-d-e d-e-list name)))))
       entry-limit)))))
@@ -767,7 +767,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth 0 (find-d-e d-e-list name)))))
        entry-limit)))))
@@ -975,7 +975,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable useful-d-e-list-p
                                      fat32-filename-p))))
 
-(defund clear-clusterchain
+(defund clear-cc
   (fat32-in-memory masked-current-cluster length)
   (declare
    (xargs :stobjs fat32-in-memory
@@ -988,95 +988,95 @@ Some (rather awful) testing forms are
                          (+ (count-of-clusters fat32-in-memory)
                             *ms-first-data-cluster*)))))
   (b*
-      (((mv dir-clusterchain error-code)
-        (get-clusterchain fat32-in-memory masked-current-cluster length))
+      (((mv dir-cc error-code)
+        (get-cc fat32-in-memory masked-current-cluster length))
        ((unless (equal error-code 0))
         (mv fat32-in-memory error-code))
        (fat32-in-memory
         (stobj-set-indices-in-fa-table
-         fat32-in-memory dir-clusterchain
-         (make-list (len dir-clusterchain)
+         fat32-in-memory dir-cc
+         (make-list (len dir-cc)
                     :initial-element 0))))
     (mv fat32-in-memory 0)))
 
 (defthm
-  fat-length-of-clear-clusterchain
+  fat-length-of-clear-cc
   (equal
    (fat-length
     (mv-nth 0
-            (clear-clusterchain fat32-in-memory
+            (clear-cc fat32-in-memory
                                 masked-current-cluster length)))
    (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+  :hints (("goal" :in-theory (enable clear-cc))))
 
 (defthm
-  count-of-clusters-of-clear-clusterchain
+  count-of-clusters-of-clear-cc
   (equal
    (count-of-clusters
     (mv-nth 0
-            (clear-clusterchain fat32-in-memory
+            (clear-cc fat32-in-memory
                                 masked-current-cluster length)))
    (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+  :hints (("goal" :in-theory (enable clear-cc))))
 
 (defthm
-  lofat-fs-p-of-clear-clusterchain
+  lofat-fs-p-of-clear-cc
   (implies
    (lofat-fs-p fat32-in-memory)
    (lofat-fs-p
     (mv-nth
      0
-     (clear-clusterchain fat32-in-memory
+     (clear-cc fat32-in-memory
                          masked-current-cluster length))))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+  :hints (("goal" :in-theory (enable clear-cc))))
 
 (defthm
-  cluster-size-of-clear-clusterchain
+  cluster-size-of-clear-cc
   (equal
    (cluster-size
     (mv-nth 0
-            (clear-clusterchain fat32-in-memory
+            (clear-cc fat32-in-memory
                                 masked-current-cluster length)))
    (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+  :hints (("goal" :in-theory (enable clear-cc))))
 
 (defthm
-  max-entry-count-of-clear-clusterchain
+  max-entry-count-of-clear-cc
   (equal (max-entry-count
           (mv-nth 0
-                  (clear-clusterchain fat32-in-memory
+                  (clear-cc fat32-in-memory
                                       masked-current-cluster length)))
          (max-entry-count fat32-in-memory))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+  :hints (("goal" :in-theory (enable clear-cc))))
 
 (defthm
-  pseudo-root-d-e-of-clear-clusterchain
+  pseudo-root-d-e-of-clear-cc
   (equal
    (pseudo-root-d-e
     (mv-nth 0
-            (clear-clusterchain fat32-in-memory
+            (clear-cc fat32-in-memory
                                 masked-current-cluster length)))
    (pseudo-root-d-e fat32-in-memory))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+  :hints (("goal" :in-theory (enable clear-cc))))
 
 ;; This has to be disabled because it's causing fat32-build-index-list to
 ;; appear where it isn't wanted.
 (defthmd
-  clear-clusterchain-correctness-1
+  clear-cc-correctness-1
   (implies
    (<= 2 masked-current-cluster)
    (equal
     (mv-nth 1
-            (clear-clusterchain fat32-in-memory
+            (clear-cc fat32-in-memory
                                 masked-current-cluster length))
     (mv-nth 1
-            (get-clusterchain-contents
+            (get-cc-contents
              fat32-in-memory
              masked-current-cluster length))))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+  :hints (("goal" :in-theory (enable clear-cc))))
 
 (defthm
-  clear-clusterchain-correctness-2
+  clear-cc-correctness-2
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -1092,27 +1092,27 @@ Some (rather awful) testing forms are
     x
     (effective-fat
      (mv-nth 0
-             (clear-clusterchain fat32-in-memory
+             (clear-cc fat32-in-memory
                                  masked-current-cluster length)))))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+  :hints (("goal" :in-theory (enable clear-cc))))
 
-(defthmd clear-clusterchain-correctness-3
+(defthmd clear-cc-correctness-3
   (implies
    (not (equal (mv-nth
                 1
-                (clear-clusterchain
+                (clear-cc
                  fat32-in-memory masked-current-cluster length))
                0))
    (equal (mv-nth
            0
-           (clear-clusterchain
+           (clear-cc
             fat32-in-memory masked-current-cluster length))
           fat32-in-memory))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+  :hints (("goal" :in-theory (enable clear-cc))))
 
 ;; This is general.
 (defthm
-  clear-clusterchain-reversibility-lemma-1
+  clear-cc-reversibility-lemma-1
   (implies
    (equal (mv-nth 1
                   (fat32-build-index-list fa-table masked-current-cluster
@@ -1124,7 +1124,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable fat32-build-index-list))))
 
 (defthm
-  clear-clusterchain-reversibility-lemma-2
+  clear-cc-reversibility-lemma-2
   (implies
    (lofat-fs-p fat32-in-memory)
    (equal
@@ -1159,7 +1159,7 @@ Some (rather awful) testing forms are
      (stobj-set-indices-in-fa-table fat32-build-index-list
                                     fat32-update-lower-28-of-fat32-entry-mask
                                     nfix)
-     ((:rewrite get-clusterchain-contents-correctness-2)))
+     ((:rewrite get-cc-contents-correctness-2)))
     :induct (fat32-build-index-list (effective-fat fat32-in-memory)
                                     masked-current-cluster
                                     length (cluster-size fat32-in-memory))
@@ -1172,7 +1172,7 @@ Some (rather awful) testing forms are
      (cluster-size fat32-in-memory)))))
 
 (defthm
-  clear-clusterchain-reversibility
+  clear-cc-reversibility
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (fat32-masked-entry-p masked-current-cluster)
@@ -1184,7 +1184,7 @@ Some (rather awful) testing forms are
    (equal
     (stobj-set-indices-in-fa-table
      (mv-nth 0
-             (clear-clusterchain fat32-in-memory
+             (clear-cc fat32-in-memory
                                  masked-current-cluster length))
      (mv-nth 0
              (fat32-build-index-list (effective-fat fat32-in-memory)
@@ -1208,9 +1208,9 @@ Some (rather awful) testing forms are
                                            (cluster-size fat32-in-memory)))))
          fat32-in-memory)))))
     fat32-in-memory))
-  :hints (("goal" :in-theory (e/d (clear-clusterchain)
-                                  (clear-clusterchain-reversibility-lemma-2))
-           :use clear-clusterchain-reversibility-lemma-2
+  :hints (("goal" :in-theory (e/d (clear-cc)
+                                  (clear-cc-reversibility-lemma-2))
+           :use clear-cc-reversibility-lemma-2
            :do-not-induct t)))
 
 (encapsulate
@@ -1218,7 +1218,7 @@ Some (rather awful) testing forms are
 
   (local
    (defthm
-     fat32-build-index-list-of-effective-fat-of-clear-clusterchain-lemma-1
+     fat32-build-index-list-of-effective-fat-of-clear-cc-lemma-1
      (implies
       (and
        (<= (+ 2 (count-of-clusters fat32-in-memory))
@@ -1241,7 +1241,7 @@ Some (rather awful) testing forms are
        (fat32-build-index-list
         (effective-fat
          (mv-nth 0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory first-cluster length2)))
         masked-current-cluster
         length1 (cluster-size fat32-in-memory))
@@ -1251,13 +1251,13 @@ Some (rather awful) testing forms are
         length1 (cluster-size fat32-in-memory))))
      :hints
      (("goal"
-       :in-theory (e/d (intersectp-equal clear-clusterchain)
+       :in-theory (e/d (intersectp-equal clear-cc)
                        (intersectp-is-commutative))
        :expand
        ((fat32-build-index-list (effective-fat fat32-in-memory)
                                 first-cluster length2
                                 (cluster-size fat32-in-memory))
-        (get-clusterchain-contents
+        (get-cc-contents
          fat32-in-memory first-cluster length2))
        :use
        (:instance
@@ -1275,7 +1275,7 @@ Some (rather awful) testing forms are
                     (cluster-size fat32-in-memory)))))))))
 
   (defthm
-    fat32-build-index-list-of-effective-fat-of-clear-clusterchain
+    fat32-build-index-list-of-effective-fat-of-clear-cc
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -1298,7 +1298,7 @@ Some (rather awful) testing forms are
       (fat32-build-index-list
        (effective-fat
         (mv-nth 0
-                (clear-clusterchain fat32-in-memory
+                (clear-cc fat32-in-memory
                                     masked-current-cluster1 length1)))
        masked-current-cluster2
        length2 cluster-size)
@@ -1307,10 +1307,10 @@ Some (rather awful) testing forms are
                               cluster-size)))
     :hints (("goal" :cases ((<= (+ 2 (count-of-clusters fat32-in-memory))
                                 masked-current-cluster1)))
-            ("subgoal 2" :in-theory (enable clear-clusterchain)))))
+            ("subgoal 2" :in-theory (enable clear-cc)))))
 
 (defthm
-  d-e-clusterchain-of-clear-clusterchain
+  d-e-cc-of-clear-cc
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -1325,27 +1325,27 @@ Some (rather awful) testing forms are
                                       masked-current-cluster
                                       length (cluster-size fat32-in-memory)))
       (mv-nth '0
-              (d-e-clusterchain fat32-in-memory d-e)))))
-   (equal (d-e-clusterchain
+              (d-e-cc fat32-in-memory d-e)))))
+   (equal (d-e-cc
            (mv-nth 0
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        masked-current-cluster length))
            d-e)
-          (d-e-clusterchain fat32-in-memory d-e)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain))))
+          (d-e-cc fat32-in-memory d-e)))
+  :hints (("goal" :in-theory (enable d-e-cc))))
 
 (defthm
-  effective-fat-of-clear-clusterchain
+  effective-fat-of-clear-cc
   (implies
    (lofat-fs-p fat32-in-memory)
    (equal
     (effective-fat
      (mv-nth 0
-             (clear-clusterchain fat32-in-memory
+             (clear-cc fat32-in-memory
                                  masked-current-cluster length)))
     (if
      (equal (mv-nth 1
-                    (clear-clusterchain fat32-in-memory
+                    (clear-cc fat32-in-memory
                                         masked-current-cluster length))
             0)
      (set-indices-in-fa-table
@@ -1363,7 +1363,7 @@ Some (rather awful) testing forms are
                                  length (cluster-size fat32-in-memory))))
        0 nil))
      (effective-fat fat32-in-memory))))
-  :hints (("goal" :in-theory (enable clear-clusterchain)))
+  :hints (("goal" :in-theory (enable clear-cc)))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -1377,23 +1377,23 @@ Some (rather awful) testing forms are
      (equal
       (effective-fat
        (mv-nth 0
-               (clear-clusterchain fat32-in-memory
+               (clear-cc fat32-in-memory
                                    masked-current-cluster length)))
       (if
        (equal (mv-nth 1
-                      (d-e-clusterchain fat32-in-memory d-e))
+                      (d-e-cc fat32-in-memory d-e))
               0)
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory d-e))
+                (d-e-cc fat32-in-memory d-e))
         (make-list-ac
          (len (mv-nth 0
-                      (d-e-clusterchain fat32-in-memory d-e)))
+                      (d-e-cc fat32-in-memory d-e)))
          0 nil))
        (effective-fat fat32-in-memory))))
-    :hints (("goal" :in-theory (enable d-e-clusterchain
-                                       clear-clusterchain))))
+    :hints (("goal" :in-theory (enable d-e-cc
+                                       clear-cc))))
    (:rewrite
     :corollary
     (implies
@@ -1405,34 +1405,34 @@ Some (rather awful) testing forms are
      (equal
       (effective-fat
        (mv-nth 0
-               (clear-clusterchain fat32-in-memory
+               (clear-cc fat32-in-memory
                                    masked-current-cluster length)))
       (if
        (equal (mv-nth 1
-                      (d-e-clusterchain fat32-in-memory d-e))
+                      (d-e-cc fat32-in-memory d-e))
               0)
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory d-e))
+                (d-e-cc fat32-in-memory d-e))
         (make-list-ac
          (len (mv-nth 0
-                      (d-e-clusterchain fat32-in-memory d-e)))
+                      (d-e-cc fat32-in-memory d-e)))
          0 nil))
        (effective-fat fat32-in-memory))))
-    :hints (("goal" :in-theory (enable d-e-clusterchain
-                                       clear-clusterchain))))))
+    :hints (("goal" :in-theory (enable d-e-cc
+                                       clear-cc))))))
 
 ;; This is needed, to avoid introducing unwanted fat32-build-index-list terms
 ;; into proofs.
-(in-theory (disable (:rewrite effective-fat-of-clear-clusterchain . 1)))
+(in-theory (disable (:rewrite effective-fat-of-clear-cc . 1)))
 
 (encapsulate
   ()
 
   (local
    (defthm
-     get-clusterchain-contents-of-clear-clusterchain-lemma-1
+     get-cc-contents-of-clear-cc-lemma-1
      (implies
       (and
        (<= (+ 2 (count-of-clusters fat32-in-memory))
@@ -1452,22 +1452,22 @@ Some (rather awful) testing forms are
                   (effective-fat fat32-in-memory)
                   first-cluster length2 (cluster-size fat32-in-memory))))))
       (equal
-       (get-clusterchain-contents
+       (get-cc-contents
         (mv-nth 0
-                (clear-clusterchain
+                (clear-cc
                  fat32-in-memory first-cluster length2))
         masked-current-cluster length1)
-       (get-clusterchain-contents
+       (get-cc-contents
         fat32-in-memory masked-current-cluster length1)))
      :hints
      (("goal"
-       :in-theory (e/d (intersectp-equal clear-clusterchain)
+       :in-theory (e/d (intersectp-equal clear-cc)
                        (intersectp-is-commutative))
        :expand
        ((fat32-build-index-list (effective-fat fat32-in-memory)
                                 first-cluster length2
                                 (cluster-size fat32-in-memory))
-        (get-clusterchain-contents
+        (get-cc-contents
          fat32-in-memory first-cluster length2))
        :use
        (:instance
@@ -1485,7 +1485,7 @@ Some (rather awful) testing forms are
                     (cluster-size fat32-in-memory)))))))))
 
   (defthm
-    get-clusterchain-contents-of-clear-clusterchain
+    get-cc-contents-of-clear-cc
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -1504,19 +1504,19 @@ Some (rather awful) testing forms are
                                         masked-current-cluster2 length2
                                         (cluster-size fat32-in-memory))))))
      (equal
-      (get-clusterchain-contents
+      (get-cc-contents
        (mv-nth 0
-               (clear-clusterchain fat32-in-memory
+               (clear-cc fat32-in-memory
                                    masked-current-cluster1 length1))
        masked-current-cluster2 length2)
-      (get-clusterchain-contents fat32-in-memory
+      (get-cc-contents fat32-in-memory
                                  masked-current-cluster2 length2)))
     :hints (("goal" :cases ((<= (+ 2 (count-of-clusters fat32-in-memory))
                                 masked-current-cluster1)))
-            ("subgoal 2" :in-theory (enable clear-clusterchain)))))
+            ("subgoal 2" :in-theory (enable clear-cc)))))
 
 (defthm
-  d-e-clusterchain-contents-of-clear-clusterchain
+  d-e-cc-contents-of-clear-cc
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -1531,19 +1531,19 @@ Some (rather awful) testing forms are
                                       masked-current-cluster
                                       length (cluster-size fat32-in-memory)))
       (mv-nth '0
-              (d-e-clusterchain fat32-in-memory d-e)))))
-   (equal (d-e-clusterchain-contents
+              (d-e-cc fat32-in-memory d-e)))))
+   (equal (d-e-cc-contents
            (mv-nth 0
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        masked-current-cluster length))
            d-e)
-          (d-e-clusterchain-contents fat32-in-memory d-e)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain
-                                     d-e-clusterchain-contents))))
+          (d-e-cc-contents fat32-in-memory d-e)))
+  :hints (("goal" :in-theory (enable d-e-cc
+                                     d-e-cc-contents))))
 
 ;; Free variables, are they necessary?
 (defthm
-  fati-of-clear-clusterchain
+  fati-of-clear-cc
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (natp i)
@@ -1561,7 +1561,7 @@ Some (rather awful) testing forms are
      i
      (mv-nth
       0
-      (clear-clusterchain fat32-in-memory
+      (clear-cc fat32-in-memory
                           masked-current-cluster length)))
     (if
      (and
@@ -1584,7 +1584,7 @@ Some (rather awful) testing forms are
      (fati i fat32-in-memory))))
   :hints
   (("goal"
-    :in-theory (e/d (clear-clusterchain)
+    :in-theory (e/d (clear-cc)
                     ((:rewrite nth-of-effective-fat)))
     :use
     ((:instance
@@ -1634,23 +1634,23 @@ Some (rather awful) testing forms are
        i
        (mv-nth
         0
-        (clear-clusterchain fat32-in-memory
+        (clear-cc fat32-in-memory
                             masked-current-cluster length)))
       (if
        (and
         (equal
          (mv-nth 1
-                 (d-e-clusterchain fat32-in-memory d-e))
+                 (d-e-cc fat32-in-memory d-e))
          0)
         (member-equal
          i
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory d-e))))
+          (d-e-cc fat32-in-memory d-e))))
        (fat32-update-lower-28 (fati i fat32-in-memory)
                               0)
        (fati i fat32-in-memory))))
-    :hints (("goal" :in-theory (enable d-e-clusterchain))))
+    :hints (("goal" :in-theory (enable d-e-cc))))
    (:rewrite
     :corollary
     (implies
@@ -1674,26 +1674,26 @@ Some (rather awful) testing forms are
        i
        (mv-nth
         0
-        (clear-clusterchain fat32-in-memory
+        (clear-cc fat32-in-memory
                             masked-current-cluster length)))
       (if
        (and
         (equal
          (mv-nth 1
-                 (d-e-clusterchain fat32-in-memory d-e))
+                 (d-e-cc fat32-in-memory d-e))
          0)
         (member-equal
          i
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory d-e))))
+          (d-e-cc fat32-in-memory d-e))))
        (fat32-update-lower-28 (fati i fat32-in-memory)
                               0)
        (fati i fat32-in-memory))))
     :hints
-    (("goal" :in-theory (enable d-e-clusterchain))))))
+    (("goal" :in-theory (enable d-e-cc))))))
 
-(in-theory (disable (:REWRITE FATI-OF-CLEAR-CLUSTERCHAIN . 1)))
+(in-theory (disable (:REWRITE FATI-OF-CLEAR-CC . 1)))
 
 ;; This function calls place-contents with a meaningless value of d-e,
 ;; because we know that for a well-formed directory, the contents will be
@@ -1739,14 +1739,14 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     first-cluster *ms-max-dir-size*
                     (cluster-size fat32-in-memory))))))))))
-  (b* (((mv clusterchain &)
-        (get-clusterchain fat32-in-memory
+  (b* (((mv cc &)
+        (get-cc fat32-in-memory
                           first-cluster *ms-max-dir-size*))
        (last-value
-        (fat32-entry-mask (fati (car (last clusterchain))
+        (fat32-entry-mask (fati (car (last cc))
                                 fat32-in-memory)))
        ((mv fat32-in-memory error-code)
-        (clear-clusterchain fat32-in-memory
+        (clear-cc fat32-in-memory
                             first-cluster *ms-max-dir-size*))
        ((unless (equal error-code 0))
         (mv fat32-in-memory *eio*))
@@ -1754,7 +1754,7 @@ Some (rather awful) testing forms are
         (update-fati first-cluster
                      (fat32-update-lower-28
                       (fati first-cluster fat32-in-memory)
-                      *ms-end-of-clusterchain*)
+                      *ms-end-of-cc*)
                      fat32-in-memory))
        ((unless (> (length dir-contents) 0))
         (mv fat32-in-memory 0))
@@ -1763,10 +1763,10 @@ Some (rather awful) testing forms are
                         dir-contents 0 first-cluster))
        ((when (equal error-code 0))
         (mv fat32-in-memory 0))
-       ;; Reversing the effects of clear-clusterchain
+       ;; Reversing the effects of clear-cc
        (fat32-in-memory (stobj-set-indices-in-fa-table
-                         fat32-in-memory clusterchain
-                         (append (cdr clusterchain)
+                         fat32-in-memory cc
+                         (append (cdr cc)
                                  (list last-value)))))
     (mv fat32-in-memory error-code)))
 
@@ -1807,7 +1807,7 @@ Some (rather awful) testing forms are
             (update-dir-contents fat32-in-memory
                                  first-cluster dir-contents))))
   :hints (("goal" :in-theory (enable update-dir-contents
-                                     clear-clusterchain-correctness-1))))
+                                     clear-cc-correctness-1))))
 
 (defthm
   fat32-build-index-list-of-effective-fat-of-update-dir-contents
@@ -1850,13 +1850,13 @@ Some (rather awful) testing forms are
                             length cluster-size)))
   :hints
   (("goal"
-    :in-theory (e/d (update-dir-contents intersectp-equal clear-clusterchain)
+    :in-theory (e/d (update-dir-contents intersectp-equal clear-cc)
                     (intersectp-is-commutative intersect-with-subset))
     :expand
     ((fat32-build-index-list (effective-fat fat32-in-memory)
                              first-cluster *ms-max-dir-size*
                              (cluster-size fat32-in-memory))
-     (get-clusterchain-contents fat32-in-memory first-cluster 2097152))
+     (get-cc-contents fat32-in-memory first-cluster 2097152))
     :use
     (:instance
      (:rewrite intersectp-is-commutative)
@@ -1870,7 +1870,7 @@ Some (rather awful) testing forms are
                                         (cluster-size fat32-in-memory))))))))
 
 (defthm
-  d-e-clusterchain-of-update-dir-contents
+  d-e-cc-of-update-dir-contents
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -1883,21 +1883,21 @@ Some (rather awful) testing forms are
     (not
      (intersectp-equal
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory d-e))
+              (d-e-cc fat32-in-memory d-e))
       (mv-nth 0
               (fat32-build-index-list (effective-fat fat32-in-memory)
                                       first-cluster *ms-max-dir-size*
                                       (cluster-size fat32-in-memory)))))
     (equal (mv-nth 1
-                   (d-e-clusterchain fat32-in-memory d-e))
+                   (d-e-cc fat32-in-memory d-e))
            0))
-   (equal (d-e-clusterchain
+   (equal (d-e-cc
            (mv-nth 0
                    (update-dir-contents fat32-in-memory
                                         first-cluster dir-contents))
            d-e)
-          (d-e-clusterchain fat32-in-memory d-e)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain))))
+          (d-e-cc fat32-in-memory d-e)))
+  :hints (("goal" :in-theory (enable d-e-cc))))
 
 (defthm
   max-entry-count-of-update-dir-contents
@@ -1972,7 +1972,7 @@ Some (rather awful) testing forms are
       (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
                              268435455)
       (mv-nth 0
-              (clear-clusterchain fat32-in-memory first-cluster 2097152)))
+              (clear-cc fat32-in-memory first-cluster 2097152)))
      (mv-nth 0
              (fat32-build-index-list (effective-fat fat32-in-memory)
                                      first-cluster
@@ -1988,9 +1988,9 @@ Some (rather awful) testing forms are
     fat32-in-memory))
   :hints
   (("goal" :in-theory
-    (e/d (clear-clusterchain stobj-set-indices-in-fa-table
+    (e/d (clear-cc stobj-set-indices-in-fa-table
                              fat32-update-lower-28-of-fat32-entry-mask)
-         (get-clusterchain-contents-correctness-2))
+         (get-cc-contents-correctness-2))
     :expand (fat32-build-index-list (effective-fat fat32-in-memory)
                                     first-cluster 2097152
                                     (cluster-size fat32-in-memory)))))
@@ -2197,7 +2197,7 @@ Some (rather awful) testing forms are
   (("goal"
     :in-theory
     (disable (:rewrite fat32-update-lower-28-of-fat32-update-lower-28)
-             (:rewrite clear-clusterchain-reversibility-lemma-2)
+             (:rewrite clear-cc-reversibility-lemma-2)
              nth-of-set-indices-in-fa-table-when-member
              (:rewrite stobj-set-indices-in-fa-table-correctness-1))
     :use
@@ -2216,7 +2216,7 @@ Some (rather awful) testing forms are
                 (masked-entry1 0)
                 (entry (nth first-cluster
                             (effective-fat fat32-in-memory))))
-     (:instance (:rewrite clear-clusterchain-reversibility-lemma-2)
+     (:instance (:rewrite clear-cc-reversibility-lemma-2)
                 (length 2097152)
                 (masked-current-cluster first-cluster)
                 (fat32-in-memory fat32-in-memory))
@@ -2263,7 +2263,7 @@ Some (rather awful) testing forms are
       (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
                              268435455)
       (mv-nth 0
-              (clear-clusterchain fat32-in-memory first-cluster 2097152)))
+              (clear-cc fat32-in-memory first-cluster 2097152)))
      (mv-nth 0
              (fat32-build-index-list (effective-fat fat32-in-memory)
                                      first-cluster
@@ -2290,8 +2290,8 @@ Some (rather awful) testing forms are
   (("goal"
     :in-theory
     (e/d
-     (clear-clusterchain)
-     (get-clusterchain-contents-correctness-2
+     (clear-cc)
+     (get-cc-contents-correctness-2
       (:rewrite
        stobj-set-indices-in-fa-table-of-stobj-set-indices-in-fa-table-lemma-3)))
     :use
@@ -2359,8 +2359,8 @@ Some (rather awful) testing forms are
           fat32-in-memory))
   :hints
   (("goal"
-    :in-theory (e/d (update-dir-contents clear-clusterchain-correctness-1
-                                         clear-clusterchain-correctness-3
+    :in-theory (e/d (update-dir-contents clear-cc-correctness-1
+                                         clear-cc-correctness-3
                                          place-contents-correctness-1))
     :expand
     (len (mv-nth '0
@@ -2538,7 +2538,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0
                               (find-d-e d-e-list filename)))))
@@ -2550,7 +2550,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e d-e-list filename)))))
@@ -2559,7 +2559,7 @@ Some (rather awful) testing forms are
        (not-intersectp-list
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth 0
                   (find-d-e d-e-list filename))))
@@ -2570,7 +2570,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents
+            (d-e-cc-contents
              fat32-in-memory
              (mv-nth 0
                      (find-d-e d-e-list filename)))))
@@ -2584,7 +2584,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents
+            (d-e-cc-contents
              fat32-in-memory
              (mv-nth 0
                      (find-d-e d-e-list filename)))))
@@ -2633,7 +2633,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e d-e-list filename)))))
@@ -2646,7 +2646,7 @@ Some (rather awful) testing forms are
     :rule-classes :linear)
 
   (defthm
-    d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-1
+    d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-1
     (implies
      (and (useful-d-e-list-p d-e-list)
           (equal (mv-nth 3
@@ -2658,7 +2658,7 @@ Some (rather awful) testing forms are
      (not-intersectp-list
       (mv-nth
        0
-       (d-e-clusterchain
+       (d-e-cc
         fat32-in-memory
         (mv-nth 0
                 (find-d-e d-e-list filename))))
@@ -2669,7 +2669,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth 0
                    (find-d-e d-e-list filename)))))
@@ -2681,7 +2681,7 @@ Some (rather awful) testing forms are
        (x nil)))))
 
   (defthm
-    d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-2
+    d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2
     (implies
      (and (useful-d-e-list-p d-e-list)
           (equal (mv-nth 3
@@ -2705,7 +2705,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth 0
                    (find-d-e d-e-list filename)))))
@@ -2813,7 +2813,7 @@ Some (rather awful) testing forms are
                                 filename)))))))
 
 (defthm
-  lofat-to-hifat-helper-of-clear-clusterchain
+  lofat-to-hifat-helper-of-clear-cc
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -2842,7 +2842,7 @@ Some (rather awful) testing forms are
    (equal
     (lofat-to-hifat-helper
      (mv-nth 0
-             (clear-clusterchain fat32-in-memory
+             (clear-cc fat32-in-memory
                                  masked-current-cluster length))
      d-e-list entry-limit)
     (lofat-to-hifat-helper fat32-in-memory
@@ -2851,7 +2851,7 @@ Some (rather awful) testing forms are
   (("goal"
     :in-theory
     (e/d
-     (lofat-to-hifat-helper clear-clusterchain
+     (lofat-to-hifat-helper clear-cc
                             lofat-to-hifat-helper-of-stobj-set-indices-in-fa-table)
      ((:rewrite nth-of-effective-fat))))))
 
@@ -2880,7 +2880,7 @@ Some (rather awful) testing forms are
        (name (mbe :logic (fat32-filename-fix (car path))
                   :exec (car path)))
        ((mv dir-contents &)
-        (d-e-clusterchain-contents fat32-in-memory root-d-e))
+        (d-e-cc-contents fat32-in-memory root-d-e))
        (d-e-list
         (make-d-e-list dir-contents))
        ((mv d-e error-code)
@@ -2928,7 +2928,7 @@ Some (rather awful) testing forms are
                        (count-of-clusters fat32-in-memory))
                     first-cluster))
             (mv fat32-in-memory 0)
-          (clear-clusterchain
+          (clear-cc
            fat32-in-memory
            first-cluster
            length))))
@@ -2983,10 +2983,10 @@ Some (rather awful) testing forms are
                   (lofat-remove-file fat32-in-memory root-d-e path))
           fat32-in-memory))
   :hints (("goal" :in-theory (enable update-dir-contents-correctness-1
-                                     clear-clusterchain-correctness-3))))
+                                     clear-cc-correctness-3))))
 
 (defthm
-  get-clusterchain-contents-of-update-dir-contents-disjoint
+  get-cc-contents-of-update-dir-contents-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3006,20 +3006,20 @@ Some (rather awful) testing forms are
                                       masked-current-cluster length
                                       (cluster-size fat32-in-memory)))))
     (equal (mv-nth '1
-                   (get-clusterchain-contents fat32-in-memory
+                   (get-cc-contents fat32-in-memory
                                               masked-current-cluster length))
            '0))
    (equal
-    (get-clusterchain-contents
+    (get-cc-contents
      (mv-nth 0
              (update-dir-contents fat32-in-memory
                                   first-cluster dir-contents))
      masked-current-cluster length)
-    (get-clusterchain-contents fat32-in-memory
+    (get-cc-contents fat32-in-memory
                                masked-current-cluster length)))
   :hints
   (("goal"
-    :in-theory (e/d (update-dir-contents clear-clusterchain-correctness-1)
+    :in-theory (e/d (update-dir-contents clear-cc-correctness-1)
                     ((:rewrite intersectp-is-commutative)))
     :expand
     ((fat32-build-index-list (effective-fat fat32-in-memory)
@@ -3039,7 +3039,7 @@ Some (rather awful) testing forms are
                (fat32-build-index-list (effective-fat fat32-in-memory)
                                        masked-current-cluster length
                                        (cluster-size fat32-in-memory)))))
-     (get-clusterchain-contents fat32-in-memory first-cluster 2097152))
+     (get-cc-contents fat32-in-memory first-cluster 2097152))
     :use
     ((:instance
       (:rewrite intersectp-is-commutative)
@@ -3067,7 +3067,7 @@ Some (rather awful) testing forms are
                                        (cluster-size fat32-in-memory)))))))))
 
 (defthm
-  get-clusterchain-contents-of-update-dir-contents-coincident-lemma-1
+  get-cc-contents-of-update-dir-contents-coincident-lemma-1
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (< 0 (len (explode dir-contents))))
@@ -3077,7 +3077,7 @@ Some (rather awful) testing forms are
            '0))))
 
 (defthmd
-  get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3
+  get-cc-contents-of-update-dir-contents-coincident-lemma-3
   (implies
    (<
     (+
@@ -3114,7 +3114,7 @@ Some (rather awful) testing forms are
                          (cluster-size fat32-in-memory)))))))
 
 (defthmd
-  get-clusterchain-contents-of-update-dir-contents-coincident-lemma-4
+  get-cc-contents-of-update-dir-contents-coincident-lemma-4
   (implies
    (and (integerp first-cluster)
         (or (< first-cluster *ms-first-data-cluster*)
@@ -3125,13 +3125,13 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (get-clusterchain-contents fat32-in-memory first-cluster 2097152))
+      (get-cc-contents fat32-in-memory first-cluster 2097152))
      0)))
   :hints (("goal" :in-theory (enable nfix)
-           :expand (get-clusterchain-contents fat32-in-memory
+           :expand (get-cc-contents fat32-in-memory
                                               first-cluster 2097152))))
 (defthm
-  get-clusterchain-contents-of-update-dir-contents-coincident-lemma-5
+  get-cc-contents-of-update-dir-contents-coincident-lemma-5
   (implies
    (and
     (equal
@@ -3143,7 +3143,7 @@ Some (rather awful) testing forms are
         (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
                                268435455)
         (mv-nth 0
-                (clear-clusterchain fat32-in-memory first-cluster 2097152)))
+                (clear-cc fat32-in-memory first-cluster 2097152)))
        '(0 0 0 0 0 0 0 0 0 0 0 0
            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
        dir-contents 0 first-cluster))
@@ -3166,13 +3166,13 @@ Some (rather awful) testing forms are
         (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
                                268435455)
         (mv-nth 0
-                (clear-clusterchain fat32-in-memory first-cluster 2097152)))
+                (clear-cc fat32-in-memory first-cluster 2097152)))
        '(0 0 0 0 0 0 0 0 0 0 0 0
            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
        dir-contents 0 first-cluster))
      0))
    (equal
-    (get-clusterchain-contents fat32-in-memory first-cluster 2097152)
+    (get-cc-contents fat32-in-memory first-cluster 2097152)
     (mv
      (implode
       (append
@@ -3190,13 +3190,13 @@ Some (rather awful) testing forms are
     :in-theory
     (e/d
      (update-dir-contents
-      get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3
+      get-cc-contents-of-update-dir-contents-coincident-lemma-3
       (:linear hifat-to-lofat-inversion-lemma-16))
      ((:rewrite nth-of-set-indices-in-fa-table-when-member)
-      (:rewrite get-clusterchain-contents-of-place-contents-coincident)))
+      (:rewrite get-cc-contents-of-place-contents-coincident)))
     :use
     ((:instance
-      (:rewrite get-clusterchain-contents-of-place-contents-coincident)
+      (:rewrite get-cc-contents-of-place-contents-coincident)
       (length *ms-max-dir-size*)
       (file-length 0)
       (contents dir-contents)
@@ -3207,12 +3207,12 @@ Some (rather awful) testing forms are
         (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
                                268435455)
         (mv-nth 0
-                (clear-clusterchain fat32-in-memory
+                (clear-cc fat32-in-memory
                                     first-cluster *ms-max-dir-size*)))))))))
 
 ;; Hypotheses are minimal.
 (defthm
-  get-clusterchain-contents-of-update-dir-contents-coincident
+  get-cc-contents-of-update-dir-contents-coincident
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3223,11 +3223,11 @@ Some (rather awful) testing forms are
         *ms-max-dir-size*)
     (equal
      (mv-nth 1
-             (get-clusterchain-contents fat32-in-memory
+             (get-cc-contents fat32-in-memory
                                         first-cluster *ms-max-dir-size*))
      0))
    (equal
-    (get-clusterchain-contents
+    (get-cc-contents
      (mv-nth 0
              (update-dir-contents fat32-in-memory
                                   first-cluster dir-contents))
@@ -3249,16 +3249,16 @@ Some (rather awful) testing forms are
          (code-char 0)
          nil)))
       0)
-     (get-clusterchain-contents fat32-in-memory
+     (get-cc-contents fat32-in-memory
                                 first-cluster *ms-max-dir-size*))))
   :hints
   (("goal"
     :in-theory
     (e/d
      (update-dir-contents
-      get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3
+      get-cc-contents-of-update-dir-contents-coincident-lemma-3
       (:linear hifat-to-lofat-inversion-lemma-16)
-      (:rewrite fati-of-clear-clusterchain . 1))
+      (:rewrite fati-of-clear-cc . 1))
      ((:rewrite nth-of-set-indices-in-fa-table-when-member)))
     :use
     ((:instance
@@ -3277,10 +3277,10 @@ Some (rather awful) testing forms are
       (fa-table (effective-fat fat32-in-memory))
       (n first-cluster))
      (:rewrite update-dir-contents-correctness-1)
-     get-clusterchain-contents-of-update-dir-contents-coincident-lemma-4))))
+     get-cc-contents-of-update-dir-contents-coincident-lemma-4))))
 
 (defthm
-  d-e-clusterchain-contents-of-update-dir-contents-disjoint
+  d-e-cc-contents-of-update-dir-contents-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3296,22 +3296,22 @@ Some (rather awful) testing forms are
                                           first-cluster '2097152
                                           (cluster-size fat32-in-memory)))
           (mv-nth '0
-                  (d-e-clusterchain fat32-in-memory d-e))))
+                  (d-e-cc fat32-in-memory d-e))))
     (equal (mv-nth '1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            '0))
-   (equal (d-e-clusterchain-contents
+   (equal (d-e-cc-contents
            (mv-nth 0
                    (update-dir-contents fat32-in-memory
                                         first-cluster dir-contents))
            d-e)
-          (d-e-clusterchain-contents fat32-in-memory d-e)))
-  :hints (("goal" :in-theory (enable d-e-clusterchain
-                                     d-e-clusterchain-contents))))
+          (d-e-cc-contents fat32-in-memory d-e)))
+  :hints (("goal" :in-theory (enable d-e-cc
+                                     d-e-cc-contents))))
 
 ;; Hypotheses are minimal.
 (defthm
-  d-e-clusterchain-contents-of-update-dir-contents-coincident
+  d-e-cc-contents-of-update-dir-contents-coincident
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3320,13 +3320,13 @@ Some (rather awful) testing forms are
     (<= (len (explode dir-contents))
         *ms-max-dir-size*)
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (equal (d-e-first-cluster d-e)
            first-cluster)
     (d-e-directory-p d-e))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth 0
              (update-dir-contents fat32-in-memory
                                   first-cluster dir-contents))
@@ -3348,14 +3348,14 @@ Some (rather awful) testing forms are
             (code-char 0)
             nil)))
          0)
-      (d-e-clusterchain-contents
+      (d-e-cc-contents
        fat32-in-memory
        d-e))))
   :hints
   (("goal" :in-theory
-    (e/d (d-e-clusterchain-contents)
-         (get-clusterchain-contents-of-update-dir-contents-coincident))
-    :use get-clusterchain-contents-of-update-dir-contents-coincident)))
+    (e/d (d-e-cc-contents)
+         (get-cc-contents-of-update-dir-contents-coincident))
+    :use get-cc-contents-of-update-dir-contents-coincident)))
 
 (defthm
   lofat-to-hifat-helper-of-update-dir-contents
@@ -3390,7 +3390,7 @@ Some (rather awful) testing forms are
                                           d-e-list entry-limit))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-6
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-6
   (implies
    (equal
     (mv-nth
@@ -3399,7 +3399,7 @@ Some (rather awful) testing forms are
       fat32-in-memory
       (make-d-e-list
        (string=>nats (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -3414,7 +3414,7 @@ Some (rather awful) testing forms are
            fat32-in-memory
            (make-d-e-list
             (string=>nats (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory (car d-e-list)))))
            (+ -1 entry-limit))))))))
     0)
@@ -3423,7 +3423,7 @@ Some (rather awful) testing forms are
      fat32-in-memory
      (make-d-e-list
       (string=>nats (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory
                              (mv-nth 0
                                      (find-d-e (cdr d-e-list)
@@ -3433,7 +3433,7 @@ Some (rather awful) testing forms are
      fat32-in-memory
      (make-d-e-list
       (string=>nats (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory
                              (mv-nth 0
                                      (find-d-e (cdr d-e-list)
@@ -3448,7 +3448,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (string=>nats (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory (car d-e-list)))))
           (+ -1 entry-limit)))))))))
   :hints
@@ -3469,14 +3469,14 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (string=>nats (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory (car d-e-list)))))
             (+ -1 entry-limit)))))))
       (entry-limit2 (+ -1 entry-limit))
       (d-e-list
        (make-d-e-list
         (string=>nats (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory
                                (mv-nth 0
                                        (find-d-e (cdr d-e-list)
@@ -3495,13 +3495,13 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (string=>nats (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory (car d-e-list)))))
             (+ -1 entry-limit)))))))
       (d-e-list
        (make-d-e-list
         (string=>nats (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory
                                (mv-nth 0
                                        (find-d-e (cdr d-e-list)
@@ -3509,7 +3509,7 @@ Some (rather awful) testing forms are
       (fat32-in-memory fat32-in-memory))))))
 
 (defthmd
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-8
   (implies
    (and
     (not (natp entry-limit))
@@ -3534,9 +3534,9 @@ Some (rather awful) testing forms are
      entry-limit))))
 
 ;; Slightly better version of
-;; d-e-clusterchain-contents-of-update-dir-contents-disjoint.
+;; d-e-cc-contents-of-update-dir-contents-disjoint.
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-3
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-3
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3550,31 +3550,31 @@ Some (rather awful) testing forms are
     (case-split
      (not (intersectp-equal
            (mv-nth '0
-                   (d-e-clusterchain fat32-in-memory root-d-e))
+                   (d-e-cc fat32-in-memory root-d-e))
            (mv-nth '0
-                   (d-e-clusterchain fat32-in-memory d-e)))))
+                   (d-e-cc fat32-in-memory d-e)))))
     (equal (mv-nth '1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            '0))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth 0
              (update-dir-contents fat32-in-memory
                                   (d-e-first-cluster root-d-e)
                                   dir-contents))
      d-e)
-    (d-e-clusterchain-contents fat32-in-memory d-e)))
+    (d-e-cc-contents fat32-in-memory d-e)))
   :hints
   (("goal"
     :in-theory
-    (e/d (d-e-clusterchain)
-         (d-e-clusterchain-contents-of-update-dir-contents-disjoint))
+    (e/d (d-e-cc)
+         (d-e-cc-contents-of-update-dir-contents-disjoint))
     :use
-    (:instance d-e-clusterchain-contents-of-update-dir-contents-disjoint
+    (:instance d-e-cc-contents-of-update-dir-contents-disjoint
                (first-cluster (d-e-first-cluster root-d-e))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-9
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-9
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (d-e-p d-e1)
@@ -3584,27 +3584,27 @@ Some (rather awful) testing forms are
             (d-e-first-cluster d-e1))
         (not (intersectp-equal
               (mv-nth '0
-                      (d-e-clusterchain fat32-in-memory d-e1))
+                      (d-e-cc fat32-in-memory d-e1))
               (mv-nth '0
-                      (d-e-clusterchain fat32-in-memory d-e2)))))
-   (equal (d-e-clusterchain-contents
+                      (d-e-cc fat32-in-memory d-e2)))))
+   (equal (d-e-cc-contents
            (mv-nth 0
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        (d-e-first-cluster d-e1)
                                        *ms-max-dir-size*))
            d-e2)
-          (d-e-clusterchain-contents fat32-in-memory d-e2)))
+          (d-e-cc-contents fat32-in-memory d-e2)))
   :hints
   (("goal"
-    :in-theory (e/d (d-e-clusterchain)
-                    (d-e-clusterchain-contents-of-clear-clusterchain))
-    :use (:instance d-e-clusterchain-contents-of-clear-clusterchain
+    :in-theory (e/d (d-e-cc)
+                    (d-e-cc-contents-of-clear-cc))
+    :use (:instance d-e-cc-contents-of-clear-cc
                     (d-e d-e2)
                     (masked-current-cluster (d-e-first-cluster d-e1))
                     (length *ms-max-dir-size*)))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-10
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-10
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (d-e-p d-e1)
@@ -3614,28 +3614,28 @@ Some (rather awful) testing forms are
             (d-e-first-cluster d-e1))
         (not (intersectp-equal
               (mv-nth '0
-                      (d-e-clusterchain fat32-in-memory d-e1))
+                      (d-e-cc fat32-in-memory d-e1))
               (mv-nth '0
-                      (d-e-clusterchain fat32-in-memory d-e2)))))
-   (equal (d-e-clusterchain-contents
+                      (d-e-cc fat32-in-memory d-e2)))))
+   (equal (d-e-cc-contents
            (mv-nth 0
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        (d-e-first-cluster d-e1)
                                        (d-e-file-size d-e1)))
            d-e2)
-          (d-e-clusterchain-contents fat32-in-memory d-e2)))
+          (d-e-cc-contents fat32-in-memory d-e2)))
   :hints
   (("goal"
-    :in-theory (e/d (d-e-clusterchain)
-                    (d-e-clusterchain-contents-of-clear-clusterchain))
-    :use (:instance d-e-clusterchain-contents-of-clear-clusterchain
+    :in-theory (e/d (d-e-cc)
+                    (d-e-cc-contents-of-clear-cc))
+    :use (:instance d-e-cc-contents-of-clear-cc
                     (d-e d-e2)
                     (masked-current-cluster (d-e-first-cluster d-e1))
                     (length (d-e-file-size d-e1))))))
 
-;; Slightly better version of d-e-clusterchain-of-update-dir-contents.
+;; Slightly better version of d-e-cc-of-update-dir-contents.
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-11
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-11
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3648,29 +3648,29 @@ Some (rather awful) testing forms are
     (<= 2 (d-e-first-cluster root-d-e))
     (not (intersectp-equal
           (mv-nth '0
-                  (d-e-clusterchain fat32-in-memory root-d-e))
+                  (d-e-cc fat32-in-memory root-d-e))
           (mv-nth '0
-                  (d-e-clusterchain fat32-in-memory d-e))))
+                  (d-e-cc fat32-in-memory d-e))))
     (equal (mv-nth '1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            '0))
    (equal
-    (d-e-clusterchain
+    (d-e-cc
      (mv-nth 0
              (update-dir-contents fat32-in-memory
                                   (d-e-first-cluster root-d-e)
                                   dir-contents))
      d-e)
-    (d-e-clusterchain fat32-in-memory d-e)))
+    (d-e-cc fat32-in-memory d-e)))
   :hints
   (("goal"
-    :in-theory (e/d (d-e-clusterchain d-e-clusterchain-contents)
-                    (d-e-clusterchain-of-update-dir-contents))
-    :use (:instance d-e-clusterchain-of-update-dir-contents
+    :in-theory (e/d (d-e-cc d-e-cc-contents)
+                    (d-e-cc-of-update-dir-contents))
+    :use (:instance d-e-cc-of-update-dir-contents
                     (first-cluster (d-e-first-cluster root-d-e))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-4
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-4
   (implies
    (and
     (useful-d-e-list-p d-e-list)
@@ -3687,7 +3687,7 @@ Some (rather awful) testing forms are
                                       (find-d-e d-e-list filename)))))
    (and
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e d-e-list filename))))
@@ -3695,7 +3695,7 @@ Some (rather awful) testing forms are
     (no-duplicatesp-equal
      (mv-nth
       0
-      (d-e-clusterchain fat32-in-memory
+      (d-e-cc fat32-in-memory
                             (mv-nth 0
                                     (find-d-e d-e-list filename)))))))
   :hints
@@ -3704,7 +3704,7 @@ Some (rather awful) testing forms are
          (nth-of-effective-fat (:definition no-duplicatesp-equal))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-5
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-5
   (implies
    (and (useful-d-e-list-p d-e-list)
         (equal (mv-nth 3
@@ -3715,7 +3715,7 @@ Some (rather awful) testing forms are
                                      (find-d-e d-e-list filename))))
    (subdir-contents-p
     (mv-nth 0
-            (d-e-clusterchain-contents
+            (d-e-cc-contents
              fat32-in-memory
              (mv-nth 0
                      (find-d-e d-e-list filename))))))
@@ -3725,10 +3725,10 @@ Some (rather awful) testing forms are
          (nth-of-effective-fat (:definition no-duplicatesp-equal))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-12
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-12
   (implies
    (equal (mv-nth 1
-                  (d-e-clusterchain-contents fat32-in-memory d-e))
+                  (d-e-cc-contents fat32-in-memory d-e))
           0)
    (and (<= *ms-first-data-cluster*
             (d-e-first-cluster d-e))
@@ -3736,17 +3736,17 @@ Some (rather awful) testing forms are
            (+ *ms-first-data-cluster*
               (count-of-clusters fat32-in-memory)))))
   :hints
-  (("goal" :in-theory (enable d-e-clusterchain-contents nfix)
-    :expand ((get-clusterchain-contents fat32-in-memory
+  (("goal" :in-theory (enable d-e-cc-contents nfix)
+    :expand ((get-cc-contents fat32-in-memory
                                         (d-e-first-cluster d-e)
                                         (d-e-file-size d-e))
-             (get-clusterchain-contents fat32-in-memory
+             (get-cc-contents fat32-in-memory
                                         (d-e-first-cluster d-e)
                                         2097152))))
   :rule-classes :linear)
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
   (implies
    (and
     (not-intersectp-list
@@ -3769,7 +3769,7 @@ Some (rather awful) testing forms are
    (not (intersectp-equal
          x
          (mv-nth '0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth '0
                           (find-d-e d-e-list filename)))))))
@@ -3815,7 +3815,7 @@ Some (rather awful) testing forms are
          (d-e-file-size (mv-nth '0
                                     (find-d-e d-e-list filename)))
          (cluster-size fat32-in-memory))))))
-    :hints (("goal" :in-theory (enable d-e-clusterchain))))
+    :hints (("goal" :in-theory (enable d-e-cc))))
    (:rewrite
     :corollary
     (implies
@@ -3849,7 +3849,7 @@ Some (rather awful) testing forms are
                          (find-d-e d-e-list filename)))
                 *ms-max-dir-size*
                 (cluster-size fat32-in-memory))))))
-    :hints (("goal" :in-theory (e/d (d-e-clusterchain)))))
+    :hints (("goal" :in-theory (e/d (d-e-cc)))))
    (:rewrite
     :corollary
     (implies
@@ -3873,7 +3873,7 @@ Some (rather awful) testing forms are
        (+ 2 (count-of-clusters fat32-in-memory))))
      (not (intersectp-equal
            (mv-nth '0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth '0
                             (find-d-e d-e-list filename))))
@@ -3904,7 +3904,7 @@ Some (rather awful) testing forms are
      (not (member-equal
            a
            (mv-nth '0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth '0
                             (find-d-e d-e-list filename))))))))
@@ -3931,7 +3931,7 @@ Some (rather awful) testing forms are
        (+ 2 (count-of-clusters fat32-in-memory))))
      (iff (equal
            (mv-nth '0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth '0
                             (find-d-e d-e-list filename))))
@@ -3939,13 +3939,13 @@ Some (rather awful) testing forms are
           (and (null x)
                (null
                 (mv-nth '0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth '0
                                  (find-d-e d-e-list filename)))))))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-disjoint
+  d-e-cc-contents-of-lofat-remove-file-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3964,45 +3964,45 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (not (intersectp-equal
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory root-d-e))
+                  (d-e-cc fat32-in-memory root-d-e))
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory d-e))))
+                  (d-e-cc fat32-in-memory d-e))))
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth 0
              (lofat-remove-file fat32-in-memory root-d-e path))
      d-e)
-    (d-e-clusterchain-contents fat32-in-memory d-e)))
+    (d-e-cc-contents fat32-in-memory d-e)))
   :hints (("goal" :induct (lofat-remove-file fat32-in-memory
                                              root-d-e path))))
 
@@ -4021,9 +4021,9 @@ Some (rather awful) testing forms are
     (not
      (intersectp-equal
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory d-e))
+              (d-e-cc fat32-in-memory d-e))
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory
+              (d-e-cc fat32-in-memory
                                     (pseudo-root-d-e fat32-in-memory))))))
    (equal (root-d-e-list
            (mv-nth 0
@@ -4056,7 +4056,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable subdir-contents-p remove1-d-e))))
 
 (defthm
-  get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-1
+  get-cc-contents-of-lofat-remove-file-coincident-lemma-1
   (implies
    (and (useful-d-e-list-p d-e-list)
         (equal (mv-nth 3
@@ -4071,7 +4071,7 @@ Some (rather awful) testing forms are
      (len
       (explode
        (mv-nth 0
-               (get-clusterchain-contents
+               (get-cc-contents
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth 0 (find-d-e d-e-list filename)))
@@ -4079,14 +4079,14 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (get-clusterchain-contents
+      (get-cc-contents
        fat32-in-memory
        (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list filename)))
        *ms-max-dir-size*))
      0)))
   :hints
   (("goal" :in-theory
-    (e/d (lofat-to-hifat-helper d-e-clusterchain-contents)
+    (e/d (lofat-to-hifat-helper d-e-cc-contents)
          ((:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
           (:definition free-index-listp)
           (:rewrite nth-of-effective-fat)))
@@ -4104,7 +4104,7 @@ Some (rather awful) testing forms are
           (d-e-directory-p (mv-nth 0
                                        (find-d-e d-e-list filename))))
      (equal (mv-nth 1
-                    (get-clusterchain-contents
+                    (get-cc-contents
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth 0 (find-d-e d-e-list filename)))
@@ -4125,14 +4125,14 @@ Some (rather awful) testing forms are
       (len
        (explode
         (mv-nth 0
-                (get-clusterchain-contents
+                (get-cc-contents
                  fat32-in-memory
                  (d-e-first-cluster
                   (mv-nth 0 (find-d-e d-e-list filename)))
                  *ms-max-dir-size*)))))))))
 
 (defthm
-  get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
+  get-cc-contents-of-lofat-remove-file-coincident-lemma-5
   (implies
    (and
     (d-e-list-p d-e-list)
@@ -4158,7 +4158,7 @@ Some (rather awful) testing forms are
      x
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth 0
                (find-d-e d-e-list filename)))))))
@@ -4211,7 +4211,7 @@ Some (rather awful) testing forms are
          *ms-max-dir-size*
          (cluster-size fat32-in-memory))))))
     :hints
-    (("goal" :in-theory (enable d-e-clusterchain))))
+    (("goal" :in-theory (enable d-e-cc))))
    (:rewrite
     :corollary
     (implies
@@ -4250,11 +4250,11 @@ Some (rather awful) testing forms are
           (mv-nth 0 (find-d-e d-e-list filename)))
          (cluster-size fat32-in-memory))))))
     :hints
-    (("goal" :in-theory (enable d-e-clusterchain))))))
+    (("goal" :in-theory (enable d-e-cc))))))
 
-;; Slightly better version of d-e-clusterchain-of-clear-clusterchain.
+;; Slightly better version of d-e-cc-of-clear-cc.
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-coincident-lemma-1
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-1
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (d-e-p d-e2)
@@ -4264,27 +4264,27 @@ Some (rather awful) testing forms are
             (d-e-first-cluster d-e1))
         (not (intersectp-equal
               (mv-nth '0
-                      (d-e-clusterchain fat32-in-memory d-e1))
+                      (d-e-cc fat32-in-memory d-e1))
               (mv-nth '0
-                      (d-e-clusterchain fat32-in-memory d-e2)))))
-   (equal (d-e-clusterchain
+                      (d-e-cc fat32-in-memory d-e2)))))
+   (equal (d-e-cc
            (mv-nth 0
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        (d-e-first-cluster d-e1)
                                        *ms-max-dir-size*))
            d-e2)
-          (d-e-clusterchain fat32-in-memory d-e2)))
+          (d-e-cc fat32-in-memory d-e2)))
   :hints
   (("goal"
-    :in-theory (e/d (d-e-clusterchain)
-                    (d-e-clusterchain-of-clear-clusterchain))
-    :use (:instance d-e-clusterchain-of-clear-clusterchain
+    :in-theory (e/d (d-e-cc)
+                    (d-e-cc-of-clear-cc))
+    :use (:instance d-e-cc-of-clear-cc
                     (d-e d-e2)
                     (masked-current-cluster (d-e-first-cluster d-e1))
                     (length *ms-max-dir-size*)))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-coincident-lemma-2
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-2
   (implies
    (and
     (d-e-directory-p
@@ -4293,7 +4293,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        (car path))))
     (<=
      2
@@ -4304,7 +4304,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -4312,7 +4312,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (cadr path)))))
     (<
@@ -4323,7 +4323,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -4331,7 +4331,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (cadr path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
@@ -4342,25 +4342,25 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0))
    (not
     (intersectp-equal
      (mv-nth
       '0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         '0
         (find-d-e
          (make-d-e-list
           (mv-nth '0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
          (car path)))))
      (mv-nth
       '0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         '0
@@ -4368,7 +4368,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            '0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              '0
@@ -4376,7 +4376,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 '0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
               (car path))))))
          (car (cdr path)))))))))
   :hints
@@ -4384,43 +4384,43 @@ Some (rather awful) testing forms are
     :in-theory
     (disable
      (:rewrite
-      get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
+      get-cc-contents-of-lofat-remove-file-coincident-lemma-5
       . 1))
     :use
     (:instance
      (:rewrite
-      get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
+      get-cc-contents-of-lofat-remove-file-coincident-lemma-5
       . 1)
      (filename (cadr path))
      (d-e-list
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          fat32-in-memory
          (mv-nth
           0
           (find-d-e
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
            (car path)))))))
      (fat32-in-memory fat32-in-memory)
      (x
       (mv-nth
        0
-       (d-e-clusterchain
+       (d-e-cc
         fat32-in-memory
         (mv-nth
          0
          (find-d-e
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
           (car path))))))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-coincident-lemma-4
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-4
   (implies
    (and
     (d-e-directory-p
@@ -4429,7 +4429,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        (car path))))
     (<=
      2
@@ -4440,7 +4440,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -4448,7 +4448,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (cadr path)))))
     (<
@@ -4459,7 +4459,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -4467,7 +4467,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (cadr path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
@@ -4478,27 +4478,27 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))))
    (not
     (intersectp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         0
@@ -4506,7 +4506,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -4514,7 +4514,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
               (car path))))))
          (cadr path))))))))
   :hints
@@ -4522,33 +4522,33 @@ Some (rather awful) testing forms are
     :in-theory
     (disable
      (:rewrite
-      get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
+      get-cc-contents-of-lofat-remove-file-coincident-lemma-5
       . 1))
     :use
     (:instance
      (:rewrite
-      get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
+      get-cc-contents-of-lofat-remove-file-coincident-lemma-5
       . 1)
      (filename (cadr path))
      (d-e-list
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          fat32-in-memory
          (mv-nth
           0
           (find-d-e
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
            (car path)))))))
      (fat32-in-memory fat32-in-memory)
      (x (mv-nth 0
-                (d-e-clusterchain fat32-in-memory d-e)))))))
+                (d-e-cc fat32-in-memory d-e)))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-5
   (implies
    (and
     (d-e-directory-p
@@ -4557,13 +4557,13 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        (car path))))
     (lofat-fs-p fat32-in-memory)
     (d-e-p d-e)
     (<= 2 (d-e-first-cluster d-e))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (equal
      (mv-nth
@@ -4572,22 +4572,22 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth
       0
       (lofat-remove-file
@@ -4597,19 +4597,19 @@ Some (rather awful) testing forms are
         (find-d-e
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
          (car path)))
        (cdr path)))
      d-e)
-    (d-e-clusterchain-contents fat32-in-memory d-e)))
+    (d-e-cc-contents fat32-in-memory d-e)))
   :hints
   (("goal"
     :in-theory
     (disable
-     (:rewrite d-e-clusterchain-contents-of-lofat-remove-file-disjoint))
+     (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-contents-of-lofat-remove-file-disjoint)
+     (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint)
      (path (cdr path))
      (root-d-e
       (mv-nth
@@ -4617,13 +4617,13 @@ Some (rather awful) testing forms are
        (find-d-e
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents fat32-in-memory d-e)))
+                 (d-e-cc-contents fat32-in-memory d-e)))
         (car path))))
      (fat32-in-memory fat32-in-memory)))))
 
-;; Slightly better version of d-e-clusterchain-of-clear-clusterchain.
+;; Slightly better version of d-e-cc-of-clear-cc.
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-coincident-lemma-6
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-6
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (d-e-p d-e2)
@@ -4633,27 +4633,27 @@ Some (rather awful) testing forms are
             (d-e-first-cluster d-e1))
         (not (intersectp-equal
               (mv-nth '0
-                      (d-e-clusterchain fat32-in-memory d-e1))
+                      (d-e-cc fat32-in-memory d-e1))
               (mv-nth '0
-                      (d-e-clusterchain fat32-in-memory d-e2)))))
-   (equal (d-e-clusterchain
+                      (d-e-cc fat32-in-memory d-e2)))))
+   (equal (d-e-cc
            (mv-nth 0
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        (d-e-first-cluster d-e1)
                                        (d-e-file-size d-e1)))
            d-e2)
-          (d-e-clusterchain fat32-in-memory d-e2)))
+          (d-e-cc fat32-in-memory d-e2)))
   :hints
   (("goal"
-    :in-theory (e/d (d-e-clusterchain)
-                    (d-e-clusterchain-of-clear-clusterchain))
-    :use (:instance d-e-clusterchain-of-clear-clusterchain
+    :in-theory (e/d (d-e-cc)
+                    (d-e-cc-of-clear-cc))
+    :use (:instance d-e-cc-of-clear-cc
                     (d-e d-e2)
                     (masked-current-cluster (d-e-first-cluster d-e1))
                     (length (d-e-file-size d-e1))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-coincident-lemma-3
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-3
   (implies
    (and
     (d-e-directory-p
@@ -4662,7 +4662,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        (car path))))
     (equal
      (mv-nth
@@ -4671,7 +4671,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0)
     (<=
@@ -4683,7 +4683,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -4691,7 +4691,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (cadr path)))))
     (<
@@ -4702,7 +4702,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -4710,14 +4710,14 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (cadr path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (equal
     (mv-nth
      '1
-     (d-e-clusterchain-contents
+     (d-e-cc-contents
       fat32-in-memory
       (mv-nth
        '0
@@ -4725,7 +4725,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           '0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             '0
@@ -4733,7 +4733,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                '0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (car (cdr path))))))
     0))
@@ -4742,29 +4742,29 @@ Some (rather awful) testing forms are
     :in-theory
     (disable
      (:rewrite
-      d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-4))
+      d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-4))
     :use
     (:instance
      (:rewrite
-      d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-4)
+      d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-4)
      (filename (cadr path))
      (d-e-list
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          fat32-in-memory
          (mv-nth
           0
           (find-d-e
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
            (car path)))))))
      (fat32-in-memory fat32-in-memory)))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-coincident-lemma-7
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-7
   t
   :rule-classes
   ((:rewrite
@@ -4775,7 +4775,7 @@ Some (rather awful) testing forms are
           (not (intersectp-equal
                 x
                 (mv-nth 0
-                        (d-e-clusterchain fat32-in-memory d-e)))))
+                        (d-e-cc fat32-in-memory d-e)))))
      (not (member-equal (d-e-first-cluster d-e)
                         x)))
     :hints
@@ -4788,7 +4788,7 @@ Some (rather awful) testing forms are
                      (intersectp-equal x
                                        (cons (d-e-first-cluster d-e)
                                              y))))
-       (d-e-clusterchain fat32-in-memory d-e)
+       (d-e-cc fat32-in-memory d-e)
        (fat32-build-index-list (effective-fat fat32-in-memory)
                                (d-e-first-cluster d-e)
                                2097152 (cluster-size fat32-in-memory))
@@ -4807,17 +4807,17 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory d-e))
+                  (d-e-cc fat32-in-memory d-e))
           (make-list-ac
            (len (mv-nth 0
-                        (d-e-clusterchain fat32-in-memory d-e)))
+                        (d-e-cc fat32-in-memory d-e)))
            0 nil))))
        0)
       (non-free-index-listp x (effective-fat fat32-in-memory))
       (not (intersectp-equal
             x
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory d-e)))))
+                    (d-e-cc fat32-in-memory d-e)))))
      (not (member-equal (d-e-first-cluster d-e)
                         x)))
     :hints
@@ -4830,7 +4830,7 @@ Some (rather awful) testing forms are
                      (intersectp-equal x
                                        (cons (d-e-first-cluster d-e)
                                              y))))
-       (d-e-clusterchain fat32-in-memory d-e)
+       (d-e-cc fat32-in-memory d-e)
        (fat32-build-index-list (effective-fat fat32-in-memory)
                                (d-e-first-cluster d-e)
                                2097152 (cluster-size fat32-in-memory))
@@ -4839,7 +4839,7 @@ Some (rather awful) testing forms are
                                 x))))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-coincident-lemma-9
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-9
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (d-e-p d-e)
@@ -4862,7 +4862,7 @@ Some (rather awful) testing forms are
         (not (intersectp-equal
               x
               (mv-nth '0
-                      (d-e-clusterchain fat32-in-memory d-e)))))
+                      (d-e-cc fat32-in-memory d-e)))))
    (and
     (non-free-index-listp
      x
@@ -4876,7 +4876,7 @@ Some (rather awful) testing forms are
       x
       (mv-nth
        0
-       (d-e-clusterchain
+       (d-e-cc
         (mv-nth 0
                 (update-dir-contents fat32-in-memory
                                      (d-e-first-cluster d-e)
@@ -4898,48 +4898,48 @@ Some (rather awful) testing forms are
      (:with intersectp-is-commutative
             (intersectp-equal
              (mv-nth '0
-                     (d-e-clusterchain fat32-in-memory d-e))
+                     (d-e-cc fat32-in-memory d-e))
              x))
      (:free (y)
             (intersectp-equal (cons (d-e-first-cluster d-e) y)
                               x)))
     :cases
     ((equal (mv-nth '1
-                    (d-e-clusterchain-contents fat32-in-memory d-e))
+                    (d-e-cc-contents fat32-in-memory d-e))
             '0)))))
 
 ;; Nice!
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-coincident-lemma-8
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-8
   (implies
    (equal (mv-nth 1
-                  (d-e-clusterchain-contents fat32-in-memory d-e))
+                  (d-e-cc-contents fat32-in-memory d-e))
           0)
    (consp (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory d-e))))
+                  (d-e-cc fat32-in-memory d-e))))
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (enable d-e-clusterchain-contents
-                       d-e-clusterchain
-                       get-clusterchain-contents
+    :in-theory (enable d-e-cc-contents
+                       d-e-cc
+                       get-cc-contents
                        fat32-build-index-list)
     :expand ((fat32-build-index-list (effective-fat fat32-in-memory)
                                      (d-e-first-cluster d-e)
                                      2097152 (cluster-size fat32-in-memory))
-             (get-clusterchain-contents fat32-in-memory
+             (get-cc-contents fat32-in-memory
                                         (d-e-first-cluster d-e)
                                         2097152)
              (fat32-build-index-list (effective-fat fat32-in-memory)
                                      (d-e-first-cluster d-e)
                                      (d-e-file-size d-e)
                                      (cluster-size fat32-in-memory))
-             (get-clusterchain-contents fat32-in-memory
+             (get-cc-contents fat32-in-memory
                                         (d-e-first-cluster d-e)
                                         (d-e-file-size d-e))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-remove-file-coincident
+  d-e-cc-contents-of-lofat-remove-file-coincident
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -4947,7 +4947,7 @@ Some (rather awful) testing forms are
     (d-e-directory-p d-e)
     (fat32-filename-list-p path)
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (equal
      (mv-nth
@@ -4956,22 +4956,22 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth 0
              (lofat-remove-file fat32-in-memory d-e path))
      d-e)
@@ -4982,7 +4982,7 @@ Some (rather awful) testing forms are
                          (lofat-remove-file fat32-in-memory d-e path))
                  0))
          (consp (cdr path)))
-        (d-e-clusterchain-contents fat32-in-memory d-e)
+        (d-e-cc-contents fat32-in-memory d-e)
       (mv
        (implode
         (append
@@ -4990,7 +4990,7 @@ Some (rather awful) testing forms are
           (clear-d-e
            (string=>nats
             (mv-nth 0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
            (car path)))
          (make-list-ac
           (+
@@ -4999,7 +4999,7 @@ Some (rather awful) testing forms are
              (explode
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))))
+               (d-e-cc-contents fat32-in-memory d-e)))))
            (*
             (cluster-size fat32-in-memory)
             (len
@@ -5009,7 +5009,7 @@ Some (rather awful) testing forms are
                 (string=>nats
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
                 (car path)))
               (cluster-size fat32-in-memory)))))
           (code-char 0)
@@ -5038,14 +5038,14 @@ Some (rather awful) testing forms are
        (len
         (explode
          (mv-nth 0
-                 (get-clusterchain-contents fat32-in-memory
+                 (get-cc-contents fat32-in-memory
                                             masked-current-cluster length))))
        y)
       0))
     :hints
-    (("goal" :induct (get-clusterchain-contents fat32-in-memory
+    (("goal" :induct (get-cc-contents fat32-in-memory
                                                 masked-current-cluster length)
-      :in-theory (enable get-clusterchain-contents
+      :in-theory (enable get-cc-contents
                          nfix mod-sum-cases)))))
 
 (defthm
@@ -5061,10 +5061,10 @@ Some (rather awful) testing forms are
      (len
       (explode
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory d-e))))
+               (d-e-cc-contents fat32-in-memory d-e))))
      y)
     0))
-  :hints (("goal" :in-theory (enable d-e-clusterchain-contents))))
+  :hints (("goal" :in-theory (enable d-e-cc-contents))))
 
 (defthm
   root-d-e-list-of-lofat-remove-file-coincident
@@ -5210,7 +5210,7 @@ Some (rather awful) testing forms are
                                    d-e-list entry-limit))))
 
 (defthm
-  d-e-clusterchain-of-lofat-remove-file-disjoint
+  d-e-cc-of-lofat-remove-file-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -5231,45 +5231,45 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (not (intersectp-equal
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory root-d-e))
+                  (d-e-cc fat32-in-memory root-d-e))
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory d-e))))
+                  (d-e-cc fat32-in-memory d-e))))
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0))
    (equal
-    (d-e-clusterchain
+    (d-e-cc
      (mv-nth 0
              (lofat-remove-file fat32-in-memory root-d-e path))
      d-e)
-    (d-e-clusterchain fat32-in-memory d-e)))
+    (d-e-cc fat32-in-memory d-e)))
   :hints (("goal" :induct (lofat-remove-file fat32-in-memory
                                              root-d-e path))))
 
@@ -5304,7 +5304,7 @@ Some (rather awful) testing forms are
     (useful-d-e-list-p d-e-list)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                     (+ -1 entry-limit))))
@@ -5314,7 +5314,7 @@ Some (rather awful) testing forms are
    (not
     (intersectp-equal
      (mv-nth '0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth
       '0
       (fat32-build-index-list
@@ -5324,7 +5324,7 @@ Some (rather awful) testing forms are
                                                     filename)))
        '2097152
        (cluster-size fat32-in-memory))))))
-  :hints (("goal" :in-theory (e/d (d-e-clusterchain)))))
+  :hints (("goal" :in-theory (e/d (d-e-cc)))))
 
 ;; remove-hyps says (for now) that these hypotheses are minimal.
 (defthm
@@ -5350,7 +5350,7 @@ Some (rather awful) testing forms are
    (not-intersectp-list
     (mv-nth
      0
-     (d-e-clusterchain fat32-in-memory
+     (d-e-cc fat32-in-memory
                            (mv-nth 0
                                    (find-d-e d-e-list filename))))
     l))
@@ -5387,7 +5387,7 @@ Some (rather awful) testing forms are
       l))
     :hints
     (("goal"
-      :in-theory (e/d (d-e-clusterchain)))))
+      :in-theory (e/d (d-e-cc)))))
    (:rewrite
     :corollary
     (implies
@@ -5421,7 +5421,7 @@ Some (rather awful) testing forms are
       l))
     :hints
     (("goal"
-      :in-theory (e/d (d-e-clusterchain)))))))
+      :in-theory (e/d (d-e-cc)))))))
 
 (defthm
   lofat-to-hifat-helper-after-delete-and-clear-2-lemma-1
@@ -5445,7 +5445,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (string=>nats (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory (car d-e-list)))))
           (+ -1 entry-limit)))))))
     (lofat-fs-p fat32-in-memory)
@@ -5465,13 +5465,13 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (string=>nats (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory (car d-e-list)))))
             (+ -1 entry-limit))))))))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -5486,7 +5486,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (string=>nats (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory (car d-e-list)))))
             (+ -1 entry-limit)))))))))
     (not-intersectp-list
@@ -5505,7 +5505,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (string=>nats (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory (car d-e-list)))))
             (+ -1 entry-limit))))))))))
    (not-intersectp-list
@@ -5514,14 +5514,14 @@ Some (rather awful) testing forms are
      2
      (lofat-to-hifat-helper
       (mv-nth 0
-              (clear-clusterchain fat32-in-memory
+              (clear-cc fat32-in-memory
                                   (d-e-first-cluster (car d-e-list))
                                   *ms-max-dir-size*))
       (cdr d-e-list)
       entry-limit))))
   :hints
   (("goal"
-    :in-theory (enable d-e-clusterchain nfix)
+    :in-theory (enable d-e-cc nfix)
     :use
     ((:theorem
       (implies
@@ -5544,7 +5544,7 @@ Some (rather awful) testing forms are
                  (make-d-e-list
                   (string=>nats
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list)))))
                  (+ -1 entry-limit))))))))))
         (<=
@@ -5559,7 +5559,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (string=>nats (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory (car d-e-list)))))
               (+ -1 entry-limit)))))))
         (useful-d-e-list-p d-e-list))
@@ -5568,7 +5568,7 @@ Some (rather awful) testing forms are
          0
          (lofat-to-hifat-helper
           (mv-nth 0
-                  (clear-clusterchain fat32-in-memory
+                  (clear-cc fat32-in-memory
                                       (d-e-first-cluster (car d-e-list))
                                       2097152))
           (cdr d-e-list)
@@ -5587,7 +5587,7 @@ Some (rather awful) testing forms are
                fat32-in-memory
                (make-d-e-list
                 (string=>nats (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory (car d-e-list)))))
                (+ -1 entry-limit)))))))))))
      (:instance
@@ -5605,7 +5605,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (string=>nats (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory (car d-e-list)))))
             (+ -1 entry-limit))))))))))))
 
@@ -5631,7 +5631,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (string=>nats (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory (car d-e-list)))))
           (+ -1 entry-limit)))))))
     (lofat-fs-p fat32-in-memory)
@@ -5651,13 +5651,13 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (string=>nats (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory (car d-e-list)))))
             (+ -1 entry-limit))))))))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -5672,7 +5672,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (string=>nats (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory (car d-e-list)))))
             (+ -1 entry-limit))))))))))
    (equal
@@ -5680,7 +5680,7 @@ Some (rather awful) testing forms are
      3
      (lofat-to-hifat-helper
       (mv-nth 0
-              (clear-clusterchain fat32-in-memory
+              (clear-cc fat32-in-memory
                                   (d-e-first-cluster (car d-e-list))
                                   2097152))
       (cdr d-e-list)
@@ -5688,7 +5688,7 @@ Some (rather awful) testing forms are
     0))
   :hints
   (("goal"
-    :in-theory (enable d-e-clusterchain nfix)
+    :in-theory (enable d-e-cc nfix)
     :use
     (:instance
      (:rewrite lofat-to-hifat-helper-correctness-4)
@@ -5705,7 +5705,7 @@ Some (rather awful) testing forms are
            fat32-in-memory
            (make-d-e-list
             (string=>nats (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory (car d-e-list)))))
            (+ -1 entry-limit)))))))))))
 
@@ -5738,7 +5738,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth 0
                   (find-d-e d-e-list filename)))))
@@ -5783,7 +5783,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (get-clusterchain-contents
+           (get-cc-contents
             fat32-in-memory
             (d-e-first-cluster
              (mv-nth 0 (find-d-e d-e-list filename)))
@@ -5791,7 +5791,7 @@ Some (rather awful) testing forms are
          entry-limit)))))
     :hints
     (("goal"
-      :in-theory (enable d-e-clusterchain-contents))))))
+      :in-theory (enable d-e-cc-contents))))))
 
 ;; Slightly better than lofat-to-hifat-helper-of-update-dir-contents
 (defthm
@@ -5810,7 +5810,7 @@ Some (rather awful) testing forms are
         (stringp dir-contents)
         (not-intersectp-list
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory root-d-e))
+                 (d-e-cc fat32-in-memory root-d-e))
          (mv-nth 2
                  (lofat-to-hifat-helper fat32-in-memory
                                         d-e-list entry-limit))))
@@ -5825,12 +5825,12 @@ Some (rather awful) testing forms are
                            d-e-list entry-limit)))
   :hints
   (("goal"
-    :in-theory (e/d (d-e-clusterchain)
+    :in-theory (e/d (d-e-cc)
                     (lofat-to-hifat-helper-of-update-dir-contents))
     :use (:instance lofat-to-hifat-helper-of-update-dir-contents
                     (first-cluster (d-e-first-cluster root-d-e))))))
 
-;; Slightly better than lofat-to-hifat-helper-of-clear-clusterchain
+;; Slightly better than lofat-to-hifat-helper-of-clear-cc
 (defthm
   lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-3
   (implies
@@ -5848,13 +5848,13 @@ Some (rather awful) testing forms are
                0)
         (not-intersectp-list
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory d-e))
+                 (d-e-cc fat32-in-memory d-e))
          (mv-nth 2
                  (lofat-to-hifat-helper fat32-in-memory
                                         d-e-list entry-limit))))
    (equal (lofat-to-hifat-helper
            (mv-nth 0
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        (d-e-first-cluster d-e)
                                        (d-e-file-size d-e)))
            d-e-list entry-limit)
@@ -5862,13 +5862,13 @@ Some (rather awful) testing forms are
                                  d-e-list entry-limit)))
   :hints
   (("goal"
-    :in-theory (e/d (d-e-clusterchain)
-                    (lofat-to-hifat-helper-of-clear-clusterchain))
-    :use (:instance lofat-to-hifat-helper-of-clear-clusterchain
+    :in-theory (e/d (d-e-cc)
+                    (lofat-to-hifat-helper-of-clear-cc))
+    :use (:instance lofat-to-hifat-helper-of-clear-cc
                     (masked-current-cluster (d-e-first-cluster d-e))
                     (length (d-e-file-size d-e))))))
 
-;; Slightly better than lofat-to-hifat-helper-of-clear-clusterchain
+;; Slightly better than lofat-to-hifat-helper-of-clear-cc
 (defthm
   lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-4
   (implies
@@ -5886,13 +5886,13 @@ Some (rather awful) testing forms are
                0)
         (not-intersectp-list
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory d-e))
+                 (d-e-cc fat32-in-memory d-e))
          (mv-nth 2
                  (lofat-to-hifat-helper fat32-in-memory
                                         d-e-list entry-limit))))
    (equal (lofat-to-hifat-helper
            (mv-nth 0
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        (d-e-first-cluster d-e)
                                        *ms-max-dir-size*))
            d-e-list entry-limit)
@@ -5900,9 +5900,9 @@ Some (rather awful) testing forms are
                                  d-e-list entry-limit)))
   :hints
   (("goal"
-    :in-theory (e/d (d-e-clusterchain)
-                    (lofat-to-hifat-helper-of-clear-clusterchain))
-    :use (:instance lofat-to-hifat-helper-of-clear-clusterchain
+    :in-theory (e/d (d-e-cc)
+                    (lofat-to-hifat-helper-of-clear-cc))
+    :use (:instance lofat-to-hifat-helper-of-clear-cc
                     (masked-current-cluster (d-e-first-cluster d-e))
                     (length *ms-max-dir-size*)))))
 
@@ -5930,23 +5930,23 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit2))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit2)))
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
                                     d-e-list entry-limit1)))
@@ -5959,7 +5959,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         entry-limit2))
       (mv-nth 2
               (lofat-to-hifat-helper fat32-in-memory
@@ -5986,7 +5986,7 @@ Some (rather awful) testing forms are
         *ms-max-dir-size*)
     (equal
      (mv-nth 1
-             (get-clusterchain-contents fat32-in-memory
+             (get-cc-contents fat32-in-memory
                                         first-cluster *ms-max-dir-size*))
      0)
     (equal (mv-nth 1
@@ -6008,13 +6008,13 @@ Some (rather awful) testing forms are
     :in-theory
     (e/d
      (update-dir-contents
-      get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3)
+      get-cc-contents-of-update-dir-contents-coincident-lemma-3)
      ((:rewrite nth-of-set-indices-in-fa-table-when-member)))
     :expand
     ((fat32-build-index-list (effective-fat fat32-in-memory)
                              first-cluster *ms-max-dir-size*
                              (cluster-size fat32-in-memory))
-     (get-clusterchain-contents fat32-in-memory first-cluster 2097152))
+     (get-cc-contents fat32-in-memory first-cluster 2097152))
     :use
     ((:instance
       (:rewrite nth-of-set-indices-in-fa-table-when-member)
@@ -6033,7 +6033,7 @@ Some (rather awful) testing forms are
       (n first-cluster))))))
 
 (defthm
-  no-duplicatesp-of-d-e-clusterchain-of-update-dir-contents-coincident
+  no-duplicatesp-of-d-e-cc-of-update-dir-contents-coincident
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -6042,7 +6042,7 @@ Some (rather awful) testing forms are
     (<= (len (explode dir-contents))
         *ms-max-dir-size*)
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (equal (mv-nth 1
                    (update-dir-contents fat32-in-memory
@@ -6053,14 +6053,14 @@ Some (rather awful) testing forms are
     (d-e-directory-p d-e))
    (no-duplicatesp-equal
     (mv-nth 0
-            (d-e-clusterchain
+            (d-e-cc
              (mv-nth 0
                      (update-dir-contents fat32-in-memory
                                           first-cluster dir-contents))
              d-e))))
   :hints
   (("goal"
-    :in-theory (e/d (d-e-clusterchain d-e-clusterchain-contents)
+    :in-theory (e/d (d-e-cc d-e-cc-contents)
                     (no-duplicatesp-of-fat32-build-index-list-of-effective-fat-of-update-dir-contents))
     :use
     no-duplicatesp-of-fat32-build-index-list-of-effective-fat-of-update-dir-contents)))
@@ -6087,7 +6087,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e d-e-list filename)))))
@@ -6101,7 +6101,7 @@ Some (rather awful) testing forms are
      (member-intersectp-is-commutative
       (:rewrite nth-of-effective-fat)
       (:rewrite
-       d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-6)
+       d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-6)
       (:rewrite take-of-len-free)))
     :do-not-induct t
     :induct (mv (mv-nth 0
@@ -6126,7 +6126,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory (car d-e-list))))
               (+ -1 entry-limit))))))))
        (mv-nth
@@ -6134,7 +6134,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory (car d-e-list))))
          (+ -1 entry-limit)))))))))
 
@@ -6215,20 +6215,20 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
            (find-d-e
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
             (fat32-filename-fix (car path)))))))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -6236,42 +6236,42 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
            (find-d-e
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
             (fat32-filename-fix (car path)))))))
        entry-limit)))
     (not
      (intersectp-equal
       (mv-nth
        0
-       (d-e-clusterchain
+       (d-e-cc
         fat32-in-memory
         (mv-nth
          0
          (find-d-e
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
           (fat32-filename-fix (car path))))))
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory d-e))))
+              (d-e-cc fat32-in-memory d-e))))
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         0
         (find-d-e
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
          (fat32-filename-fix (car path))))))
      (mv-nth
       2
@@ -6280,24 +6280,24 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
            (find-d-e
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
             (fat32-filename-fix (car path)))))))
        entry-limit)))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0))
-   (equal (d-e-clusterchain
+   (equal (d-e-cc
            (mv-nth 0
                    (lofat-remove-file fat32-in-memory d-e path))
            d-e)
-          (d-e-clusterchain fat32-in-memory d-e))))
+          (d-e-cc fat32-in-memory d-e))))
 
 ;; The hypotheses are minimal.
 (defthm
@@ -6318,7 +6318,7 @@ Some (rather awful) testing forms are
    (not-intersectp-list
     (mv-nth
      '0
-     (d-e-clusterchain fat32-in-memory
+     (d-e-cc fat32-in-memory
                            (mv-nth '0
                                    (find-d-e d-e-list filename))))
     (mv-nth '2
@@ -6356,16 +6356,16 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                     (+ -1 entry-limit)))))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth 0
              (lofat-remove-file fat32-in-memory
                                 (mv-nth 0
@@ -6373,15 +6373,15 @@ Some (rather awful) testing forms are
                                                       filename))
                                 path))
      (car d-e-list))
-    (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+    (d-e-cc-contents fat32-in-memory (car d-e-list))))
   :hints
   (("goal"
     :in-theory
     (disable
-     (:rewrite d-e-clusterchain-contents-of-lofat-remove-file-disjoint))
+     (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-contents-of-lofat-remove-file-disjoint)
+     (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint)
      (d-e (car d-e-list))
      (root-d-e (mv-nth 0
                            (find-d-e (cdr d-e-list)
@@ -6406,7 +6406,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -6423,7 +6423,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        (+ -1 entry-limit)))
      0)
     (not
@@ -6435,7 +6435,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))
         (+ -1 entry-limit)))
       (mv-nth
        2
@@ -6451,7 +6451,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit)))))))))))
    (equal
@@ -6465,14 +6465,14 @@ Some (rather awful) testing forms are
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+       (d-e-cc-contents fat32-in-memory (car d-e-list))))
      (+ -1 entry-limit))
     (lofat-to-hifat-helper
      fat32-in-memory
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+       (d-e-cc-contents fat32-in-memory (car d-e-list))))
      (+ -1 entry-limit))))
   :hints
   (("goal"
@@ -6486,7 +6486,7 @@ Some (rather awful) testing forms are
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))))
+        (d-e-cc-contents fat32-in-memory (car d-e-list)))))
      (path path)
      (root-d-e (mv-nth 0
                            (find-d-e (cdr d-e-list)
@@ -6501,7 +6501,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))))))))))
 
@@ -6523,7 +6523,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -6541,7 +6541,7 @@ Some (rather awful) testing forms are
                                       path))
            0))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth 0
              (lofat-remove-file fat32-in-memory
                                 (mv-nth 0
@@ -6553,7 +6553,7 @@ Some (rather awful) testing forms are
                            filename)))
     (if
         (consp (cdr path))
-        (d-e-clusterchain-contents fat32-in-memory
+        (d-e-cc-contents fat32-in-memory
                                        (mv-nth 0
                                                (find-d-e (cdr d-e-list)
                                                              filename)))
@@ -6563,7 +6563,7 @@ Some (rather awful) testing forms are
          (nats=>chars
           (clear-d-e
            (string=>nats (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -6573,7 +6573,7 @@ Some (rather awful) testing forms are
           (+
            (-
             (len (explode (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory
                                    (mv-nth 0
                                            (find-d-e (cdr d-e-list)
@@ -6586,7 +6586,7 @@ Some (rather awful) testing forms are
                (clear-d-e
                 (string=>nats
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -6599,10 +6599,10 @@ Some (rather awful) testing forms are
   (("goal"
     :in-theory
     (disable
-     (:rewrite d-e-clusterchain-contents-of-lofat-remove-file-coincident))
+     (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-contents-of-lofat-remove-file-coincident)
+     (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
      (path path)
      (d-e (mv-nth 0
                       (find-d-e (cdr d-e-list)
@@ -6617,7 +6617,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))))))))))
 
@@ -6634,7 +6634,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (fat32-filename-list-p path)
@@ -6644,10 +6644,10 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path)))))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth
       0
       (lofat-remove-file
@@ -6658,7 +6658,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))
        (cdr path)))
      (mv-nth
@@ -6666,7 +6666,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path))))
     (if
      (or
@@ -6682,12 +6682,12 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))
           (cdr path)))
         0))
       (consp (cddr path)))
-     (d-e-clusterchain-contents
+     (d-e-cc-contents
       fat32-in-memory
       (mv-nth
        0
@@ -6695,7 +6695,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (mv
       (implode
@@ -6705,13 +6705,13 @@ Some (rather awful) testing forms are
           (string=>nats
            (mv-nth
             0
-            (d-e-clusterchain-contents
+            (d-e-cc-contents
              fat32-in-memory
              (mv-nth
               0
               (find-d-e
                (make-d-e-list (mv-nth 0
-                                          (d-e-clusterchain-contents
+                                          (d-e-cc-contents
                                            fat32-in-memory root-d-e)))
                (car path))))))
           (cadr path)))
@@ -6722,13 +6722,13 @@ Some (rather awful) testing forms are
             (explode
              (mv-nth
               0
-              (d-e-clusterchain-contents
+              (d-e-cc-contents
                fat32-in-memory
                (mv-nth 0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))))))
           (*
@@ -6740,14 +6740,14 @@ Some (rather awful) testing forms are
                (string=>nats
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth
                    0
                    (find-d-e
                     (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory root-d-e)))
                     (car path))))))
                (cadr path)))
@@ -6759,10 +6759,10 @@ Some (rather awful) testing forms are
   (("goal"
     :in-theory
     (disable
-     (:rewrite d-e-clusterchain-contents-of-lofat-remove-file-coincident))
+     (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-contents-of-lofat-remove-file-coincident)
+     (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
      (path (cdr path))
      (d-e
       (mv-nth
@@ -6771,7 +6771,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))))))
 
 (defthm
@@ -6792,7 +6792,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -6813,7 +6813,7 @@ Some (rather awful) testing forms are
          (nats=>string
           (clear-d-e
            (string=>nats (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -6829,7 +6829,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      (put-assoc-equal
@@ -6846,7 +6846,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e (cdr d-e-list)
@@ -6861,7 +6861,7 @@ Some (rather awful) testing forms are
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory (car d-e-list))))
                (+ -1 entry-limit))))))))))
       (mv-nth
@@ -6878,7 +6878,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit))))))))))
     (useful-d-e-list-p d-e-list))
@@ -6896,7 +6896,7 @@ Some (rather awful) testing forms are
         (nats=>string
          (clear-d-e
           (string=>nats (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e (cdr d-e-list)
@@ -6912,7 +6912,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit))))))))
     (put-assoc-equal
@@ -6928,7 +6928,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -6947,7 +6947,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))))
   :hints
@@ -6966,13 +6966,13 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))))))
      (entry-limit2 entry-limit)
      (d-e-list (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory
                              (mv-nth 0
                                      (find-d-e (cdr d-e-list)
@@ -7004,7 +7004,7 @@ Some (rather awful) testing forms are
          (nats=>string
           (clear-d-e
            (string=>nats (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -7026,7 +7026,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e (cdr d-e-list)
@@ -7050,7 +7050,7 @@ Some (rather awful) testing forms are
         (nats=>string
          (clear-d-e
           (string=>nats (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e (cdr d-e-list)
@@ -7071,7 +7071,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -7084,7 +7084,7 @@ Some (rather awful) testing forms are
   (("goal"
     :in-theory
     (enable
-     d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8
+     d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-8
      nfix)
     :use
     (:instance
@@ -7093,7 +7093,7 @@ Some (rather awful) testing forms are
      (entry-limit2 entry-limit)
      (d-e-list
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -7127,7 +7127,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -7149,7 +7149,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -7162,7 +7162,7 @@ Some (rather awful) testing forms are
   (("goal"
     :in-theory
     (enable
-     d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8
+     d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-8
      nfix)
     :use
     (:instance
@@ -7171,7 +7171,7 @@ Some (rather awful) testing forms are
      (entry-limit2 entry-limit)
      (d-e-list
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -7196,7 +7196,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -7219,7 +7219,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e (cdr d-e-list)
@@ -7234,7 +7234,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory (car d-e-list))))
               (+ -1 entry-limit))))))))))
      (mv-nth
@@ -7250,7 +7250,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))
     (put-assoc-equal
@@ -7266,7 +7266,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -7285,7 +7285,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))))
   :hints
@@ -7303,13 +7303,13 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))))))
      (entry-limit2 entry-limit)
      (d-e-list
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -7335,7 +7335,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -7347,7 +7347,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -7357,23 +7357,23 @@ Some (rather awful) testing forms are
     (useful-d-e-list-p d-e-list)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                     (+ -1 entry-limit)))))
    (not
     (intersectp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth 0
                (find-d-e
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -7384,20 +7384,20 @@ Some (rather awful) testing forms are
     :use
     ((:instance
       (:rewrite
-       get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
+       get-cc-contents-of-lofat-remove-file-coincident-lemma-5
        . 1)
       (entry-limit (- entry-limit 1))
       (filename filename2)
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
                                                     filename1))))))
       (fat32-in-memory fat32-in-memory)
       (x (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory
+                 (d-e-cc fat32-in-memory
                                        (car d-e-list)))))))))
 
 (defthm
@@ -7418,7 +7418,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -7430,7 +7430,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -7441,19 +7441,19 @@ Some (rather awful) testing forms are
    (not
     (intersectp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (mv-nth 0
                                            (find-d-e (cdr d-e-list)
                                                          filename1))))
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth 0
                (find-d-e
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -7464,25 +7464,25 @@ Some (rather awful) testing forms are
     :in-theory
     (disable
      (:rewrite
-      get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
+      get-cc-contents-of-lofat-remove-file-coincident-lemma-5
       . 1))
     :use
     (:instance
      (:rewrite
-      get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
+      get-cc-contents-of-lofat-remove-file-coincident-lemma-5
       . 1)
      (entry-limit (- entry-limit 1))
      (filename filename2)
      (d-e-list
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
                                                         filename1))))))
      (fat32-in-memory fat32-in-memory)
      (x (mv-nth 0
-                (d-e-clusterchain fat32-in-memory
+                (d-e-cc fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             filename1)))))))))
@@ -7501,7 +7501,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        (+ -1 entry-limit)))
      0)
     (equal
@@ -7518,13 +7518,13 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -7538,7 +7538,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))
     (equal
@@ -7548,12 +7548,12 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        filename2))
      0))
    (not-intersectp-list
     (mv-nth 0
-            (d-e-clusterchain fat32-in-memory (car d-e-list)))
+            (d-e-cc fat32-in-memory (car d-e-list)))
     (mv-nth
      2
      (lofat-to-hifat-helper
@@ -7569,7 +7569,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))))
   :hints
@@ -7601,7 +7601,7 @@ Some (rather awful) testing forms are
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory (car d-e-list))))
                (+ -1 entry-limit))))))))))
       (filename filename2)
@@ -7609,7 +7609,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list)))))
       (fat32-in-memory fat32-in-memory))
      (:instance
       (:rewrite lofat-to-hifat-helper-correctness-4)
@@ -7623,7 +7623,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (entry-limit2
@@ -7639,7 +7639,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit))))))))
       (d-e-list (cdr d-e-list))
@@ -7656,7 +7656,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (d-e-list (cdr d-e-list))
@@ -7676,7 +7676,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        (+ -1 entry-limit)))
      0)
     (equal
@@ -7693,7 +7693,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -7704,7 +7704,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        filename2))
      0))
    (equal
@@ -7723,7 +7723,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))
     (mv-nth
@@ -7739,7 +7739,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit))))))))))
   :hints
@@ -7762,7 +7762,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit))))))))
       (entry-limit1
@@ -7775,7 +7775,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (d-e-list (cdr d-e-list)))
@@ -7791,7 +7791,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (d-e-list (cdr d-e-list)))))))
@@ -7820,11 +7820,11 @@ Some (rather awful) testing forms are
         (non-free-index-list-listp x (effective-fat fat32-in-memory))
         (not-intersectp-list
          (mv-nth '0
-                 (d-e-clusterchain fat32-in-memory d-e))
+                 (d-e-cc fat32-in-memory d-e))
          x))
    (not-intersectp-list
     (mv-nth 0
-            (d-e-clusterchain
+            (d-e-cc
              (mv-nth 0
                      (update-dir-contents fat32-in-memory
                                           (d-e-first-cluster d-e)
@@ -7848,7 +7848,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        (+ -1 entry-limit)))
      0)
     (equal
@@ -7858,7 +7858,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        filename2))
      0)
     (<=
@@ -7874,7 +7874,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))))))))
    (<=
@@ -7892,7 +7892,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))
     (+
@@ -7906,7 +7906,7 @@ Some (rather awful) testing forms are
                  fat32-in-memory
                  (make-d-e-list
                   (mv-nth 0
-                          (d-e-clusterchain-contents
+                          (d-e-cc-contents
                            fat32-in-memory (car d-e-list))))
                  (+ -1 entry-limit)))))))))
   :hints
@@ -7925,7 +7925,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))))))
      (d-e-list (cdr d-e-list))
@@ -7945,7 +7945,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        (+ -1 entry-limit)))
      0)
     (equal
@@ -7955,7 +7955,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        filename2))
      0))
    (>=
@@ -7972,7 +7972,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth '0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (binary-+ '-1 entry-limit))))))))
     '0))
@@ -8275,7 +8275,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -8289,7 +8289,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -8301,7 +8301,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -8318,7 +8318,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))
         (+ -1 entry-limit)))
       (mv-nth
        2
@@ -8334,19 +8334,19 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit)))))))))))
    (not-intersectp-list
     (mv-nth
      0
-     (d-e-clusterchain
+     (d-e-cc
       fat32-in-memory
       (mv-nth 0
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -8359,7 +8359,7 @@ Some (rather awful) testing forms are
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+        (d-e-cc-contents fat32-in-memory (car d-e-list))))
       (+ -1 entry-limit)))))
   :hints
   (("goal"
@@ -8377,7 +8377,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))))))
      (l
@@ -8388,12 +8388,12 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))
         (+ -1 entry-limit))))
      (filename filename2)
      (d-e-list
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -8428,7 +8428,7 @@ Some (rather awful) testing forms are
         (explode
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory d-e)))))))
+          (d-e-cc-contents fat32-in-memory d-e)))))))
     :hints (("goal" :in-theory
              (disable
               root-d-e-list-of-lofat-remove-file-coincident-lemma-2
@@ -8454,7 +8454,7 @@ Some (rather awful) testing forms are
         (subdir-contents-p
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list)))))
        (subdir-contents-p
         (implode
          (append
@@ -8463,12 +8463,12 @@ Some (rather awful) testing forms are
             (string=>nats
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+              (d-e-cc-contents fat32-in-memory (car d-e-list))))
             filename2))
           (make-list-ac
            (+
             (- (len (explode (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory (car d-e-list))))))
             (*
              (cluster-size fat32-in-memory)
@@ -8477,7 +8477,7 @@ Some (rather awful) testing forms are
                (nats=>string
                 (clear-d-e
                  (string=>nats (mv-nth 0
-                                       (d-e-clusterchain-contents
+                                       (d-e-cc-contents
                                         fat32-in-memory (car d-e-list))))
                  filename2))
                (cluster-size fat32-in-memory)))))
@@ -8490,7 +8490,7 @@ Some (rather awful) testing forms are
          (n
           (+
            (- (len (explode (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory (car d-e-list))))))
            (*
             (cluster-size fat32-in-memory)
@@ -8499,7 +8499,7 @@ Some (rather awful) testing forms are
               (nats=>string
                (clear-d-e
                 (string=>nats (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory (car d-e-list))))
                 filename2))
               (cluster-size fat32-in-memory))))))
@@ -8507,7 +8507,7 @@ Some (rather awful) testing forms are
          (dir-contents
           (string=>nats
            (mv-nth 0
-                   (d-e-clusterchain-contents fat32-in-memory
+                   (d-e-cc-contents fat32-in-memory
                                                   (car d-e-list)))))))))))
 
 (defthm
@@ -8545,7 +8545,7 @@ Some (rather awful) testing forms are
                           path))
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 fat32-in-memory
                 (mv-nth 0
                         (find-d-e d-e-list filename)))))
@@ -8556,7 +8556,7 @@ Some (rather awful) testing forms are
     :in-theory (disable (:rewrite lofat-find-file-correctness-1-lemma-6))
     :use
     ((:instance
-      (:rewrite d-e-clusterchain-contents-of-lofat-remove-file-coincident)
+      (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
       (path path)
       (d-e (mv-nth 0 (find-d-e d-e-list filename)))
       (fat32-in-memory fat32-in-memory))
@@ -8591,16 +8591,16 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                     (+ -1 entry-limit)))))
    (equal
-    (d-e-clusterchain
+    (d-e-cc
      (mv-nth 0
              (lofat-remove-file fat32-in-memory
                                 (mv-nth 0
@@ -8608,13 +8608,13 @@ Some (rather awful) testing forms are
                                                       filename))
                                 path))
      (car d-e-list))
-    (d-e-clusterchain fat32-in-memory (car d-e-list))))
+    (d-e-cc fat32-in-memory (car d-e-list))))
   :hints
   (("goal"
     :in-theory
-    (disable (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint))
+    (disable (:rewrite d-e-cc-of-lofat-remove-file-disjoint))
     :use
-    (:instance (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint)
+    (:instance (:rewrite d-e-cc-of-lofat-remove-file-disjoint)
                (d-e (car d-e-list))
                (entry-limit (+ -1 entry-limit))
                (root-d-e (mv-nth 0
@@ -8631,13 +8631,13 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        (car path))))
     (lofat-fs-p fat32-in-memory)
     (d-e-p d-e)
     (<= 2 (d-e-first-cluster d-e))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (equal
      (mv-nth
@@ -8646,27 +8646,27 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit)))
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))))
+             (d-e-cc fat32-in-memory d-e))))
    (no-duplicatesp-equal
     (mv-nth
      0
-     (d-e-clusterchain
+     (d-e-cc
       (mv-nth
        0
        (lofat-remove-file
@@ -8676,17 +8676,17 @@ Some (rather awful) testing forms are
          (find-d-e
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
           (car path)))
         (cdr path)))
       d-e))))
   :hints
   (("goal"
     :in-theory
-    (disable (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint))
+    (disable (:rewrite d-e-cc-of-lofat-remove-file-disjoint))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint)
+     (:rewrite d-e-cc-of-lofat-remove-file-disjoint)
      (d-e d-e)
      (path (cdr path))
      (root-d-e
@@ -8695,7 +8695,7 @@ Some (rather awful) testing forms are
        (find-d-e
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents fat32-in-memory d-e)))
+                 (d-e-cc-contents fat32-in-memory d-e)))
         (car path))))
      (fat32-in-memory fat32-in-memory)))))
 
@@ -8713,7 +8713,7 @@ Some (rather awful) testing forms are
           (count-of-clusters fat32-in-memory)))
     (fat32-filename-list-p path)
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (equal (mv-nth 1
                    (lofat-remove-file fat32-in-memory d-e path))
@@ -8725,26 +8725,26 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit)))
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))))
+             (d-e-cc fat32-in-memory d-e))))
    (no-duplicatesp-equal
     (mv-nth 0
-            (d-e-clusterchain
+            (d-e-cc
              (mv-nth 0
                      (lofat-remove-file fat32-in-memory d-e path))
              d-e)))))
@@ -8765,7 +8765,7 @@ Some (rather awful) testing forms are
                                   path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -8785,7 +8785,7 @@ Some (rather awful) testing forms are
                                    path))
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e (cdr d-e-list)
@@ -8797,7 +8797,7 @@ Some (rather awful) testing forms are
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -8814,7 +8814,7 @@ Some (rather awful) testing forms are
                                                        filename))
                                  path))
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -8831,7 +8831,7 @@ Some (rather awful) testing forms are
      (entry-limit2 (+ -1 entry-limit))
      (d-e-list
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -8860,7 +8860,7 @@ Some (rather awful) testing forms are
                                   path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -8892,7 +8892,7 @@ Some (rather awful) testing forms are
                                    path))
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e (cdr d-e-list)
@@ -8904,7 +8904,7 @@ Some (rather awful) testing forms are
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -8917,7 +8917,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e (cdr d-e-list)
@@ -8935,7 +8935,7 @@ Some (rather awful) testing forms are
                                   path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -8951,7 +8951,7 @@ Some (rather awful) testing forms are
       (entry-limit2 (+ -1 entry-limit))
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -8969,7 +8969,7 @@ Some (rather awful) testing forms are
       (entry-limit2 entry-limit)
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -8993,7 +8993,7 @@ Some (rather awful) testing forms are
                                   path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -9015,7 +9015,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -9035,7 +9035,7 @@ Some (rather awful) testing forms are
                                    path))
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e (cdr d-e-list)
@@ -9047,7 +9047,7 @@ Some (rather awful) testing forms are
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -9064,7 +9064,7 @@ Some (rather awful) testing forms are
                                                        filename))
                                  path))
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -9078,7 +9078,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit))))))))
     0))
@@ -9099,12 +9099,12 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -9128,7 +9128,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (name filename)
@@ -9146,13 +9146,13 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (entry-limit2 entry-limit)
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -9177,7 +9177,7 @@ Some (rather awful) testing forms are
                                   path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -9197,7 +9197,7 @@ Some (rather awful) testing forms are
                                    path))
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e (cdr d-e-list)
@@ -9209,7 +9209,7 @@ Some (rather awful) testing forms are
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -9226,7 +9226,7 @@ Some (rather awful) testing forms are
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents fat32-in-memory
+       (d-e-cc-contents fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             filename)))))
@@ -9241,7 +9241,7 @@ Some (rather awful) testing forms are
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents fat32-in-memory
+       (d-e-cc-contents fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             filename)))))
@@ -9255,7 +9255,7 @@ Some (rather awful) testing forms are
      (entry-limit2 (+ -1 entry-limit))
      (d-e-list
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -9281,7 +9281,7 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (equal
      (mv-nth
@@ -9291,12 +9291,12 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        (+ -1 entry-limit)))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -9304,24 +9304,24 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        (+ -1 entry-limit))))
     (fat32-filename-list-p path))
-   (equal (d-e-clusterchain
+   (equal (d-e-cc
            (mv-nth 0
                    (lofat-remove-file fat32-in-memory (car d-e-list)
                                       path))
            (car d-e-list))
-          (d-e-clusterchain fat32-in-memory (car d-e-list))))
+          (d-e-cc fat32-in-memory (car d-e-list))))
   :hints
   (("goal"
     :expand (lofat-remove-file fat32-in-memory (car d-e-list)
                                path)
     :in-theory
-    (disable (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint))
+    (disable (:rewrite d-e-cc-of-lofat-remove-file-disjoint))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint)
+     (:rewrite d-e-cc-of-lofat-remove-file-disjoint)
      (entry-limit (- entry-limit 1))
      (d-e (car d-e-list))
      (path (cdr path))
@@ -9332,7 +9332,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))
         (car path))))
      (fat32-in-memory fat32-in-memory)))))
 
@@ -9352,7 +9352,7 @@ Some (rather awful) testing forms are
                                   path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -9374,7 +9374,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -9394,7 +9394,7 @@ Some (rather awful) testing forms are
                                    path))
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e (cdr d-e-list)
@@ -9406,7 +9406,7 @@ Some (rather awful) testing forms are
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -9420,7 +9420,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -9434,7 +9434,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))
     (hifat-entry-count
@@ -9449,7 +9449,7 @@ Some (rather awful) testing forms are
                                   path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -9463,7 +9463,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))))
   :rule-classes :linear
@@ -9476,7 +9476,7 @@ Some (rather awful) testing forms are
       (entry-limit2 entry-limit)
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -9491,7 +9491,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      (:instance
@@ -9499,7 +9499,7 @@ Some (rather awful) testing forms are
       (entry-limit2 entry-limit)
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -9521,7 +9521,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      (:instance
@@ -9536,12 +9536,12 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -9568,7 +9568,7 @@ Some (rather awful) testing forms are
        (find-d-e
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e d-e-list filename1)))))
@@ -9580,7 +9580,7 @@ Some (rather awful) testing forms are
        (find-d-e
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e d-e-list filename1)))))
@@ -9597,7 +9597,7 @@ Some (rather awful) testing forms are
         (clear-d-e
          (string=>nats
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list filename1)))))
@@ -9609,7 +9609,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e d-e-list filename1)))))
@@ -9625,14 +9625,14 @@ Some (rather awful) testing forms are
    (not-intersectp-list
     (mv-nth
      0
-     (d-e-clusterchain
+     (d-e-cc
       fat32-in-memory
       (mv-nth
        0
        (find-d-e
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e d-e-list filename1)))))
@@ -9650,7 +9650,7 @@ Some (rather awful) testing forms are
          (clear-d-e
           (string=>nats
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e d-e-list filename1)))))
@@ -9676,7 +9676,7 @@ Some (rather awful) testing forms are
       (:rewrite lofat-to-hifat-helper-of-delete-d-e-2
                 . 1)
       (:rewrite
-       get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
+       get-cc-contents-of-lofat-remove-file-coincident-lemma-5
        . 2)
       (:rewrite consp-of-make-list-ac)
       (:definition delete-d-e)
@@ -9684,7 +9684,7 @@ Some (rather awful) testing forms are
       (:definition non-free-index-list-listp)
       (:definition remove-assoc-equal)
       (:linear make-clusters-correctness-2)
-      (:rewrite clear-clusterchain-reversibility-lemma-1)
+      (:rewrite clear-cc-reversibility-lemma-1)
       (:rewrite len-of-effective-fat)
       (:definition make-list-ac)
       (:rewrite subsetp-car-member)
@@ -9719,7 +9719,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        entry-limit))
      0)
     (<
@@ -9733,7 +9733,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))
         entry-limit)))
      (hifat-entry-count
       (mv-nth
@@ -9743,7 +9743,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))
         (+ -1 entry-limit))))))
    (equal
     (lofat-to-hifat-helper
@@ -9753,7 +9753,7 @@ Some (rather awful) testing forms are
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+       (d-e-cc-contents fat32-in-memory (car d-e-list))))
      (+ -1 entry-limit))
     (lofat-to-hifat-helper
      (mv-nth 0
@@ -9762,7 +9762,7 @@ Some (rather awful) testing forms are
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+       (d-e-cc-contents fat32-in-memory (car d-e-list))))
      entry-limit)))
   :hints
   (("goal"
@@ -9775,7 +9775,7 @@ Some (rather awful) testing forms are
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))))
+        (d-e-cc-contents fat32-in-memory (car d-e-list)))))
      (fat32-in-memory
       (mv-nth 0
               (lofat-remove-file fat32-in-memory (car d-e-list)
@@ -9797,7 +9797,7 @@ Some (rather awful) testing forms are
                                   path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -9819,7 +9819,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -9839,7 +9839,7 @@ Some (rather awful) testing forms are
                                    path))
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e (cdr d-e-list)
@@ -9851,7 +9851,7 @@ Some (rather awful) testing forms are
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e (cdr d-e-list)
@@ -9868,7 +9868,7 @@ Some (rather awful) testing forms are
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents fat32-in-memory
+       (d-e-cc-contents fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             filename)))))
@@ -9881,7 +9881,7 @@ Some (rather awful) testing forms are
                  fat32-in-memory
                  (make-d-e-list
                   (mv-nth 0
-                          (d-e-clusterchain-contents
+                          (d-e-cc-contents
                            fat32-in-memory (car d-e-list))))
                  (+ -1 entry-limit)))))))
     (lofat-to-hifat-helper
@@ -9894,7 +9894,7 @@ Some (rather awful) testing forms are
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents fat32-in-memory
+       (d-e-cc-contents fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             filename)))))
@@ -9915,12 +9915,12 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -9944,13 +9944,13 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (entry-limit2 entry-limit)
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -9968,12 +9968,12 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -9997,12 +9997,12 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (d-e-list (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e (cdr d-e-list)
@@ -10025,7 +10025,7 @@ Some (rather awful) testing forms are
                                   path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -10033,14 +10033,14 @@ Some (rather awful) testing forms are
        entry-limit))
      (cons
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory (car d-e-list)))
+              (d-e-cc fat32-in-memory (car d-e-list)))
       (append
        (mv-nth
         2
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory (car d-e-list))))
          (+ -1 entry-limit)))
        (mv-nth
@@ -10059,7 +10059,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory (car d-e-list))))
               (+ -1 entry-limit))))))))))))
    (not
@@ -10071,7 +10071,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        (+ -1 entry-limit)))
      (mv-nth
       2
@@ -10084,7 +10084,7 @@ Some (rather awful) testing forms are
                                   path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e (cdr d-e-list)
@@ -10099,14 +10099,14 @@ Some (rather awful) testing forms are
       (y
        (cons
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                (d-e-cc fat32-in-memory (car d-e-list)))
         (append
          (mv-nth 2
                  (lofat-to-hifat-helper
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))
          (mv-nth
@@ -10125,7 +10125,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory (car d-e-list))))
                 (+ -1 entry-limit)))))))))))
       (x
@@ -10140,7 +10140,7 @@ Some (rather awful) testing forms are
                                     path))
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e (cdr d-e-list)
@@ -10157,12 +10157,12 @@ Some (rather awful) testing forms are
                      (< (d-e-first-cluster root-d-e)
                         (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))))
         nil)
-       ((mv & error-code) (d-e-clusterchain-contents fat32-in-memory
+       ((mv & error-code) (d-e-cc-contents fat32-in-memory
                                                          root-d-e))
-       ((mv clusterchain &)
-        (d-e-clusterchain fat32-in-memory root-d-e)))
+       ((mv cc &)
+        (d-e-cc fat32-in-memory root-d-e)))
     (and (equal error-code 0)
-         (no-duplicatesp-equal clusterchain))))
+         (no-duplicatesp-equal cc))))
 
 (defthm good-root-d-e-p-of-pseudo-root-d-e
   (implies
@@ -10171,12 +10171,12 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory
+      (d-e-cc-contents fat32-in-memory
                                      (pseudo-root-d-e fat32-in-memory)))
      0)
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (pseudo-root-d-e fat32-in-memory)))))
    (good-root-d-e-p (pseudo-root-d-e fat32-in-memory)
                         fat32-in-memory))
@@ -10356,7 +10356,7 @@ Some (rather awful) testing forms are
    (good-root-d-e-p root-d-e fat32-in-memory)
    (equal
     (mv-nth 1
-            (d-e-clusterchain-contents fat32-in-memory root-d-e))
+            (d-e-cc-contents fat32-in-memory root-d-e))
     0))
   :hints (("goal" :do-not-induct t
            :in-theory (enable good-root-d-e-p))))
@@ -10367,7 +10367,7 @@ Some (rather awful) testing forms are
    (and (good-root-d-e-p root-d-e fat32-in-memory)
         (not (intersectp-equal
               (mv-nth 0
-                      (d-e-clusterchain fat32-in-memory root-d-e))
+                      (d-e-cc fat32-in-memory root-d-e))
               x)))
    (not
     (intersectp-equal
@@ -10377,7 +10377,7 @@ Some (rather awful) testing forms are
                                      (d-e-first-cluster root-d-e)
                                      '2097152
                                      (cluster-size fat32-in-memory))))))
-  :hints (("goal" :in-theory (enable d-e-clusterchain
+  :hints (("goal" :in-theory (enable d-e-cc
                                      good-root-d-e-p))))
 
 ;; This might work.
@@ -10408,13 +10408,13 @@ Some (rather awful) testing forms are
    (and
     (<= 2 (d-e-first-cluster d-e))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0))
    (member-equal (d-e-first-cluster d-e)
                  (mv-nth 0
-                         (d-e-clusterchain fat32-in-memory d-e))))
-  :hints (("goal" :in-theory (enable d-e-clusterchain
-                                     d-e-clusterchain-contents))))
+                         (d-e-cc fat32-in-memory d-e))))
+  :hints (("goal" :in-theory (enable d-e-cc
+                                     d-e-cc-contents))))
 
 (defthm
   lofat-remove-file-correctness-lemma-12
@@ -10423,10 +10423,10 @@ Some (rather awful) testing forms are
         (< (d-e-first-cluster d-e)
            (len (effective-fat fat32-in-memory))))
    (bounded-nat-listp (mv-nth '0
-                              (d-e-clusterchain fat32-in-memory d-e))
+                              (d-e-cc fat32-in-memory d-e))
                       (binary-+ '2
                                 (count-of-clusters fat32-in-memory))))
-  :hints (("goal" :in-theory (enable d-e-clusterchain nfix))))
+  :hints (("goal" :in-theory (enable d-e-cc nfix))))
 
 (defthm
   lofat-remove-file-correctness-lemma-13
@@ -10442,11 +10442,11 @@ Some (rather awful) testing forms are
        (d-e-first-cluster d-e))
     (stringp dir-contents)
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))))
+             (d-e-cc fat32-in-memory d-e))))
    (equal
     (mv-nth 1
             (update-dir-contents fat32-in-memory
@@ -10456,13 +10456,13 @@ Some (rather awful) testing forms are
      (and (< 0 (len (explode dir-contents)))
           (< (+ (count-free-clusters (effective-fat fat32-in-memory))
                 (len (mv-nth 0
-                             (d-e-clusterchain fat32-in-memory d-e))))
+                             (d-e-cc fat32-in-memory d-e))))
              (len (make-clusters dir-contents
                                  (cluster-size fat32-in-memory)))))
      *enospc* 0)))
   :hints (("goal" :in-theory (enable update-dir-contents
-                                     d-e-clusterchain-contents
-                                     clear-clusterchain-correctness-1))))
+                                     d-e-cc-contents
+                                     clear-cc-correctness-1))))
 
 (defthm lofat-place-file-correctness-lemma-145
   (implies (lofat-regular-file-p file)
@@ -10509,21 +10509,21 @@ Some (rather awful) testing forms are
    (and (<= *ms-first-data-cluster*
             (d-e-first-cluster d-e))
         (equal (mv-nth 1
-                       (d-e-clusterchain fat32-in-memory d-e))
+                       (d-e-cc fat32-in-memory d-e))
                0)
         (equal (fat32-entry-mask (nth key (effective-fat fat32-in-memory)))
                0))
    (not
     (member-equal key
                   (mv-nth 0
-                          (d-e-clusterchain fat32-in-memory d-e)))))
+                          (d-e-cc fat32-in-memory d-e)))))
   :hints
   (("goal"
     :in-theory (disable non-free-index-listp-correctness-2)
     :use
     (:instance non-free-index-listp-correctness-2
                (x (mv-nth 0
-                          (d-e-clusterchain fat32-in-memory d-e)))
+                          (d-e-cc fat32-in-memory d-e)))
                (fa-table (effective-fat fat32-in-memory))))))
 
 (defund
@@ -10630,22 +10630,22 @@ Some (rather awful) testing forms are
                                       masked-current-cluster
                                       length (cluster-size fat32-in-memory)))
       (mv-nth '0
-              (d-e-clusterchain fat32-in-memory d-e))))
+              (d-e-cc fat32-in-memory d-e))))
     (lofat-fs-p fat32-in-memory)
     (natp masked-current-cluster))
-   (equal (d-e-clusterchain-contents
+   (equal (d-e-cc-contents
            (mv-nth 0
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        masked-current-cluster length))
            d-e)
-          (d-e-clusterchain-contents fat32-in-memory d-e)))
+          (d-e-cc-contents fat32-in-memory d-e)))
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (d-e-clusterchain d-e-clusterchain-contents
-                                          get-clusterchain-contents
-                                          clear-clusterchain)
-                    (d-e-clusterchain-contents-of-clear-clusterchain)))))
+    :in-theory (e/d (d-e-cc d-e-cc-contents
+                                          get-cc-contents
+                                          clear-cc)
+                    (d-e-cc-contents-of-clear-cc)))))
 
 (defthm lofat-place-file-correctness-lemma-44
   (implies
@@ -10658,7 +10658,7 @@ Some (rather awful) testing forms are
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                     (+ -1 entry-limit))))
@@ -10666,13 +10666,13 @@ Some (rather awful) testing forms are
      (member-equal
       i
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory (car d-e-list)))))
+              (d-e-cc fat32-in-memory (car d-e-list)))))
     (useful-d-e-list-p d-e-list))
    (not
     (member-equal
      i
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (mv-nth 0
                                            (find-d-e (cdr d-e-list)
                                                          name)))))))
@@ -10683,9 +10683,9 @@ Some (rather awful) testing forms are
     (:instance
      intersectp-member (a i)
      (x (mv-nth 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                (d-e-cc fat32-in-memory (car d-e-list))))
      (y (mv-nth 0
-                (d-e-clusterchain fat32-in-memory
+                (d-e-cc fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             name)))))))))
@@ -10723,7 +10723,7 @@ Some (rather awful) testing forms are
       nat-listp-if-fat32-masked-entry-list-p)
      (:rewrite len-of-insert-d-e)
      (:rewrite
-      d-e-clusterchain-of-clear-clusterchain)
+      d-e-cc-of-clear-cc)
      (:rewrite place-contents-expansion-2)
      (:rewrite len-of-place-d-e)
      (:rewrite member-when-atom)
@@ -10731,15 +10731,15 @@ Some (rather awful) testing forms are
       useful-d-e-list-p-of-place-d-e)
      (:rewrite fat32-filename-p-correctness-1)
      (:rewrite
-      lofat-to-hifat-helper-of-clear-clusterchain)
+      lofat-to-hifat-helper-of-clear-cc)
      (:rewrite
-      d-e-clusterchain-of-update-dir-contents)
+      d-e-cc-of-update-dir-contents)
      (:rewrite
-      d-e-clusterchain-contents-of-update-dir-contents-disjoint)
+      d-e-cc-contents-of-update-dir-contents-disjoint)
      (:rewrite put-assoc-equal-without-change . 2)
      (:rewrite len-of-find-n-free-clusters)
      (:rewrite
-      d-e-clusterchain-contents-of-clear-clusterchain)
+      d-e-cc-contents-of-clear-cc)
      (:definition
       stobj-find-n-free-clusters-correctness-1))))
 
@@ -10771,13 +10771,13 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory (car d-e-list))))
               (+ -1 entry-limit)))))))
         fat32-in-memory
         (append
          (mv-nth 0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory (car d-e-list)))
          (flatten
           (mv-nth
@@ -10786,7 +10786,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory (car d-e-list))))
             (+ -1 entry-limit))))
          x)))
@@ -10805,7 +10805,7 @@ Some (rather awful) testing forms are
         fat32-in-memory
         (append
          (mv-nth 0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory (car d-e-list)))
          x)))
       ((and
@@ -10839,7 +10839,7 @@ Some (rather awful) testing forms are
         (find-d-e
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list filename1)))))
@@ -10856,7 +10856,7 @@ Some (rather awful) testing forms are
           (clear-d-e
            (string=>nats
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename1)))))
@@ -10883,7 +10883,7 @@ Some (rather awful) testing forms are
             (clear-d-e
              (string=>nats
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename1)))))
@@ -10901,7 +10901,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0
                               (find-d-e d-e-list filename1)))))
@@ -10923,7 +10923,7 @@ Some (rather awful) testing forms are
             (clear-d-e
              (string=>nats
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename1)))))
@@ -10945,7 +10945,7 @@ Some (rather awful) testing forms are
             (clear-d-e
              (string=>nats
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename1)))))
@@ -10984,7 +10984,7 @@ Some (rather awful) testing forms are
           (find-d-e
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename1)))))
@@ -11001,7 +11001,7 @@ Some (rather awful) testing forms are
             (clear-d-e
              (string=>nats
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename1)))))
@@ -11028,7 +11028,7 @@ Some (rather awful) testing forms are
              (clear-d-e
               (string=>nats
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename1)))))
@@ -11051,7 +11051,7 @@ Some (rather awful) testing forms are
                              path))
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list filename)))))
@@ -11060,7 +11060,7 @@ Some (rather awful) testing forms are
       (not-intersectp-list
        (mv-nth
         0
-        (d-e-clusterchain fat32-in-memory
+        (d-e-cc fat32-in-memory
                               (mv-nth 0
                                       (find-d-e d-e-list filename))))
        (mv-nth
@@ -11073,7 +11073,7 @@ Some (rather awful) testing forms are
                              path))
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list filename)))))
@@ -11094,7 +11094,7 @@ Some (rather awful) testing forms are
                               path))
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e d-e-list filename)))))
@@ -11111,7 +11111,7 @@ Some (rather awful) testing forms are
                              path))
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list filename)))))
@@ -11143,7 +11143,7 @@ Some (rather awful) testing forms are
                               path))
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e d-e-list filename)))))
@@ -11155,7 +11155,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e d-e-list filename)))))
@@ -11196,7 +11196,7 @@ Some (rather awful) testing forms are
                                path))
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename)))))
@@ -11233,11 +11233,11 @@ Some (rather awful) testing forms are
         (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
                   . 1)
         (:rewrite assoc-of-car-when-member)
-        (:rewrite d-e-clusterchain-contents-of-lofat-remove-file-disjoint)
-        (:rewrite d-e-clusterchain-of-lofat-remove-file-disjoint)
+        (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint)
+        (:rewrite d-e-cc-of-lofat-remove-file-disjoint)
         (:rewrite take-of-len-free)
         (:rewrite
-         d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-2)
+         d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
         (:rewrite lofat-to-hifat-helper-of-delete-d-e-2
                   . 2)
         (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
@@ -11280,7 +11280,7 @@ Some (rather awful) testing forms are
                                path))
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename)))))
@@ -11289,7 +11289,7 @@ Some (rather awful) testing forms are
         (not-intersectp-list
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory
+          (d-e-cc fat32-in-memory
                                 (mv-nth 0
                                         (find-d-e d-e-list filename))))
          (mv-nth
@@ -11302,7 +11302,7 @@ Some (rather awful) testing forms are
                                path))
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename)))))
@@ -11323,7 +11323,7 @@ Some (rather awful) testing forms are
                                 path))
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0
                               (find-d-e d-e-list filename)))))
@@ -11340,7 +11340,7 @@ Some (rather awful) testing forms are
                                path))
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename)))))
@@ -11372,7 +11372,7 @@ Some (rather awful) testing forms are
                                 path))
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0
                               (find-d-e d-e-list filename)))))
@@ -11384,7 +11384,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0
                               (find-d-e d-e-list filename)))))
@@ -11421,7 +11421,7 @@ Some (rather awful) testing forms are
                                       d-e-list entry-limit)))
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory root-d-e))
+               (d-e-cc fat32-in-memory root-d-e))
        (mv-nth 2
                (lofat-to-hifat-helper fat32-in-memory
                                       d-e-list entry-limit)))
@@ -11437,11 +11437,11 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0 (find-d-e d-e-list name))))
           (make-list-ac
            (len (mv-nth 0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth 0 (find-d-e d-e-list name)))))
            0 nil))))
@@ -11456,7 +11456,7 @@ Some (rather awful) testing forms are
                                  268435455)
           (mv-nth
            0
-           (clear-clusterchain
+           (clear-cc
             fat32-in-memory
             (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
             (d-e-file-size (mv-nth 0 (find-d-e d-e-list name))))))
@@ -11490,7 +11490,7 @@ Some (rather awful) testing forms are
               (fat32-update-lower-28 (fati i fat32-in-memory)
                                      268435455)
               (mv-nth 0
-                      (clear-clusterchain
+                      (clear-cc
                        fat32-in-memory
                        (d-e-first-cluster
                         (mv-nth 0 (find-d-e d-e-list name)))
@@ -11506,7 +11506,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth 0 (find-d-e d-e-list name))
               i
@@ -11538,7 +11538,7 @@ Some (rather awful) testing forms are
               (fat32-update-lower-28 (fati i fat32-in-memory)
                                      268435455)
               (mv-nth 0
-                      (clear-clusterchain
+                      (clear-cc
                        fat32-in-memory
                        (d-e-first-cluster
                         (mv-nth 0 (find-d-e d-e-list name)))
@@ -11554,7 +11554,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth 0 (find-d-e d-e-list name))
               i
@@ -11582,7 +11582,7 @@ Some (rather awful) testing forms are
               (fat32-update-lower-28 (fati i fat32-in-memory)
                                      268435455)
               (mv-nth 0
-                      (clear-clusterchain
+                      (clear-cc
                        fat32-in-memory
                        (d-e-first-cluster
                         (mv-nth 0 (find-d-e d-e-list name)))
@@ -11598,7 +11598,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth 0 (find-d-e d-e-list name))
               i
@@ -11649,7 +11649,7 @@ Some (rather awful) testing forms are
                                         d-e-list entry-limit)))
         (not-intersectp-list
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory root-d-e))
+                 (d-e-cc fat32-in-memory root-d-e))
          (mv-nth 2
                  (lofat-to-hifat-helper fat32-in-memory
                                         d-e-list entry-limit)))
@@ -11665,11 +11665,11 @@ Some (rather awful) testing forms are
             (effective-fat fat32-in-memory)
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (mv-nth 0 (find-d-e d-e-list name))))
             (make-list-ac
              (len (mv-nth 0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth 0 (find-d-e d-e-list name)))))
              0 nil))))
@@ -11684,7 +11684,7 @@ Some (rather awful) testing forms are
                                    268435455)
             (mv-nth
              0
-             (clear-clusterchain
+             (clear-cc
               fat32-in-memory
               (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
               (d-e-file-size (mv-nth 0 (find-d-e d-e-list name))))))
@@ -11718,7 +11718,7 @@ Some (rather awful) testing forms are
                (fat32-update-lower-28 (fati i fat32-in-memory)
                                       268435455)
                (mv-nth 0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (mv-nth 0 (find-d-e d-e-list name)))
@@ -11734,7 +11734,7 @@ Some (rather awful) testing forms are
               (string=>nats
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (d-e-set-first-cluster-file-size
                (mv-nth 0 (find-d-e d-e-list name))
                i
@@ -11761,7 +11761,7 @@ Some (rather awful) testing forms are
                                  268435455)
           (mv-nth
            0
-           (clear-clusterchain
+           (clear-cc
             fat32-in-memory
             (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
             2097152)))
@@ -11778,7 +11778,7 @@ Some (rather awful) testing forms are
              0)
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory root-d-e))
+               (d-e-cc fat32-in-memory root-d-e))
        (mv-nth 2
                (lofat-to-hifat-helper fat32-in-memory
                                       d-e-list entry-limit)))
@@ -11799,11 +11799,11 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0 (find-d-e d-e-list name))))
           (make-list-ac
            (len (mv-nth 0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth 0 (find-d-e d-e-list name)))))
            0 nil))))
@@ -11825,7 +11825,7 @@ Some (rather awful) testing forms are
               (fat32-update-lower-28 (fati i fat32-in-memory)
                                      268435455)
               (mv-nth 0
-                      (clear-clusterchain
+                      (clear-cc
                        fat32-in-memory
                        (d-e-first-cluster
                         (mv-nth 0 (find-d-e d-e-list name)))
@@ -11839,7 +11839,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth 0 (find-d-e d-e-list name))
               i 0)))))
@@ -11869,7 +11869,7 @@ Some (rather awful) testing forms are
               (fat32-update-lower-28 (fati i fat32-in-memory)
                                      268435455)
               (mv-nth 0
-                      (clear-clusterchain
+                      (clear-cc
                        fat32-in-memory
                        (d-e-first-cluster
                         (mv-nth 0 (find-d-e d-e-list name)))
@@ -11883,7 +11883,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth 0 (find-d-e d-e-list name))
               i 0)))))
@@ -11907,7 +11907,7 @@ Some (rather awful) testing forms are
               (fat32-update-lower-28 (fati i fat32-in-memory)
                                      268435455)
               (mv-nth 0
-                      (clear-clusterchain
+                      (clear-cc
                        fat32-in-memory
                        (d-e-first-cluster
                         (mv-nth 0 (find-d-e d-e-list name)))
@@ -11921,7 +11921,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth 0 (find-d-e d-e-list name))
               i 0)))))
@@ -11961,7 +11961,7 @@ Some (rather awful) testing forms are
                                    268435455)
             (mv-nth
              0
-             (clear-clusterchain
+             (clear-cc
               fat32-in-memory
               (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
               2097152)))
@@ -11978,7 +11978,7 @@ Some (rather awful) testing forms are
                0)
         (not-intersectp-list
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory root-d-e))
+                 (d-e-cc fat32-in-memory root-d-e))
          (mv-nth 2
                  (lofat-to-hifat-helper fat32-in-memory
                                         d-e-list entry-limit)))
@@ -12000,11 +12000,11 @@ Some (rather awful) testing forms are
              (effective-fat fat32-in-memory)
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory
+              (d-e-cc fat32-in-memory
                                     (mv-nth 0 (find-d-e d-e-list name))))
              (make-list-ac
               (len (mv-nth 0
-                           (d-e-clusterchain
+                           (d-e-cc
                             fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name)))))
               0 nil))))
@@ -12026,7 +12026,7 @@ Some (rather awful) testing forms are
                (fat32-update-lower-28 (fati i fat32-in-memory)
                                       268435455)
                (mv-nth 0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (mv-nth 0 (find-d-e d-e-list name)))
@@ -12040,7 +12040,7 @@ Some (rather awful) testing forms are
               (string=>nats
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (d-e-set-first-cluster-file-size
                (mv-nth 0 (find-d-e d-e-list name))
                i 0)))))
@@ -12070,7 +12070,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e d-e-list filename1)))))
@@ -12087,7 +12087,7 @@ Some (rather awful) testing forms are
         (clear-d-e
          (string=>nats
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list filename1)))))
@@ -12108,7 +12108,7 @@ Some (rather awful) testing forms are
           (clear-d-e
            (string=>nats
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename1)))))
@@ -12126,7 +12126,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e d-e-list filename1)))))
@@ -12148,7 +12148,7 @@ Some (rather awful) testing forms are
           (clear-d-e
            (string=>nats
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename1)))))
@@ -12180,7 +12180,7 @@ Some (rather awful) testing forms are
                            path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e d-e-list filename)))))
@@ -12189,7 +12189,7 @@ Some (rather awful) testing forms are
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain fat32-in-memory
+      (d-e-cc fat32-in-memory
                             (mv-nth 0
                                     (find-d-e d-e-list filename))))
      (mv-nth
@@ -12202,7 +12202,7 @@ Some (rather awful) testing forms are
                            path))
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e d-e-list filename)))))
@@ -12223,7 +12223,7 @@ Some (rather awful) testing forms are
                             path))
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e d-e-list filename)))))
@@ -12248,7 +12248,7 @@ Some (rather awful) testing forms are
                             path))
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e d-e-list filename)))))
@@ -12260,7 +12260,7 @@ Some (rather awful) testing forms are
         fat32-in-memory
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e d-e-list filename)))))
@@ -12301,7 +12301,7 @@ Some (rather awful) testing forms are
                              path))
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list filename)))))
@@ -12324,7 +12324,7 @@ Some (rather awful) testing forms are
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
                                     d-e-list entry-limit)))
@@ -12340,11 +12340,11 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          0
-         (d-e-clusterchain fat32-in-memory
+         (d-e-cc fat32-in-memory
                                (mv-nth 0 (find-d-e d-e-list name))))
         (make-list-ac
          (len (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0 (find-d-e d-e-list name)))))
          0 nil))))
@@ -12359,7 +12359,7 @@ Some (rather awful) testing forms are
                                268435455)
         (mv-nth
          0
-         (clear-clusterchain
+         (clear-cc
           fat32-in-memory
           (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
           (d-e-file-size (mv-nth 0 (find-d-e d-e-list name))))))
@@ -12393,7 +12393,7 @@ Some (rather awful) testing forms are
             (fat32-update-lower-28 (fati i fat32-in-memory)
                                    268435455)
             (mv-nth 0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth 0 (find-d-e d-e-list name)))
@@ -12409,7 +12409,7 @@ Some (rather awful) testing forms are
            (string=>nats
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (d-e-set-first-cluster-file-size
             (mv-nth 0 (find-d-e d-e-list name))
             i
@@ -12441,7 +12441,7 @@ Some (rather awful) testing forms are
             (fat32-update-lower-28 (fati i fat32-in-memory)
                                    268435455)
             (mv-nth 0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth 0 (find-d-e d-e-list name)))
@@ -12457,7 +12457,7 @@ Some (rather awful) testing forms are
            (string=>nats
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (d-e-set-first-cluster-file-size
             (mv-nth 0 (find-d-e d-e-list name))
             i
@@ -12488,7 +12488,7 @@ Some (rather awful) testing forms are
                                268435455)
         (mv-nth
          0
-         (clear-clusterchain
+         (clear-cc
           fat32-in-memory
           (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
           2097152)))
@@ -12504,7 +12504,7 @@ Some (rather awful) testing forms are
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
                                     d-e-list entry-limit)))
@@ -12521,11 +12521,11 @@ Some (rather awful) testing forms are
          (effective-fat fat32-in-memory)
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory
+          (d-e-cc fat32-in-memory
                                 (mv-nth 0 (find-d-e d-e-list name))))
          (make-list-ac
           (len (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
           0 nil))))
@@ -12547,7 +12547,7 @@ Some (rather awful) testing forms are
             (fat32-update-lower-28 (fati i fat32-in-memory)
                                    268435455)
             (mv-nth 0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth 0 (find-d-e d-e-list name)))
@@ -12561,7 +12561,7 @@ Some (rather awful) testing forms are
            (string=>nats
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (d-e-set-first-cluster-file-size
             (mv-nth 0 (find-d-e d-e-list name))
             i 0)))))
@@ -12590,7 +12590,7 @@ Some (rather awful) testing forms are
             (fat32-update-lower-28 (fati i fat32-in-memory)
                                    268435455)
             (mv-nth 0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth 0 (find-d-e d-e-list name)))
@@ -12604,7 +12604,7 @@ Some (rather awful) testing forms are
            (string=>nats
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (d-e-set-first-cluster-file-size
             (mv-nth 0 (find-d-e d-e-list name))
             i 0)))))
@@ -12630,7 +12630,7 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   fat32-in-memory
                   (make-d-e-list
-                   (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                   (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                   entry-limit))
          path)))
     (implies
@@ -12642,18 +12642,18 @@ Some (rather awful) testing forms are
                      (lofat-to-hifat-helper
                       fat32-in-memory
                       (make-d-e-list
-                       (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                       (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                       entry-limit))
              0)
       (<= *ms-first-data-cluster* (d-e-first-cluster root-d-e))
       (< (d-e-first-cluster root-d-e)
          (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
       (equal
-       (mv-nth 1 (d-e-clusterchain-contents fat32-in-memory root-d-e))
+       (mv-nth 1 (d-e-cc-contents fat32-in-memory root-d-e))
        0)
       (no-duplicatesp-equal
        (mv-nth '0
-               (d-e-clusterchain fat32-in-memory root-d-e))))
+               (d-e-cc fat32-in-memory root-d-e))))
      (equal
       (mv-nth
        1
@@ -12687,13 +12687,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
@@ -12701,7 +12701,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      0)
@@ -12719,13 +12719,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
@@ -12733,7 +12733,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      (mv-nth
@@ -12746,7 +12746,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -12754,14 +12754,14 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))))
          entry-limit))
        (cdr path))))
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         0
@@ -12769,7 +12769,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))))
      (mv-nth
       2
@@ -12784,13 +12784,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
@@ -12798,7 +12798,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit)))
     (not
@@ -12811,7 +12811,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))
         entry-limit))
       (mv-nth
@@ -12827,13 +12827,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))
           (cdr path)))
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -12841,7 +12841,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path))))))
         entry-limit))))
     (lofat-fs-p fat32-in-memory)
@@ -12852,7 +12852,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (fat32-filename-list-p path)
@@ -12862,7 +12862,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path)))))
    (equal
     (mv-nth
@@ -12878,12 +12878,12 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (cdr path)))
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
       entry-limit))
     0))
   :hints
@@ -12900,7 +12900,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (cdr path)))
       0))
@@ -12915,7 +12915,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))))
       (fat32-in-memory fat32-in-memory))
      (:instance
@@ -12929,7 +12929,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -12937,7 +12937,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))))
          entry-limit))))))))
 
@@ -12960,13 +12960,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
@@ -12974,7 +12974,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      0)
@@ -12992,13 +12992,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
@@ -13006,7 +13006,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      (mv-nth
@@ -13019,7 +13019,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -13027,14 +13027,14 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))))
          entry-limit))
        (cdr path))))
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         0
@@ -13042,7 +13042,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))))
      (mv-nth
       2
@@ -13057,13 +13057,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
@@ -13071,7 +13071,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit)))
     (not
@@ -13084,7 +13084,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))
         entry-limit))
       (mv-nth
@@ -13100,13 +13100,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))
           (cdr path)))
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -13114,7 +13114,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path))))))
         entry-limit))))
     (not-intersectp-list
@@ -13132,13 +13132,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
@@ -13146,7 +13146,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit)))
     (lofat-fs-p fat32-in-memory)
@@ -13157,7 +13157,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (fat32-filename-list-p path)
@@ -13169,7 +13169,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (d-e-directory-p
      (mv-nth
@@ -13177,7 +13177,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path))))
     (<
      (d-e-first-cluster
@@ -13187,7 +13187,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (not-intersectp-list
@@ -13205,12 +13205,12 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (cdr path)))
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
       entry-limit))))
   :hints
   (("goal"
@@ -13226,7 +13226,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (cdr path)))
       0))
@@ -13241,7 +13241,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))))
       (fat32-in-memory fat32-in-memory))
      (:instance
@@ -13255,7 +13255,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -13263,7 +13263,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))))
          entry-limit))))))))
 
@@ -13286,13 +13286,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
@@ -13300,7 +13300,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      0)
@@ -13318,13 +13318,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
@@ -13332,7 +13332,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      (mv-nth
@@ -13345,7 +13345,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -13353,14 +13353,14 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))))
          entry-limit))
        (cdr path))))
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         0
@@ -13368,7 +13368,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))))
      (mv-nth
       2
@@ -13383,13 +13383,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           fat32-in-memory
           (mv-nth
            0
@@ -13397,7 +13397,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit)))
     (not
@@ -13410,7 +13410,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))
         entry-limit))
       (mv-nth
@@ -13426,13 +13426,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))
           (cdr path)))
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -13440,7 +13440,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path))))))
         entry-limit))))
     (lofat-fs-p fat32-in-memory)
@@ -13451,7 +13451,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (fat32-filename-list-p path)
@@ -13461,7 +13461,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path)))))
    (equal
     (mv-nth
@@ -13477,12 +13477,12 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (cdr path)))
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
       entry-limit))
     (put-assoc-equal
      (car path)
@@ -13493,7 +13493,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))
       (mv-nth
        0
@@ -13505,13 +13505,13 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents
+            (d-e-cc-contents
              fat32-in-memory
              (mv-nth
               0
               (find-d-e
                (make-d-e-list (mv-nth 0
-                                          (d-e-clusterchain-contents
+                                          (d-e-cc-contents
                                            fat32-in-memory root-d-e)))
                (car path))))))
           entry-limit))
@@ -13522,7 +13522,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))))
   :hints
   (("goal"
@@ -13538,13 +13538,13 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents
+            (d-e-cc-contents
              fat32-in-memory
              (mv-nth
               0
               (find-d-e
                (make-d-e-list (mv-nth 0
-                                          (d-e-clusterchain-contents
+                                          (d-e-cc-contents
                                            fat32-in-memory root-d-e)))
                (car path))))))
           entry-limit))
@@ -13563,7 +13563,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))))
       (fat32-in-memory fat32-in-memory))
      (:instance
@@ -13576,7 +13576,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))))
       (fat32-in-memory fat32-in-memory))
      (:instance
@@ -13588,7 +13588,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory root-d-e))))
+         (d-e-cc-contents fat32-in-memory root-d-e))))
       (fat32-in-memory fat32-in-memory))))))
 
 (defthm lofat-remove-file-correctness-lemma-18
@@ -13602,19 +13602,19 @@ Some (rather awful) testing forms are
       fat32-in-memory
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
       entry-limit))
     0)
    (not-intersectp-list
     (mv-nth 0
-            (d-e-clusterchain fat32-in-memory root-d-e))
+            (d-e-cc fat32-in-memory root-d-e))
     (mv-nth
      2
      (lofat-to-hifat-helper
       fat32-in-memory
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
       entry-limit))))
   (equal
    (mv-nth
@@ -13630,12 +13630,12 @@ Some (rather awful) testing forms are
          (string=>nats
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))))
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents
+       (d-e-cc-contents
         (mv-nth
          0
          (update-dir-contents
@@ -13644,7 +13644,7 @@ Some (rather awful) testing forms are
           (nats=>string
            (clear-d-e
             (string=>nats (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
             (car path)))))
         root-d-e)))
@@ -13668,19 +13668,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (not-intersectp-list
      x
@@ -13690,7 +13690,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (<=
      2
@@ -13701,7 +13701,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (<
      (d-e-first-cluster
@@ -13711,7 +13711,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (equal
@@ -13725,7 +13725,7 @@ Some (rather awful) testing forms are
          (string=>nats
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))))
      0)
     (not
@@ -13736,7 +13736,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))))
    (not-intersectp-list
     x
@@ -13745,7 +13745,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper
       (mv-nth
        0
-       (clear-clusterchain
+       (clear-cc
         (mv-nth
          0
          (update-dir-contents
@@ -13756,7 +13756,7 @@ Some (rather awful) testing forms are
             (string=>nats
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))))
         (d-e-first-cluster
          (mv-nth
@@ -13765,7 +13765,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))
         (d-e-file-size
          (mv-nth
@@ -13774,15 +13774,15 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            (mv-nth
             0
             (update-dir-contents
@@ -13791,7 +13791,7 @@ Some (rather awful) testing forms are
              (nats=>string
               (clear-d-e
                (string=>nats (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                (car path)))))
            (d-e-first-cluster
@@ -13799,7 +13799,7 @@ Some (rather awful) testing forms are
              0
              (find-d-e (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
            (d-e-file-size
@@ -13807,7 +13807,7 @@ Some (rather awful) testing forms are
              0
              (find-d-e (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))))
          root-d-e)))
@@ -13831,19 +13831,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (<=
      2
@@ -13854,7 +13854,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (<
      (d-e-first-cluster
@@ -13864,7 +13864,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (equal
@@ -13878,7 +13878,7 @@ Some (rather awful) testing forms are
          (string=>nats
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))))
      0)
     (not
@@ -13889,7 +13889,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))))
    (equal
     (mv-nth
@@ -13897,7 +13897,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper
       (mv-nth
        0
-       (clear-clusterchain
+       (clear-cc
         (mv-nth
          0
          (update-dir-contents
@@ -13908,7 +13908,7 @@ Some (rather awful) testing forms are
             (string=>nats
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))))
         (d-e-first-cluster
          (mv-nth
@@ -13917,7 +13917,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))
         (d-e-file-size
          (mv-nth
@@ -13926,15 +13926,15 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            (mv-nth
             0
             (update-dir-contents
@@ -13943,7 +13943,7 @@ Some (rather awful) testing forms are
              (nats=>string
               (clear-d-e
                (string=>nats (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                (car path)))))
            (d-e-first-cluster
@@ -13951,7 +13951,7 @@ Some (rather awful) testing forms are
              0
              (find-d-e (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
            (d-e-file-size
@@ -13959,7 +13959,7 @@ Some (rather awful) testing forms are
              0
              (find-d-e (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))))
          root-d-e)))
@@ -13984,19 +13984,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (<=
      2
@@ -14007,7 +14007,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (<
      (d-e-first-cluster
@@ -14017,7 +14017,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (equal
@@ -14031,7 +14031,7 @@ Some (rather awful) testing forms are
          (string=>nats
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))))
      0)
     (not
@@ -14042,7 +14042,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))))
    (equal
     (mv-nth
@@ -14050,7 +14050,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper
       (mv-nth
        0
-       (clear-clusterchain
+       (clear-cc
         (mv-nth
          0
          (update-dir-contents
@@ -14061,7 +14061,7 @@ Some (rather awful) testing forms are
             (string=>nats
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))))
         (d-e-first-cluster
          (mv-nth
@@ -14070,7 +14070,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))
         (d-e-file-size
          (mv-nth
@@ -14079,15 +14079,15 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            (mv-nth
             0
             (update-dir-contents
@@ -14096,7 +14096,7 @@ Some (rather awful) testing forms are
              (nats=>string
               (clear-d-e
                (string=>nats (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                (car path)))))
            (d-e-first-cluster
@@ -14104,7 +14104,7 @@ Some (rather awful) testing forms are
              0
              (find-d-e (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
            (d-e-file-size
@@ -14112,7 +14112,7 @@ Some (rather awful) testing forms are
              0
              (find-d-e (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))))
          root-d-e)))
@@ -14126,7 +14126,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+         (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))))
   :hints
   (("goal" :do-not-induct t
@@ -14147,19 +14147,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))))
    (equal
     (mv-nth
@@ -14175,12 +14175,12 @@ Some (rather awful) testing forms are
           (string=>nats
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
           (update-dir-contents
@@ -14189,7 +14189,7 @@ Some (rather awful) testing forms are
            (nats=>string
             (clear-d-e
              (string=>nats (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
              (car path)))))
          root-d-e)))
@@ -14203,7 +14203,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+         (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))))
   :hints
   (("goal" :do-not-induct t
@@ -14228,7 +14228,7 @@ Some (rather awful) testing forms are
         (string=>nats
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     0))
   :hints
@@ -14250,19 +14250,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (not-intersectp-list
      x
@@ -14272,7 +14272,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))))
    (not-intersectp-list
     x
@@ -14289,12 +14289,12 @@ Some (rather awful) testing forms are
           (string=>nats
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
           (update-dir-contents
@@ -14303,7 +14303,7 @@ Some (rather awful) testing forms are
            (nats=>string
             (clear-d-e
              (string=>nats (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
              (car path)))))
          root-d-e)))
@@ -14327,19 +14327,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (d-e-directory-p
      (mv-nth
@@ -14347,7 +14347,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path)))))
    (equal
     (mv-nth
@@ -14355,7 +14355,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper
       (mv-nth
        0
-       (clear-clusterchain
+       (clear-cc
         (mv-nth
          0
          (update-dir-contents
@@ -14366,7 +14366,7 @@ Some (rather awful) testing forms are
             (string=>nats
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))))
         (d-e-first-cluster
          (mv-nth
@@ -14375,16 +14375,16 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))
         2097152))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            (mv-nth
             0
             (update-dir-contents
@@ -14393,7 +14393,7 @@ Some (rather awful) testing forms are
              (nats=>string
               (clear-d-e
                (string=>nats (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                (car path)))))
            (d-e-first-cluster
@@ -14401,7 +14401,7 @@ Some (rather awful) testing forms are
              0
              (find-d-e (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
            2097152))
@@ -14416,7 +14416,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+         (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))))
   :hints
   (("goal" :do-not-induct t
@@ -14438,7 +14438,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (d-e-directory-p
@@ -14447,7 +14447,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        name))))
    (good-root-d-e-p
     (mv-nth
@@ -14455,7 +14455,7 @@ Some (rather awful) testing forms are
      (find-d-e
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
       name))
     fat32-in-memory))
   :hints
@@ -14484,13 +14484,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-remove-file
@@ -14501,7 +14501,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (cdr path)))
           (mv-nth
@@ -14510,7 +14510,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      0)
@@ -14528,13 +14528,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-remove-file
@@ -14545,7 +14545,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (cdr path)))
           (mv-nth
@@ -14554,7 +14554,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      (mv-nth
@@ -14567,7 +14567,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -14575,14 +14575,14 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))))
          entry-limit))
        (cdr path))))
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         0
@@ -14590,7 +14590,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))))
      (mv-nth
       2
@@ -14605,13 +14605,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-remove-file
@@ -14622,7 +14622,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (cdr path)))
           (mv-nth
@@ -14631,7 +14631,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit)))
     (not
@@ -14644,7 +14644,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))
         entry-limit))
       (mv-nth
@@ -14660,13 +14660,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))
           (cdr path)))
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            (mv-nth
             0
             (lofat-remove-file
@@ -14675,7 +14675,7 @@ Some (rather awful) testing forms are
               0
               (find-d-e
                (make-d-e-list (mv-nth 0
-                                          (d-e-clusterchain-contents
+                                          (d-e-cc-contents
                                            fat32-in-memory root-d-e)))
                (car path)))
              (cdr path)))
@@ -14685,7 +14685,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path))))))
         entry-limit))))
     (good-root-d-e-p root-d-e fat32-in-memory)
@@ -14697,19 +14697,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (d-e-directory-p
      (mv-nth
@@ -14717,7 +14717,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path)))))
    (equal
     (mv-nth
@@ -14733,13 +14733,13 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (cdr path)))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
           (lofat-remove-file
@@ -14748,7 +14748,7 @@ Some (rather awful) testing forms are
             0
             (find-d-e
              (make-d-e-list (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
              (car path)))
            (cdr path)))
@@ -14763,7 +14763,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))
       (mv-nth
        0
@@ -14775,13 +14775,13 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents
+            (d-e-cc-contents
              fat32-in-memory
              (mv-nth 0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))))
           entry-limit))
@@ -14793,7 +14793,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+         (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))))
   :hints
   (("goal" :do-not-induct t
@@ -14821,13 +14821,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-remove-file
@@ -14838,7 +14838,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (cdr path)))
           (mv-nth
@@ -14847,7 +14847,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      0)
@@ -14865,13 +14865,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-remove-file
@@ -14882,7 +14882,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (cdr path)))
           (mv-nth
@@ -14891,7 +14891,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      (mv-nth
@@ -14904,7 +14904,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -14912,14 +14912,14 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))))
          entry-limit))
        (cdr path))))
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         0
@@ -14927,7 +14927,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))))
      (mv-nth
       2
@@ -14942,13 +14942,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-remove-file
@@ -14959,7 +14959,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (cdr path)))
           (mv-nth
@@ -14968,7 +14968,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit)))
     (not
@@ -14981,7 +14981,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))
         entry-limit))
       (mv-nth
@@ -14997,13 +14997,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))
           (cdr path)))
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            (mv-nth
             0
             (lofat-remove-file
@@ -15012,7 +15012,7 @@ Some (rather awful) testing forms are
               0
               (find-d-e
                (make-d-e-list (mv-nth 0
-                                          (d-e-clusterchain-contents
+                                          (d-e-cc-contents
                                            fat32-in-memory root-d-e)))
                (car path)))
              (cdr path)))
@@ -15022,7 +15022,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path))))))
         entry-limit))))
     (good-root-d-e-p root-d-e fat32-in-memory)
@@ -15034,19 +15034,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (d-e-directory-p
      (mv-nth
@@ -15054,7 +15054,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path)))))
    (equal
     (mv-nth
@@ -15070,13 +15070,13 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (cdr path)))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
           (lofat-remove-file
@@ -15085,7 +15085,7 @@ Some (rather awful) testing forms are
             0
             (find-d-e
              (make-d-e-list (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
              (car path)))
            (cdr path)))
@@ -15118,13 +15118,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-remove-file
@@ -15135,7 +15135,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (cdr path)))
           (mv-nth
@@ -15144,7 +15144,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      0)
@@ -15162,13 +15162,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-remove-file
@@ -15179,7 +15179,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (cdr path)))
           (mv-nth
@@ -15188,7 +15188,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit))
      (mv-nth
@@ -15201,7 +15201,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -15209,14 +15209,14 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))))
          entry-limit))
        (cdr path))))
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         0
@@ -15224,7 +15224,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))))
      (mv-nth
       2
@@ -15239,13 +15239,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-remove-file
@@ -15256,7 +15256,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (cdr path)))
           (mv-nth
@@ -15265,7 +15265,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit)))
     (not
@@ -15278,7 +15278,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))
         entry-limit))
       (mv-nth
@@ -15294,13 +15294,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))
           (cdr path)))
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            (mv-nth
             0
             (lofat-remove-file
@@ -15309,7 +15309,7 @@ Some (rather awful) testing forms are
               0
               (find-d-e
                (make-d-e-list (mv-nth 0
-                                          (d-e-clusterchain-contents
+                                          (d-e-cc-contents
                                            fat32-in-memory root-d-e)))
                (car path)))
              (cdr path)))
@@ -15319,7 +15319,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path))))))
         entry-limit))))
     (not-intersectp-list
@@ -15337,13 +15337,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (cdr path)))
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-remove-file
@@ -15354,7 +15354,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (cdr path)))
           (mv-nth
@@ -15363,7 +15363,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        entry-limit)))
     (good-root-d-e-p root-d-e fat32-in-memory)
@@ -15376,19 +15376,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (not-intersectp-list
      x
@@ -15398,7 +15398,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (d-e-directory-p
      (mv-nth
@@ -15406,7 +15406,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path)))))
    (not-intersectp-list
     x
@@ -15423,13 +15423,13 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (cdr path)))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
           (lofat-remove-file
@@ -15438,7 +15438,7 @@ Some (rather awful) testing forms are
             0
             (find-d-e
              (make-d-e-list (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
              (car path)))
            (cdr path)))
@@ -15463,19 +15463,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (not-intersectp-list
      x
@@ -15485,7 +15485,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (d-e-directory-p
      (mv-nth
@@ -15493,7 +15493,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path)))))
    (not-intersectp-list
     x
@@ -15502,7 +15502,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper
       (mv-nth
        0
-       (clear-clusterchain
+       (clear-cc
         (mv-nth
          0
          (update-dir-contents
@@ -15513,7 +15513,7 @@ Some (rather awful) testing forms are
             (string=>nats
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))))
         (d-e-first-cluster
          (mv-nth
@@ -15522,16 +15522,16 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))
         2097152))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            (mv-nth
             0
             (update-dir-contents
@@ -15540,7 +15540,7 @@ Some (rather awful) testing forms are
              (nats=>string
               (clear-d-e
                (string=>nats (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                (car path)))))
            (d-e-first-cluster
@@ -15548,7 +15548,7 @@ Some (rather awful) testing forms are
              0
              (find-d-e (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
            2097152))
@@ -15573,19 +15573,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (d-e-directory-p
      (mv-nth
@@ -15593,7 +15593,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path)))))
    (equal
     (mv-nth
@@ -15601,7 +15601,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper
       (mv-nth
        0
-       (clear-clusterchain
+       (clear-cc
         (mv-nth
          0
          (update-dir-contents
@@ -15612,7 +15612,7 @@ Some (rather awful) testing forms are
             (string=>nats
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))))
         (d-e-first-cluster
          (mv-nth
@@ -15621,16 +15621,16 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))
         2097152))
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            (mv-nth
             0
             (update-dir-contents
@@ -15639,7 +15639,7 @@ Some (rather awful) testing forms are
              (nats=>string
               (clear-d-e
                (string=>nats (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                (car path)))))
            (d-e-first-cluster
@@ -15647,7 +15647,7 @@ Some (rather awful) testing forms are
              0
              (find-d-e (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
            2097152))
@@ -15678,7 +15678,7 @@ Some (rather awful) testing forms are
           (find-d-e
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                    (d-e-cc-contents fat32-in-memory root-d-e)))
            (fat32-filename-fix (car path))))
          0)
         (d-e-directory-p
@@ -15688,7 +15688,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (fat32-filename-fix (car path)))))
         (consp (cdr path)))
        (induction-scheme
@@ -15699,19 +15699,19 @@ Some (rather awful) testing forms are
          (find-d-e
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                   (d-e-cc-contents fat32-in-memory root-d-e)))
           (fat32-filename-fix (car path))))
         (append
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
             (find-d-e
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                      (d-e-cc-contents fat32-in-memory root-d-e)))
              (fat32-filename-fix (car path))))))
          (flatten
           (mv-nth
@@ -15721,7 +15721,7 @@ Some (rather awful) testing forms are
             (delete-d-e
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                      (d-e-cc-contents fat32-in-memory root-d-e)))
              (fat32-filename-fix (car path)))
             entry-limit)))
          x)))
@@ -15738,7 +15738,7 @@ Some (rather awful) testing forms are
                    (lofat-to-hifat-helper
                     fat32-in-memory
                     (make-d-e-list
-                     (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                     (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                     entry-limit))
            path)))
       (implies
@@ -15750,16 +15750,16 @@ Some (rather awful) testing forms are
                        (lofat-to-hifat-helper
                         fat32-in-memory
                         (make-d-e-list
-                         (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                         (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                         entry-limit))
                0)
         (not-intersectp-list
-         (mv-nth 0 (d-e-clusterchain fat32-in-memory root-d-e))
+         (mv-nth 0 (d-e-cc fat32-in-memory root-d-e))
          (mv-nth 2
                  (lofat-to-hifat-helper
                   fat32-in-memory
                   (make-d-e-list
-                   (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                   (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                   entry-limit)))
         (not-intersectp-list
          x
@@ -15767,7 +15767,7 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   fat32-in-memory
                   (make-d-e-list
-                   (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                   (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                   entry-limit))))
        (and
         (equal
@@ -15778,7 +15778,7 @@ Some (rather awful) testing forms are
                    (lofat-remove-file fat32-in-memory root-d-e path))
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             (mv-nth
                              0
                              (lofat-remove-file fat32-in-memory root-d-e path))
@@ -15793,7 +15793,7 @@ Some (rather awful) testing forms are
                    (lofat-remove-file fat32-in-memory root-d-e path))
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             (mv-nth
                              0
                              (lofat-remove-file fat32-in-memory root-d-e path))
@@ -15809,7 +15809,7 @@ Some (rather awful) testing forms are
                    (lofat-remove-file fat32-in-memory root-d-e path))
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             (mv-nth
                              0
                              (lofat-remove-file fat32-in-memory root-d-e path))
@@ -15826,7 +15826,7 @@ Some (rather awful) testing forms are
                   (hifat-remove-file
                    (:rewrite lofat-to-hifat-inversion-lemma-4)
                    lofat-to-hifat-inversion-lemma-15)
-                  ((:rewrite d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-9)
+                  ((:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-9)
                    (:rewrite intersectp-is-commutative)
                    (:forward-chaining lofat-place-file-correctness-lemma-1)))))
     :rule-classes
@@ -15841,16 +15841,16 @@ Some (rather awful) testing forms are
                        (lofat-to-hifat-helper
                         fat32-in-memory
                         (make-d-e-list
-                         (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                         (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                         entry-limit))
                0)
         (not-intersectp-list
-         (mv-nth 0 (d-e-clusterchain fat32-in-memory root-d-e))
+         (mv-nth 0 (d-e-cc fat32-in-memory root-d-e))
          (mv-nth 2
                  (lofat-to-hifat-helper
                   fat32-in-memory
                   (make-d-e-list
-                   (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                   (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                   entry-limit)))
         (not-intersectp-list
          x
@@ -15858,7 +15858,7 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   fat32-in-memory
                   (make-d-e-list
-                   (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                   (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                   entry-limit))))
        (not-intersectp-list
         x
@@ -15869,7 +15869,7 @@ Some (rather awful) testing forms are
                   (lofat-remove-file fat32-in-memory root-d-e path))
                  (make-d-e-list
                   (mv-nth 0
-                          (d-e-clusterchain-contents
+                          (d-e-cc-contents
                            (mv-nth
                             0
                             (lofat-remove-file fat32-in-memory root-d-e path))
@@ -15886,7 +15886,7 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   fat32-in-memory
                   (make-d-e-list
-                   (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                   (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                   entry-limit))
          path)))
     (implies
@@ -15897,16 +15897,16 @@ Some (rather awful) testing forms are
                      (lofat-to-hifat-helper
                       fat32-in-memory
                       (make-d-e-list
-                       (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                       (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                       entry-limit))
              0)
       (not-intersectp-list
-       (mv-nth 0 (d-e-clusterchain fat32-in-memory root-d-e))
+       (mv-nth 0 (d-e-cc fat32-in-memory root-d-e))
        (mv-nth 2
                (lofat-to-hifat-helper
                 fat32-in-memory
                 (make-d-e-list
-                 (mv-nth 0 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (mv-nth 0 (d-e-cc-contents fat32-in-memory root-d-e)))
                 entry-limit))))
      (and
       (equal
@@ -15917,7 +15917,7 @@ Some (rather awful) testing forms are
                  (lofat-remove-file fat32-in-memory root-d-e path))
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           (mv-nth
                            0
                            (lofat-remove-file fat32-in-memory root-d-e path))
@@ -15932,7 +15932,7 @@ Some (rather awful) testing forms are
                  (lofat-remove-file fat32-in-memory root-d-e path))
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           (mv-nth
                            0
                            (lofat-remove-file fat32-in-memory root-d-e path))
@@ -16050,7 +16050,7 @@ Some (rather awful) testing forms are
   (b* (((unless (consp path)) (mv fat32-in-memory *enoent*))
        ;; Design choice - calls which ask for the entire root directory to be affected will fail.
        (name (mbe :logic (fat32-filename-fix (car path)) :exec (car path)))
-       ((mv dir-contents &) (d-e-clusterchain-contents fat32-in-memory root-d-e))
+       ((mv dir-contents &) (d-e-cc-contents fat32-in-memory root-d-e))
        (d-e-list (make-d-e-list dir-contents))
        ((mv d-e error-code) (find-d-e d-e-list name))
        ;; If it's not there, it's a new file. In either case, though, we shouldn't give it the name
@@ -16082,7 +16082,7 @@ Some (rather awful) testing forms are
         (mv fat32-in-memory *enoent*))
        ((mv fat32-in-memory &)
         (if (or (< first-cluster 2) (<= (+ 2 (count-of-clusters fat32-in-memory)) first-cluster))
-            (mv fat32-in-memory 0) (clear-clusterchain fat32-in-memory first-cluster length)))
+            (mv fat32-in-memory 0) (clear-cc fat32-in-memory first-cluster length)))
        ;; We're going to have to refer to two different values of file-length:
        ;; one which refers to how much space we need to allocate, which will be
        ;; non-zero for directories (remember, we're not adding any root
@@ -16109,7 +16109,7 @@ Some (rather awful) testing forms are
        ;; existing clusterchains.
        (fat32-in-memory (update-fati first-cluster (fat32-update-lower-28
                                                     (fati first-cluster fat32-in-memory)
-                                                    *ms-end-of-clusterchain*)
+                                                    *ms-end-of-cc*)
                                      fat32-in-memory))
        (contents (if (lofat-regular-file-p file) (lofat-file->contents file)
                    ;; Our guard ensures that the contents of this directory
@@ -16160,20 +16160,20 @@ Some (rather awful) testing forms are
       (effective-fat fat32-in-memory)
       (mv-nth
        0
-       (d-e-clusterchain
+       (d-e-cc
         fat32-in-memory
         (mv-nth
          0
          (find-d-e
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
           (fat32-filename-fix (car path))))))
       (make-list-ac
        (len
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            0
@@ -16181,7 +16181,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory d-e)))
+              (d-e-cc-contents fat32-in-memory d-e)))
             (fat32-filename-fix (car path)))))))
        0 nil))))
    (<
@@ -16192,20 +16192,20 @@ Some (rather awful) testing forms are
        (effective-fat fat32-in-memory)
        (mv-nth
         '0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           '0
           (find-d-e
            (make-d-e-list
             (mv-nth '0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
            (fat32-filename-fix (car path))))))
        (make-list-ac
         (len
          (mv-nth
           '0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             '0
@@ -16213,7 +16213,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                '0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (fat32-filename-fix (car path)))))))
         '0
         'nil))
@@ -16239,20 +16239,20 @@ Some (rather awful) testing forms are
       (effective-fat fat32-in-memory)
       (mv-nth
        0
-       (d-e-clusterchain
+       (d-e-cc
         fat32-in-memory
         (mv-nth
          0
          (find-d-e
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
           (fat32-filename-fix (car path))))))
       (make-list-ac
        (len
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            0
@@ -16260,7 +16260,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory d-e)))
+              (d-e-cc-contents fat32-in-memory d-e)))
             (fat32-filename-fix (car path)))))))
        0 nil))))
    (not
@@ -16272,7 +16272,7 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          '0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            '0
@@ -16280,13 +16280,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               '0
-              (d-e-clusterchain-contents fat32-in-memory d-e)))
+              (d-e-cc-contents fat32-in-memory d-e)))
             (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
            '0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              '0
@@ -16294,7 +16294,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 '0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
               (fat32-filename-fix (car path)))))))
          '0
          'nil))
@@ -16457,7 +16457,7 @@ Some (rather awful) testing forms are
       (effective-fat fat32-in-memory)
       (mv-nth
        0
-       (d-e-clusterchain
+       (d-e-cc
         fat32-in-memory
         (mv-nth
          0
@@ -16465,13 +16465,13 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))))
       (make-list-ac
        (len
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            0
@@ -16479,7 +16479,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        0 nil))))
    (<=
@@ -16491,7 +16491,7 @@ Some (rather awful) testing forms are
        (effective-fat fat32-in-memory)
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -16499,13 +16499,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))))
        (make-list-ac
         (len
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
@@ -16513,7 +16513,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path))))))
         0 nil))
       1)))))
@@ -16624,7 +16624,7 @@ Some (rather awful) testing forms are
       (effective-fat fat32-in-memory)
       (mv-nth
        0
-       (d-e-clusterchain
+       (d-e-cc
         fat32-in-memory
         (mv-nth
          0
@@ -16632,13 +16632,13 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))))
       (make-list-ac
        (len
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            0
@@ -16646,7 +16646,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path))))))
        0 nil))))
    (not
@@ -16658,7 +16658,7 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          '0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            '0
@@ -16666,13 +16666,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               '0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))))
         (make-list-ac
          (len
           (mv-nth
            '0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              '0
@@ -16680,7 +16680,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 '0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))))
          '0
          'nil))
@@ -16734,7 +16734,7 @@ Some (rather awful) testing forms are
 ;;                    fat32-in-memory root-d-e path file))
 ;;           fat32-in-memory))
 ;;   :hints (("goal" :in-theory (enable update-dir-contents-correctness-1
-;;                                      clear-clusterchain-correctness-3
+;;                                      clear-cc-correctness-3
 ;;                                      place-contents-correctness-1))))
 
 (defthm
@@ -17279,12 +17279,12 @@ Some (rather awful) testing forms are
             (file (m1-file-fix file)))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-disjoint-lemma-1
+  d-e-cc-contents-of-lofat-place-file-disjoint-lemma-1
   (implies
    (and (>= (d-e-first-cluster d-e)
             *ms-first-data-cluster*)
         (equal (mv-nth 1
-                       (d-e-clusterchain fat32-in-memory d-e))
+                       (d-e-cc fat32-in-memory d-e))
                0)
         (< (d-e-first-cluster d-e)
            (+ *ms-first-data-cluster*
@@ -17298,7 +17298,7 @@ Some (rather awful) testing forms are
                        (find-n-free-clusters (effective-fat fat32-in-memory)
                                              n2))
                   (mv-nth 0
-                          (d-e-clusterchain fat32-in-memory d-e)))))
+                          (d-e-cc fat32-in-memory d-e)))))
   :hints
   (("goal"
     :in-theory (e/d (nth-when->=-n-len-l)
@@ -17307,13 +17307,13 @@ Some (rather awful) testing forms are
     (:instance non-free-index-listp-correctness-2
                (fa-table (effective-fat fat32-in-memory))
                (x (mv-nth 0
-                          (d-e-clusterchain fat32-in-memory d-e)))
+                          (d-e-cc fat32-in-memory d-e)))
                (key (nth n1
                          (find-n-free-clusters (effective-fat fat32-in-memory)
                                                n2)))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-disjoint-lemma-2
+  d-e-cc-contents-of-lofat-place-file-disjoint-lemma-2
   (implies
    (and
     (<=
@@ -17325,7 +17325,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (fat32-filename-fix (car path))))))
     (<
      (d-e-first-cluster
@@ -17335,7 +17335,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (fat32-filename-fix (car path)))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (<= 2 (d-e-first-cluster d-e))
@@ -17348,22 +17348,22 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (<=
      1
@@ -17372,7 +17372,7 @@ Some (rather awful) testing forms are
        (effective-fat fat32-in-memory)
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -17380,13 +17380,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (fat32-filename-fix (car path))))))
        (make-list-ac
         (len
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
@@ -17394,7 +17394,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (fat32-filename-fix (car path)))))))
         0 nil)))))
    (not
@@ -17406,7 +17406,7 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          '0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            '0
@@ -17414,13 +17414,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               '0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
            '0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              '0
@@ -17428,13 +17428,13 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 '0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (fat32-filename-fix (car path)))))))
          '0
          'nil))
        '1))
      (mv-nth '0
-             (d-e-clusterchain fat32-in-memory d-e)))))
+             (d-e-cc fat32-in-memory d-e)))))
   :hints
   (("goal"
     :in-theory (disable (:rewrite non-free-index-listp-correctness-2 . 1))
@@ -17442,7 +17442,7 @@ Some (rather awful) testing forms are
     ((:instance
       (:rewrite non-free-index-listp-correctness-2 . 1)
       (x (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory d-e)))
+                 (d-e-cc fat32-in-memory d-e)))
       (key
        (nth
         0
@@ -17451,7 +17451,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -17459,19 +17459,19 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (fat32-filename-fix (car path))))))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
                (find-d-e (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (fat32-filename-fix (car path)))))))
            0 nil))
@@ -17481,7 +17481,7 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            0
@@ -17489,13 +17489,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -17503,12 +17503,12 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (fat32-filename-fix (car path)))))))
          0 nil))))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-disjoint
+  d-e-cc-contents-of-lofat-place-file-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -17517,7 +17517,7 @@ Some (rather awful) testing forms are
     (d-e-p d-e)
     (equal
      (mv-nth '1
-             (d-e-clusterchain-contents fat32-in-memory root-d-e))
+             (d-e-cc-contents fat32-in-memory root-d-e))
      '0)
     (equal
      (mv-nth
@@ -17526,51 +17526,51 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (not (intersectp-equal
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory root-d-e))
+                  (d-e-cc fat32-in-memory root-d-e))
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory d-e))))
+                  (d-e-cc fat32-in-memory d-e))))
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0))
-   (equal (d-e-clusterchain-contents
+   (equal (d-e-cc-contents
            (mv-nth 0
                    (lofat-place-file fat32-in-memory
                                      root-d-e path file))
            d-e)
-          (d-e-clusterchain-contents fat32-in-memory d-e)))
+          (d-e-cc-contents fat32-in-memory d-e)))
   :hints (("goal" :induct (lofat-place-file fat32-in-memory
                                             root-d-e path file)
            :in-theory
            (e/d ()
                 ((:rewrite
-                  d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+                  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
                   . 5))))))
 
 (defthm
@@ -17586,23 +17586,23 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (equal
      (mv-nth 1
-             (d-e-clusterchain-contents fat32-in-memory root-d-e))
+             (d-e-cc-contents fat32-in-memory root-d-e))
      0)
     (d-e-directory-p
      (mv-nth
@@ -17610,10 +17610,10 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        (car path)))))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth
       '0
       (lofat-place-file
@@ -17624,20 +17624,20 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            '0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))
        (cdr path)
        file))
      root-d-e)
-    (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+    (d-e-cc-contents fat32-in-memory root-d-e)))
   :hints
   (("goal"
     :in-theory
     (disable
-     (:rewrite d-e-clusterchain-contents-of-lofat-place-file-disjoint))
+     (:rewrite d-e-cc-contents-of-lofat-place-file-disjoint))
     :use
     ((:instance
-      (:rewrite d-e-clusterchain-contents-of-lofat-place-file-disjoint)
+      (:rewrite d-e-cc-contents-of-lofat-place-file-disjoint)
       (d-e root-d-e)
       (file file)
       (path (cdr path))
@@ -17648,7 +17648,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path))))
       (fat32-in-memory fat32-in-memory))))))
 
@@ -17662,7 +17662,7 @@ Some (rather awful) testing forms are
   :rule-classes :linear)
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-1
+  d-e-cc-contents-of-lofat-place-file-coincident-lemma-1
   (implies
    (and
     (<=
@@ -17673,7 +17673,7 @@ Some (rather awful) testing forms are
        (find-d-e
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents fat32-in-memory d-e)))
+                 (d-e-cc-contents fat32-in-memory d-e)))
         (car path)))))
     (<
      (d-e-first-cluster
@@ -17682,11 +17682,11 @@ Some (rather awful) testing forms are
        (find-d-e
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents fat32-in-memory d-e)))
+                 (d-e-cc-contents fat32-in-memory d-e)))
         (car path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (equal
      (mv-nth
@@ -17695,19 +17695,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit)))
     (<=
      1
@@ -17716,20 +17716,20 @@ Some (rather awful) testing forms are
        (effective-fat fat32-in-memory)
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
           (find-d-e
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
            (car path)))))
        (make-list-ac
         (len
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
@@ -17737,7 +17737,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         0 nil)))))
    (not
@@ -17749,20 +17749,20 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          '0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            '0
            (find-d-e
             (make-d-e-list
              (mv-nth '0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
             (car path)))))
         (make-list-ac
          (len
           (mv-nth
            '0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              '0
@@ -17770,13 +17770,13 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 '0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
               (car path))))))
          '0
          'nil))
        '1))
      (mv-nth '0
-             (d-e-clusterchain fat32-in-memory d-e)))))
+             (d-e-cc fat32-in-memory d-e)))))
   :hints
   (("goal"
     :in-theory (disable (:rewrite non-free-index-listp-correctness-2 . 1))
@@ -17784,7 +17784,7 @@ Some (rather awful) testing forms are
     ((:instance
       (:rewrite non-free-index-listp-correctness-2 . 1)
       (x (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory d-e)))
+                 (d-e-cc fat32-in-memory d-e)))
       (key
        (nth
         0
@@ -17793,7 +17793,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -17801,13 +17801,13 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
               (car path)))))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -17815,7 +17815,7 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
                 (car path))))))
            0 nil))
          1)))
@@ -17824,20 +17824,20 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            0
            (find-d-e
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
             (car path)))))
         (make-list-ac
          (len
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -17845,12 +17845,12 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
               (car path))))))
          0 nil))))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-2
+  d-e-cc-contents-of-lofat-place-file-coincident-lemma-2
   (implies
    (and
     (d-e-directory-p
@@ -17859,7 +17859,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        (car path))))
     (<=
      1
@@ -17868,7 +17868,7 @@ Some (rather awful) testing forms are
        (effective-fat fat32-in-memory)
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -17876,7 +17876,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                0
@@ -17884,14 +17884,14 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
                 (car path))))))
            (cadr path)))))
        (make-list-ac
         (len
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
@@ -17899,7 +17899,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 fat32-in-memory
                 (mv-nth
                  0
@@ -17907,7 +17907,7 @@ Some (rather awful) testing forms are
                   (make-d-e-list
                    (mv-nth
                     0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
                   (car path))))))
              (cadr path))))))
         0 nil))))
@@ -17918,7 +17918,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0)
     (<=
@@ -17930,7 +17930,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -17938,7 +17938,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (cadr path)))))
     (<
@@ -17949,7 +17949,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -17957,7 +17957,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (cadr path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
@@ -17970,7 +17970,7 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          '0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            '0
@@ -17978,7 +17978,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               '0
-              (d-e-clusterchain-contents
+              (d-e-cc-contents
                fat32-in-memory
                (mv-nth
                 '0
@@ -17986,14 +17986,14 @@ Some (rather awful) testing forms are
                  (make-d-e-list
                   (mv-nth
                    '0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
                  (car path))))))
             (car (cdr path))))))
         (make-list-ac
          (len
           (mv-nth
            '0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              '0
@@ -18001,7 +18001,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 '0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth
                   '0
@@ -18009,7 +18009,7 @@ Some (rather awful) testing forms are
                    (make-d-e-list
                     (mv-nth
                      '0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
                    (car path))))))
               (car (cdr path)))))))
          '0
@@ -18017,14 +18017,14 @@ Some (rather awful) testing forms are
        '1))
      (mv-nth
       '0
-      (d-e-clusterchain
+      (d-e-cc
        fat32-in-memory
        (mv-nth
         '0
         (find-d-e
          (make-d-e-list
           (mv-nth '0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
          (car path))))))))
   :hints
   (("goal"
@@ -18035,14 +18035,14 @@ Some (rather awful) testing forms are
       (x
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
           (find-d-e
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
            (car path))))))
       (key
        (nth
@@ -18052,7 +18052,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -18060,7 +18060,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth
                   0
@@ -18068,14 +18068,14 @@ Some (rather awful) testing forms are
                    (make-d-e-list
                     (mv-nth
                      0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
                    (car path))))))
               (cadr path)))))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -18083,13 +18083,13 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e (make-d-e-list
                                    (mv-nth 0
-                                           (d-e-clusterchain-contents
+                                           (d-e-cc-contents
                                             fat32-in-memory d-e)))
                                   (car path))))))
                 (cadr path))))))
@@ -18100,7 +18100,7 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            0
@@ -18108,7 +18108,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents
+              (d-e-cc-contents
                fat32-in-memory
                (mv-nth
                 0
@@ -18116,14 +18116,14 @@ Some (rather awful) testing forms are
                  (make-d-e-list
                   (mv-nth
                    0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
                  (car path))))))
             (cadr path)))))
         (make-list-ac
          (len
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -18131,7 +18131,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth
                   0
@@ -18139,13 +18139,13 @@ Some (rather awful) testing forms are
                    (make-d-e-list
                     (mv-nth
                      0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
                    (car path))))))
               (cadr path))))))
          0 nil))))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-4
+  d-e-cc-contents-of-lofat-place-file-coincident-lemma-4
   (implies (equal (mv-nth 1 (find-d-e d-e-list filename))
                   0)
            (< 0 (len d-e-list)))
@@ -18159,55 +18159,55 @@ Some (rather awful) testing forms are
              (< 0 (* x (len d-e-list)))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-5
+  d-e-cc-contents-of-lofat-place-file-coincident-lemma-5
   (implies
    (and (<= 2 (d-e-first-cluster d-e))
         (equal (mv-nth 1
-                       (d-e-clusterchain fat32-in-memory d-e))
+                       (d-e-cc fat32-in-memory d-e))
                0)
         (no-duplicatesp-equal
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory d-e))))
+                 (d-e-cc fat32-in-memory d-e))))
    (equal
     (count-free-clusters
      (set-indices-in-fa-table
       (effective-fat fat32-in-memory)
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory d-e))
+              (d-e-cc fat32-in-memory d-e))
       (make-list-ac
        (len (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory d-e)))
+                    (d-e-cc fat32-in-memory d-e)))
        0 nil)))
     (+ (count-free-clusters (effective-fat fat32-in-memory))
        (len (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory d-e)))))))
+                    (d-e-cc fat32-in-memory d-e)))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-6
+  d-e-cc-contents-of-lofat-place-file-coincident-lemma-6
   (and
    (implies
     (and (d-e-directory-p d-e)
          (<= 2 (d-e-first-cluster d-e)))
     (equal (mv-nth 1
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        (d-e-first-cluster d-e)
                                        *ms-max-dir-size*))
            (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))))
+                   (d-e-cc-contents fat32-in-memory d-e))))
    (implies
     (and (not (d-e-directory-p d-e))
          (<= 2 (d-e-first-cluster d-e)))
     (equal (mv-nth 1
-                   (clear-clusterchain fat32-in-memory
+                   (clear-cc fat32-in-memory
                                        (d-e-first-cluster d-e)
                                        (d-e-file-size d-e)))
            (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))))
-  :hints (("goal" :in-theory (enable d-e-clusterchain-contents
-                                     clear-clusterchain-correctness-1))))
+                   (d-e-cc-contents fat32-in-memory d-e)))))
+  :hints (("goal" :in-theory (enable d-e-cc-contents
+                                     clear-cc-correctness-1))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-7
+  d-e-cc-contents-of-lofat-place-file-coincident-lemma-7
   t
   :rule-classes
   ((:rewrite
@@ -18218,26 +18218,26 @@ Some (rather awful) testing forms are
           (d-e-directory-p d-e))
      (equal
       (effective-fat (mv-nth 0
-                             (clear-clusterchain fat32-in-memory
+                             (clear-cc fat32-in-memory
                                                  (d-e-first-cluster d-e)
                                                  *ms-max-dir-size*)))
       (if
        (equal (mv-nth 1
-                      (clear-clusterchain fat32-in-memory
+                      (clear-cc fat32-in-memory
                                           (d-e-first-cluster d-e)
                                           *ms-max-dir-size*))
               0)
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory d-e))
+                (d-e-cc fat32-in-memory d-e))
         (make-list-ac
          (len (mv-nth 0
-                      (d-e-clusterchain fat32-in-memory d-e)))
+                      (d-e-cc fat32-in-memory d-e)))
          0 nil))
        (effective-fat fat32-in-memory))))
-    :hints (("goal" :in-theory (enable d-e-clusterchain
-                                       d-e-clusterchain-contents))))
+    :hints (("goal" :in-theory (enable d-e-cc
+                                       d-e-cc-contents))))
    (:rewrite
     :corollary
     (implies
@@ -18246,30 +18246,30 @@ Some (rather awful) testing forms are
           (not (d-e-directory-p d-e)))
      (equal
       (effective-fat (mv-nth 0
-                             (clear-clusterchain fat32-in-memory
+                             (clear-cc fat32-in-memory
                                                  (d-e-first-cluster d-e)
                                                  (d-e-file-size d-e))))
       (if
        (equal (mv-nth 1
-                      (clear-clusterchain fat32-in-memory
+                      (clear-cc fat32-in-memory
                                           (d-e-first-cluster d-e)
                                           (d-e-file-size d-e)))
               0)
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory d-e))
+                (d-e-cc fat32-in-memory d-e))
         (make-list-ac
          (len (mv-nth 0
-                      (d-e-clusterchain fat32-in-memory d-e)))
+                      (d-e-cc fat32-in-memory d-e)))
          0 nil))
        (effective-fat fat32-in-memory))))
-    :hints (("goal" :in-theory (enable d-e-clusterchain
-                                       d-e-clusterchain-contents))))))
+    :hints (("goal" :in-theory (enable d-e-cc
+                                       d-e-cc-contents))))))
 
 ;; Consider changing to remove free variables...
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-10
+  d-e-cc-contents-of-lofat-place-file-coincident-lemma-10
   (implies (<= 2
                (d-e-first-cluster
                 (mv-nth 0
@@ -18278,7 +18278,7 @@ Some (rather awful) testing forms are
   :rule-classes :linear)
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-11
+  d-e-cc-contents-of-lofat-place-file-coincident-lemma-11
   (implies
    (and
     (d-e-directory-p
@@ -18287,7 +18287,7 @@ Some (rather awful) testing forms are
       (find-d-e
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        (car path))))
     (<=
      2
@@ -18298,7 +18298,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -18306,7 +18306,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (cadr path)))))
     (<
@@ -18317,7 +18317,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -18325,7 +18325,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (car path))))))
         (cadr path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
@@ -18336,7 +18336,7 @@ Some (rather awful) testing forms are
        (effective-fat fat32-in-memory)
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -18344,7 +18344,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                0
@@ -18352,14 +18352,14 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
                 (car path))))))
            (cadr path)))))
        (make-list-ac
         (len
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
@@ -18367,7 +18367,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 fat32-in-memory
                 (mv-nth
                  0
@@ -18375,12 +18375,12 @@ Some (rather awful) testing forms are
                   (make-d-e-list
                    (mv-nth
                     0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
                   (car path))))))
              (cadr path))))))
         0 nil))))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (equal
      (mv-nth
@@ -18389,19 +18389,19 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))))
    (not
     (member-equal
@@ -18412,7 +18412,7 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            0
@@ -18420,7 +18420,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents
+              (d-e-cc-contents
                fat32-in-memory
                (mv-nth
                 0
@@ -18428,14 +18428,14 @@ Some (rather awful) testing forms are
                  (make-d-e-list
                   (mv-nth
                    0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
                  (car path))))))
             (cadr path)))))
         (make-list-ac
          (len
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -18443,7 +18443,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth
                   0
@@ -18451,13 +18451,13 @@ Some (rather awful) testing forms are
                    (make-d-e-list
                     (mv-nth
                      0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
                    (car path))))))
               (cadr path))))))
          0 nil))
        1))
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e)))))
+             (d-e-cc fat32-in-memory d-e)))))
   :hints
   (("goal"
     :in-theory (disable (:rewrite non-free-index-listp-correctness-2 . 1))
@@ -18465,7 +18465,7 @@ Some (rather awful) testing forms are
     ((:instance
       (:rewrite non-free-index-listp-correctness-2 . 1)
       (x (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory d-e)))
+                 (d-e-cc fat32-in-memory d-e)))
       (key
        (nth
         0
@@ -18474,7 +18474,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -18482,7 +18482,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth
                   0
@@ -18490,14 +18490,14 @@ Some (rather awful) testing forms are
                    (make-d-e-list
                     (mv-nth
                      0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
                    (car path))))))
               (cadr path)))))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -18505,13 +18505,13 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e (make-d-e-list
                                    (mv-nth 0
-                                           (d-e-clusterchain-contents
+                                           (d-e-cc-contents
                                             fat32-in-memory d-e)))
                                   (car path))))))
                 (cadr path))))))
@@ -18522,7 +18522,7 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            0
@@ -18530,7 +18530,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents
+              (d-e-cc-contents
                fat32-in-memory
                (mv-nth
                 0
@@ -18538,14 +18538,14 @@ Some (rather awful) testing forms are
                  (make-d-e-list
                   (mv-nth
                    0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
                  (car path))))))
             (cadr path)))))
         (make-list-ac
          (len
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -18553,7 +18553,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth
                   0
@@ -18561,20 +18561,20 @@ Some (rather awful) testing forms are
                    (make-d-e-list
                     (mv-nth
                      0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
                    (car path))))))
               (cadr path))))))
          0 nil))))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-12
+  d-e-cc-contents-of-lofat-place-file-coincident-lemma-12
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
     (d-e-p d-e)
     (d-e-directory-p d-e)
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (<=
      (+
@@ -18584,7 +18584,7 @@ Some (rather awful) testing forms are
        (len
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents fat32-in-memory d-e))))))
+                 (d-e-cc-contents fat32-in-memory d-e))))))
      2097152)
     (equal
      (mv-nth
@@ -18597,7 +18597,7 @@ Some (rather awful) testing forms are
          (place-d-e
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
           (d-e-set-first-cluster-file-size
            (d-e-set-filename
             '(0 0 0 0 0 0 0 0 0 0 0 0
@@ -18606,7 +18606,7 @@ Some (rather awful) testing forms are
            0 0))))))
      0))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth
       0
       (update-dir-contents
@@ -18617,7 +18617,7 @@ Some (rather awful) testing forms are
          (place-d-e
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents fat32-in-memory d-e)))
+                   (d-e-cc-contents fat32-in-memory d-e)))
           (d-e-set-first-cluster-file-size
            (d-e-set-filename
             '(0 0 0 0 0 0 0 0 0 0 0 0
@@ -18637,7 +18637,7 @@ Some (rather awful) testing forms are
           (place-d-e
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
            (d-e-set-first-cluster-file-size
             (d-e-set-filename
              '(0 0 0 0 0 0 0 0 0 0 0 0
@@ -18654,7 +18654,7 @@ Some (rather awful) testing forms are
            (place-d-e
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
             (d-e-set-first-cluster-file-size
              (d-e-set-filename
               '(0 0 0 0 0 0 0 0 0 0 0 0
@@ -18672,7 +18672,7 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
                 (d-e-set-first-cluster-file-size
                  (d-e-set-filename
                   '(0 0 0 0 0 0 0 0 0 0 0 0
@@ -18689,7 +18689,7 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
                 (d-e-set-first-cluster-file-size
                  (d-e-set-filename
                   '(0 0 0 0 0 0 0 0 0 0 0 0
@@ -18699,11 +18699,11 @@ Some (rather awful) testing forms are
              (cluster-size fat32-in-memory)))))
          (code-char 0) nil)))
       '(0))
-     (d-e-clusterchain-contents fat32-in-memory d-e)))))
+     (d-e-cc-contents fat32-in-memory d-e)))))
 
 (make-event
  `(defthm
-    d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+    d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
     (implies (and (equal (nth 0 (explode filename))
                          (code-char 0))
                   (useful-d-e-list-p d-e-list))
@@ -18721,10 +18721,10 @@ Some (rather awful) testing forms are
                            ,(code-char 0))))))))
 
 (defthm
-  d-e-clusterchain-contents-of-lofat-place-file-coincident-1
+  d-e-cc-contents-of-lofat-place-file-coincident-1
   (b*
-      (((mv clusterchain-contents error-code)
-        (d-e-clusterchain-contents fat32-in-memory d-e))
+      (((mv cc-contents error-code)
+        (d-e-cc-contents fat32-in-memory d-e))
        (new-d-e
         (if
          (or (< 0
@@ -18739,7 +18739,7 @@ Some (rather awful) testing forms are
              (find-d-e
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents fat32-in-memory d-e)))
+                       (d-e-cc-contents fat32-in-memory d-e)))
               (car path)))))
           (if
            (<
@@ -18749,7 +18749,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents fat32-in-memory d-e)))
+                        (d-e-cc-contents fat32-in-memory d-e)))
                (car path))))
             (+ 2 (count-of-clusters fat32-in-memory)))
            (d-e-set-first-cluster-file-size
@@ -18758,7 +18758,7 @@ Some (rather awful) testing forms are
              (find-d-e
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents fat32-in-memory d-e)))
+                       (d-e-cc-contents fat32-in-memory d-e)))
               (car path)))
             (nth
              0
@@ -18767,7 +18767,7 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth
                   0
@@ -18775,13 +18775,13 @@ Some (rather awful) testing forms are
                    (make-d-e-list
                     (mv-nth
                      0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
                    (car path)))))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
@@ -18789,7 +18789,7 @@ Some (rather awful) testing forms are
                      (make-d-e-list
                       (mv-nth
                        0
-                       (d-e-clusterchain-contents fat32-in-memory d-e)))
+                       (d-e-cc-contents fat32-in-memory d-e)))
                      (car path))))))
                 0 nil))
               1))
@@ -18802,7 +18802,7 @@ Some (rather awful) testing forms are
              (find-d-e
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents fat32-in-memory d-e)))
+                       (d-e-cc-contents fat32-in-memory d-e)))
               (car path)))
             (nth 0
                  (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -18817,7 +18817,7 @@ Some (rather awful) testing forms are
              (find-d-e
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents fat32-in-memory d-e)))
+                       (d-e-cc-contents fat32-in-memory d-e)))
               (car path)))
             0)
            (d-e-set-first-cluster-file-size
@@ -18826,7 +18826,7 @@ Some (rather awful) testing forms are
              (find-d-e
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents fat32-in-memory d-e)))
+                       (d-e-cc-contents fat32-in-memory d-e)))
               (car path)))
             (nth 0
                  (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -18851,7 +18851,7 @@ Some (rather awful) testing forms are
             (find-d-e
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents fat32-in-memory d-e)))
+                      (d-e-cc-contents fat32-in-memory d-e)))
              (car path)))
            0)
           (d-e-set-first-cluster-file-size
@@ -18860,7 +18860,7 @@ Some (rather awful) testing forms are
             (find-d-e
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents fat32-in-memory d-e)))
+                      (d-e-cc-contents fat32-in-memory d-e)))
              (car path)))
            0 0)
           (d-e-set-first-cluster-file-size
@@ -18868,7 +18868,7 @@ Some (rather awful) testing forms are
                                           (lofat-directory-file-p file))
            0 0))))
        (new-contents
-        (nats=>chars (insert-d-e (string=>nats clusterchain-contents)
+        (nats=>chars (insert-d-e (string=>nats cc-contents)
                                      new-d-e))))
     (implies
      (and
@@ -18880,22 +18880,22 @@ Some (rather awful) testing forms are
       (equal
        (mv-nth 3
                (lofat-to-hifat-helper fat32-in-memory
-                                      (make-d-e-list clusterchain-contents)
+                                      (make-d-e-list cc-contents)
                                       entry-limit))
        0)
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory d-e))
+               (d-e-cc fat32-in-memory d-e))
        (mv-nth 2
                (lofat-to-hifat-helper fat32-in-memory
-                                      (make-d-e-list clusterchain-contents)
+                                      (make-d-e-list cc-contents)
                                       entry-limit)))
       (equal (mv-nth 1
                      (lofat-place-file fat32-in-memory d-e path file))
              0)
       (lofat-file-p file))
      (equal
-      (d-e-clusterchain-contents
+      (d-e-cc-contents
        (mv-nth 0
                (lofat-place-file fat32-in-memory d-e path file))
        d-e)
@@ -18913,18 +18913,18 @@ Some (rather awful) testing forms are
            (code-char 0)
            nil)))
         0)
-       (d-e-clusterchain-contents fat32-in-memory d-e)))))
+       (d-e-cc-contents fat32-in-memory d-e)))))
   :hints
   (("goal"
     :expand (lofat-place-file fat32-in-memory d-e path file)
     :do-not-induct t
     :in-theory
     (e/d (update-dir-contents-correctness-1 nats=>string)
-         (explode-of-d-e-filename clear-clusterchain-correctness-1
-                                      effective-fat-of-clear-clusterchain)))))
+         (explode-of-d-e-filename clear-cc-correctness-1
+                                      effective-fat-of-clear-cc)))))
 
 (defthm
-  d-e-clusterchain-of-lofat-place-file-disjoint
+  d-e-cc-of-lofat-place-file-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -18933,7 +18933,7 @@ Some (rather awful) testing forms are
     (d-e-p d-e)
     (equal
      (mv-nth '1
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      '0)
     (equal
      (mv-nth
@@ -18942,53 +18942,53 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (not (intersectp-equal
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory root-d-e))
+                  (d-e-cc fat32-in-memory root-d-e))
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory d-e))))
+                  (d-e-cc fat32-in-memory d-e))))
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (equal (mv-nth 1
-                   (d-e-clusterchain fat32-in-memory d-e))
+                   (d-e-cc fat32-in-memory d-e))
            0)
     (<= 2 (d-e-first-cluster d-e))
     (<= 2 (d-e-first-cluster root-d-e)))
-   (equal (d-e-clusterchain
+   (equal (d-e-cc
            (mv-nth 0
                    (lofat-place-file fat32-in-memory
                                      root-d-e path file))
            d-e)
-          (d-e-clusterchain fat32-in-memory d-e)))
+          (d-e-cc fat32-in-memory d-e)))
   :hints (("goal" :induct (lofat-place-file fat32-in-memory
                                             root-d-e path file)
            :in-theory
            (disable
             (:rewrite
-             d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+             d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
              . 5)))))
 
 (defthm
@@ -19002,7 +19002,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit1))
      0)
     (not
@@ -19017,7 +19017,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         entry-limit1))))
     (zp (mv-nth 3
                 (lofat-to-hifat-helper fat32-in-memory
@@ -19025,18 +19025,18 @@ Some (rather awful) testing forms are
     (useful-d-e-list-p d-e-list)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit1)))
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
                                     d-e-list entry-limit2)))
@@ -19044,13 +19044,13 @@ Some (rather awful) testing forms are
     (d-e-p root-d-e)
     (d-e-directory-p root-d-e)
     (mv-let (ignore-0 error-code)
-      (d-e-clusterchain-contents fat32-in-memory root-d-e)
+      (d-e-cc-contents fat32-in-memory root-d-e)
       (declare (ignore ignore-0))
-      (mv-let (clusterchain ignore-0)
-        (d-e-clusterchain fat32-in-memory root-d-e)
+      (mv-let (cc ignore-0)
+        (d-e-cc fat32-in-memory root-d-e)
         (declare (ignore ignore-0))
         (and (equal error-code 0)
-             (no-duplicatesp-equal clusterchain)))))
+             (no-duplicatesp-equal cc)))))
    (equal
     (lofat-to-hifat-helper
      (mv-nth 0
@@ -19065,7 +19065,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper not-intersectp-list)
      (member-intersectp-is-commutative
       (:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+       d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
        . 1)
       (:rewrite nth-of-nats=>chars)
       (:rewrite nth-of-effective-fat)
@@ -19110,7 +19110,7 @@ Some (rather awful) testing forms are
                   (d-e-first-cluster (d-e-fix d-e))))
           ""
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory
+                  (d-e-cc-contents fat32-in-memory
                                                  (d-e-fix d-e)))))
      (mv-nth 0
              (lofat-to-hifat-helper fat32-in-memory
@@ -19120,7 +19120,7 @@ Some (rather awful) testing forms are
   (("goal" :in-theory
     (e/d (lofat-to-hifat-helper hifat-entry-count)
          ((:rewrite
-           d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+           d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
            . 1)
           (:rewrite nth-of-effective-fat)
           (:rewrite nth-of-nats=>chars)
@@ -19158,7 +19158,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -19172,7 +19172,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory (car d-e-list))))
          (+ -1 entry-limit))))
       (hifat-entry-count
@@ -19190,7 +19190,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory (car d-e-list))))
               (+ -1 entry-limit))))))))))
      entry-limit))
@@ -19215,7 +19215,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))))))
      (entry-limit2 (+ -1 entry-limit))
@@ -19240,7 +19240,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -19254,7 +19254,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory (car d-e-list))))
          (+ -1 entry-limit))))
       (hifat-entry-count
@@ -19272,7 +19272,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory (car d-e-list))))
               (+ -1 entry-limit))))))))))
      entry-limit)
@@ -19291,7 +19291,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))))
    (not-intersectp-list
@@ -19315,7 +19315,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))))))
      (entry-limit2 (+ -1 entry-limit))
@@ -19345,12 +19345,12 @@ Some (rather awful) testing forms are
       (equal
        (mv-nth
         1
-        (d-e-clusterchain-contents fat32-in-memory (d-e-fix d-e)))
+        (d-e-cc-contents fat32-in-memory (d-e-fix d-e)))
        0)
       (not
        (intersectp-equal x
                          (mv-nth 0
-                                 (d-e-clusterchain fat32-in-memory
+                                 (d-e-cc fat32-in-memory
                                                        (d-e-fix d-e)))))))
     (not-intersectp-list
      x
@@ -19369,7 +19369,7 @@ Some (rather awful) testing forms are
     (e/d
      (lofat-to-hifat-helper hifat-entry-count not-intersectp-list)
      ((:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+       d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
        . 1)
       (:rewrite nth-of-effective-fat)
       (:rewrite nth-of-nats=>chars)
@@ -19420,11 +19420,11 @@ Some (rather awful) testing forms are
       (equal
        (mv-nth
         1
-        (d-e-clusterchain-contents fat32-in-memory (d-e-fix d-e)))
+        (d-e-cc-contents fat32-in-memory (d-e-fix d-e)))
        0)
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory (d-e-fix d-e)))
+               (d-e-cc fat32-in-memory (d-e-fix d-e)))
        x)))
     (not (member-intersectp-equal
           x
@@ -19471,14 +19471,14 @@ Some (rather awful) testing forms are
       (equal
        (mv-nth
         1
-        (d-e-clusterchain-contents fat32-in-memory (d-e-fix d-e)))
+        (d-e-cc-contents fat32-in-memory (d-e-fix d-e)))
        0)
       (no-duplicatesp-equal
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory (d-e-fix d-e))))
+               (d-e-cc fat32-in-memory (d-e-fix d-e))))
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory (d-e-fix d-e)))
+               (d-e-cc fat32-in-memory (d-e-fix d-e)))
        (mv-nth 2
                (lofat-to-hifat-helper fat32-in-memory
                                       d-e-list entry-limit))))))
@@ -19493,7 +19493,7 @@ Some (rather awful) testing forms are
     (e/d
      (lofat-to-hifat-helper hifat-entry-count not-intersectp-list)
      ((:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+       d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
        . 1)
       (:rewrite nth-of-effective-fat)
       (:rewrite nth-of-nats=>chars)
@@ -19524,19 +19524,19 @@ Some (rather awful) testing forms are
     (lofat-fs-p fat32-in-memory)
     (equal
      (mv-nth 1
-             (d-e-clusterchain-contents fat32-in-memory root-d-e))
+             (d-e-cc-contents fat32-in-memory root-d-e))
      0))
    (not
     (<
      (+ (count-free-clusters (effective-fat fat32-in-memory))
         (len (mv-nth 0
-                     (d-e-clusterchain fat32-in-memory root-d-e)))
+                     (d-e-cc fat32-in-memory root-d-e)))
         (- (len (make-clusters (lofat-file->contents file)
                                (cluster-size fat32-in-memory)))))
      (len
       (make-clusters
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e))
+               (d-e-cc-contents fat32-in-memory root-d-e))
        (cluster-size fat32-in-memory))))))
   :hints (("goal" :in-theory (enable len-of-make-clusters
                                      (:REWRITE LOFAT-TO-HIFAT-INVERSION-LEMMA-15)))))
@@ -19562,12 +19562,12 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (equal
      (mv-nth 1
-             (d-e-clusterchain-contents fat32-in-memory root-d-e))
+             (d-e-cc-contents fat32-in-memory root-d-e))
      0)
     (<=
      (+
@@ -19581,7 +19581,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))
        (cluster-size fat32-in-memory))
       (-
@@ -19593,7 +19593,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           entry-limit))
         (cluster-size fat32-in-memory)))
       (-
@@ -19601,7 +19601,7 @@ Some (rather awful) testing forms are
         (make-clusters
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -19609,7 +19609,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path)))))
          (cluster-size fat32-in-memory)))))
      (count-free-clusters (effective-fat fat32-in-memory)))
@@ -19622,7 +19622,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (<
      (d-e-first-cluster
@@ -19632,7 +19632,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (not
@@ -19640,13 +19640,13 @@ Some (rather awful) testing forms are
      (+
       (count-free-clusters (effective-fat fat32-in-memory))
       (len (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory root-d-e)))
+                   (d-e-cc fat32-in-memory root-d-e)))
       (- (len (make-clusters (lofat-file->contents file)
                              (cluster-size fat32-in-memory))))
       (len
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -19654,12 +19654,12 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))))))
      (len
       (make-clusters
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e))
+               (d-e-cc-contents fat32-in-memory root-d-e))
        (cluster-size fat32-in-memory))))))
   :hints (("goal" :in-theory (enable len-of-make-clusters
                                      (:rewrite lofat-to-hifat-inversion-lemma-15)))))
@@ -19676,12 +19676,12 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (equal
      (mv-nth 1
-             (d-e-clusterchain-contents fat32-in-memory root-d-e))
+             (d-e-cc-contents fat32-in-memory root-d-e))
      0)
     (<=
      (+
@@ -19695,7 +19695,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))
        (cluster-size fat32-in-memory))
       (-
@@ -19707,7 +19707,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           entry-limit))
         (cluster-size fat32-in-memory)))
       (-
@@ -19715,7 +19715,7 @@ Some (rather awful) testing forms are
         (make-clusters
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -19723,7 +19723,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path)))))
          (cluster-size fat32-in-memory)))))
      (count-free-clusters (effective-fat fat32-in-memory)))
@@ -19736,7 +19736,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (<
      (d-e-first-cluster
@@ -19746,7 +19746,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (not
@@ -19755,13 +19755,13 @@ Some (rather awful) testing forms are
       1
       (count-free-clusters (effective-fat fat32-in-memory))
       (len (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory root-d-e)))
+                   (d-e-cc fat32-in-memory root-d-e)))
       (- (len (make-clusters (lofat-file->contents file)
                              (cluster-size fat32-in-memory))))
       (len
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -19769,12 +19769,12 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))))))
      (len
       (make-clusters
        (mv-nth 0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e))
+               (d-e-cc-contents fat32-in-memory root-d-e))
        (cluster-size fat32-in-memory))))))
   :hints (("goal" :in-theory (enable len-of-make-clusters
                                      (:REWRITE LOFAT-TO-HIFAT-INVERSION-LEMMA-15)))))
@@ -19783,18 +19783,18 @@ Some (rather awful) testing forms are
 (defthm
   lofat-place-file-correctness-1-lemma-25
   (implies (equal (mv-nth 1
-                          (d-e-clusterchain fat32-in-memory d-e))
+                          (d-e-cc fat32-in-memory d-e))
                   0)
            (not
             (<
              (binary-+
               (count-free-clusters (effective-fat fat32-in-memory))
               (len (mv-nth '0
-                           (d-e-clusterchain fat32-in-memory d-e))))
+                           (d-e-cc fat32-in-memory d-e))))
              '1)))
   :hints
   (("goal"
-    :in-theory (enable d-e-clusterchain
+    :in-theory (enable d-e-cc
                        fat32-build-index-list)
     :expand ((fat32-build-index-list (effective-fat fat32-in-memory)
                                      (d-e-first-cluster d-e)
@@ -19813,11 +19813,11 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
     (<
      (nth
       0
@@ -19825,11 +19825,11 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                (d-e-cc fat32-in-memory (car d-e-list)))
         (make-list-ac
          (len
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                  (d-e-cc fat32-in-memory (car d-e-list))))
          0 nil))
        1))
      (+ 2 (count-of-clusters fat32-in-memory))))
@@ -19845,11 +19845,11 @@ Some (rather awful) testing forms are
         (set-indices-in-fa-table
          (effective-fat fat32-in-memory)
          (mv-nth '0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                 (d-e-cc fat32-in-memory (car d-e-list)))
          (make-list-ac
           (len
            (mv-nth '0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                   (d-e-cc fat32-in-memory (car d-e-list))))
           '0
           'nil))
         '1))))))
@@ -19865,12 +19865,12 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                  (d-e-cc fat32-in-memory (car d-e-list)))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
            0 nil))
          1)))
       (y (+ 2
@@ -19883,7 +19883,7 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (equal (mv-nth 3
                    (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
@@ -19891,10 +19891,10 @@ Some (rather awful) testing forms are
            0)
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                     (+ -1 entry-limit)))))
@@ -19906,11 +19906,11 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                (d-e-cc fat32-in-memory (car d-e-list)))
         (make-list-ac
          (len
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                  (d-e-cc fat32-in-memory (car d-e-list))))
          0 nil))
        1)))
     (mv-nth 2
@@ -19933,12 +19933,12 @@ Some (rather awful) testing forms are
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory (car d-e-list)))
            (make-list-ac
             (len
              (mv-nth 0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory (car d-e-list))))
             0 nil))
           1))))
@@ -19946,12 +19946,12 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory (car d-e-list)))
         (make-list-ac
          (len
           (mv-nth 0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory (car d-e-list))))
          0 nil))))))))
 
@@ -19962,7 +19962,7 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (equal (mv-nth 3
                    (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
@@ -19970,10 +19970,10 @@ Some (rather awful) testing forms are
            0)
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                     (+ -1 entry-limit)))))
@@ -19985,11 +19985,11 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                (d-e-cc fat32-in-memory (car d-e-list)))
         (make-list-ac
          (len
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                  (d-e-cc fat32-in-memory (car d-e-list))))
          0 nil))
        1))
      (find-n-free-clusters
@@ -20000,12 +20000,12 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                  (d-e-cc fat32-in-memory (car d-e-list)))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
            0 nil))
          1))
        (fat32-update-lower-28
@@ -20016,12 +20016,12 @@ Some (rather awful) testing forms are
            (set-indices-in-fa-table
             (effective-fat fat32-in-memory)
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                    (d-e-cc fat32-in-memory (car d-e-list)))
             (make-list-ac
              (len
               (mv-nth
                0
-               (d-e-clusterchain fat32-in-memory (car d-e-list))))
+               (d-e-cc fat32-in-memory (car d-e-list))))
              0 nil))
            1))
          fat32-in-memory)
@@ -20029,11 +20029,11 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                (d-e-cc fat32-in-memory (car d-e-list)))
         (make-list-ac
          (len
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                  (d-e-cc fat32-in-memory (car d-e-list))))
          0 nil)))
       (+ -1
          (len (make-clusters (lofat-file->contents file)
@@ -20059,12 +20059,12 @@ Some (rather awful) testing forms are
            (set-indices-in-fa-table
             (effective-fat fat32-in-memory)
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                    (d-e-cc fat32-in-memory (car d-e-list)))
             (make-list-ac
              (len
               (mv-nth
                0
-               (d-e-clusterchain fat32-in-memory (car d-e-list))))
+               (d-e-cc fat32-in-memory (car d-e-list))))
              0 nil))
            1))
          (fat32-update-lower-28
@@ -20076,12 +20076,12 @@ Some (rather awful) testing forms are
               (effective-fat fat32-in-memory)
               (mv-nth
                0
-               (d-e-clusterchain fat32-in-memory (car d-e-list)))
+               (d-e-cc fat32-in-memory (car d-e-list)))
               (make-list-ac
                (len
                 (mv-nth
                  0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                 (d-e-cc fat32-in-memory (car d-e-list))))
                0 nil))
              1))
            fat32-in-memory)
@@ -20089,12 +20089,12 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                  (d-e-cc fat32-in-memory (car d-e-list)))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
            0 nil)))
         (+ -1
            (len (make-clusters (lofat-file->contents file)
@@ -20107,12 +20107,12 @@ Some (rather awful) testing forms are
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                   (d-e-cc fat32-in-memory (car d-e-list)))
            (make-list-ac
             (len
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory (car d-e-list))))
+              (d-e-cc fat32-in-memory (car d-e-list))))
             0 nil))
           1)))))))))
 
@@ -20131,12 +20131,12 @@ Some (rather awful) testing forms are
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                   (d-e-cc fat32-in-memory (car d-e-list)))
            (make-list-ac
             (len
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory (car d-e-list))))
+              (d-e-cc fat32-in-memory (car d-e-list))))
             0 nil))
           1))
         (fat32-update-lower-28
@@ -20148,18 +20148,18 @@ Some (rather awful) testing forms are
              (effective-fat fat32-in-memory)
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory (car d-e-list)))
+              (d-e-cc fat32-in-memory (car d-e-list)))
              (make-list-ac
               (len
                (mv-nth
                 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                (d-e-cc fat32-in-memory (car d-e-list))))
               0 nil))
             1))
           fat32-in-memory)
          268435455)
         (mv-nth 0
-                (clear-clusterchain fat32-in-memory
+                (clear-cc fat32-in-memory
                                     (d-e-first-cluster (car d-e-list))
                                     (d-e-file-size (car d-e-list)))))
        (car d-e-list)
@@ -20171,12 +20171,12 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                  (d-e-cc fat32-in-memory (car d-e-list)))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
            0 nil))
          1))))
      0)
@@ -20187,14 +20187,14 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
     (lofat-regular-file-p file))
    (equal
-    (d-e-clusterchain
+    (d-e-cc
      (mv-nth
       0
       (place-contents
@@ -20205,12 +20205,12 @@ Some (rather awful) testing forms are
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                   (d-e-cc fat32-in-memory (car d-e-list)))
            (make-list-ac
             (len
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory (car d-e-list))))
+              (d-e-cc fat32-in-memory (car d-e-list))))
             0 nil))
           1))
         (fat32-update-lower-28
@@ -20222,18 +20222,18 @@ Some (rather awful) testing forms are
              (effective-fat fat32-in-memory)
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory (car d-e-list)))
+              (d-e-cc fat32-in-memory (car d-e-list)))
              (make-list-ac
               (len
                (mv-nth
                 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                (d-e-cc fat32-in-memory (car d-e-list))))
               0 nil))
             1))
           fat32-in-memory)
          268435455)
         (mv-nth 0
-                (clear-clusterchain fat32-in-memory
+                (clear-cc fat32-in-memory
                                     (d-e-first-cluster (car d-e-list))
                                     (d-e-file-size (car d-e-list)))))
        (car d-e-list)
@@ -20245,12 +20245,12 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                  (d-e-cc fat32-in-memory (car d-e-list)))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
            0 nil))
          1))))
      (d-e-set-first-cluster-file-size
@@ -20261,11 +20261,11 @@ Some (rather awful) testing forms are
         (set-indices-in-fa-table
          (effective-fat fat32-in-memory)
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                 (d-e-cc fat32-in-memory (car d-e-list)))
          (make-list-ac
           (len
            (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                   (d-e-cc fat32-in-memory (car d-e-list))))
           0 nil))
         1))
       (len (explode (lofat-file->contents file)))))
@@ -20277,11 +20277,11 @@ Some (rather awful) testing forms are
         (set-indices-in-fa-table
          (effective-fat fat32-in-memory)
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                 (d-e-cc fat32-in-memory (car d-e-list)))
          (make-list-ac
           (len
            (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                   (d-e-cc fat32-in-memory (car d-e-list))))
           0 nil))
         1))
       (find-n-free-clusters
@@ -20293,12 +20293,12 @@ Some (rather awful) testing forms are
            (set-indices-in-fa-table
             (effective-fat fat32-in-memory)
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                    (d-e-cc fat32-in-memory (car d-e-list)))
             (make-list-ac
              (len
               (mv-nth
                0
-               (d-e-clusterchain fat32-in-memory (car d-e-list))))
+               (d-e-cc fat32-in-memory (car d-e-list))))
              0 nil))
            1))
          (fat32-update-lower-28
@@ -20310,19 +20310,19 @@ Some (rather awful) testing forms are
               (effective-fat fat32-in-memory)
               (mv-nth
                0
-               (d-e-clusterchain fat32-in-memory (car d-e-list)))
+               (d-e-cc fat32-in-memory (car d-e-list)))
               (make-list-ac
                (len
                 (mv-nth
                  0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                 (d-e-cc fat32-in-memory (car d-e-list))))
                0 nil))
              1))
            fat32-in-memory)
           268435455)
          (mv-nth
           0
-          (clear-clusterchain fat32-in-memory
+          (clear-cc fat32-in-memory
                               (d-e-first-cluster (car d-e-list))
                               (d-e-file-size (car d-e-list))))))
        (+
@@ -20339,12 +20339,12 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                (d-e-cc fat32-in-memory (car d-e-list)))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                  (d-e-cc fat32-in-memory (car d-e-list))))
                 0 nil))
               1))
             (fat32-update-lower-28
@@ -20356,17 +20356,17 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                  (d-e-cc fat32-in-memory (car d-e-list)))
                  (make-list-ac
                   (len (mv-nth 0
-                               (d-e-clusterchain
+                               (d-e-cc
                                 fat32-in-memory (car d-e-list))))
                   0 nil))
                 1))
               fat32-in-memory)
              268435455)
             (mv-nth 0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster (car d-e-list))
                      (d-e-file-size (car d-e-list)))))))))))
@@ -20381,7 +20381,7 @@ Some (rather awful) testing forms are
        (binary-+
         (count-free-clusters (effective-fat fat32-in-memory))
         (len (mv-nth '0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory (car d-e-list)))))
        (binary-+
         '-1
@@ -20394,7 +20394,7 @@ Some (rather awful) testing forms are
        (binary-+
         (count-free-clusters (effective-fat fat32-in-memory))
         (len (mv-nth '0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory (car d-e-list)))))
        (binary-+
         '-1
@@ -20407,7 +20407,7 @@ Some (rather awful) testing forms are
        (binary-+
         (count-free-clusters (effective-fat fat32-in-memory))
         (len (mv-nth '0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory (car d-e-list)))))
        (binary-+
         '-1
@@ -20430,12 +20430,12 @@ Some (rather awful) testing forms are
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                   (d-e-cc fat32-in-memory (car d-e-list)))
            (make-list-ac
             (len
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory (car d-e-list))))
+              (d-e-cc fat32-in-memory (car d-e-list))))
             0 nil))
           1))
         (fat32-update-lower-28
@@ -20447,18 +20447,18 @@ Some (rather awful) testing forms are
              (effective-fat fat32-in-memory)
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory (car d-e-list)))
+              (d-e-cc fat32-in-memory (car d-e-list)))
              (make-list-ac
               (len
                (mv-nth
                 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                (d-e-cc fat32-in-memory (car d-e-list))))
               0 nil))
             1))
           fat32-in-memory)
          268435455)
         (mv-nth 0
-                (clear-clusterchain fat32-in-memory
+                (clear-cc fat32-in-memory
                                     (d-e-first-cluster (car d-e-list))
                                     (d-e-file-size (car d-e-list)))))
        (car d-e-list)
@@ -20470,12 +20470,12 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                  (d-e-cc fat32-in-memory (car d-e-list)))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
            0 nil))
          1))))
      0)
@@ -20488,14 +20488,14 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
     (lofat-regular-file-p file))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth
       0
       (place-contents
@@ -20506,12 +20506,12 @@ Some (rather awful) testing forms are
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                   (d-e-cc fat32-in-memory (car d-e-list)))
            (make-list-ac
             (len
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory (car d-e-list))))
+              (d-e-cc fat32-in-memory (car d-e-list))))
             0 nil))
           1))
         (fat32-update-lower-28
@@ -20523,18 +20523,18 @@ Some (rather awful) testing forms are
              (effective-fat fat32-in-memory)
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory (car d-e-list)))
+              (d-e-cc fat32-in-memory (car d-e-list)))
              (make-list-ac
               (len
                (mv-nth
                 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                (d-e-cc fat32-in-memory (car d-e-list))))
               0 nil))
             1))
           fat32-in-memory)
          268435455)
         (mv-nth 0
-                (clear-clusterchain fat32-in-memory
+                (clear-cc fat32-in-memory
                                     (d-e-first-cluster (car d-e-list))
                                     (d-e-file-size (car d-e-list)))))
        (car d-e-list)
@@ -20546,12 +20546,12 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                  (d-e-cc fat32-in-memory (car d-e-list)))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
            0 nil))
          1))))
      (d-e-set-first-cluster-file-size
@@ -20562,11 +20562,11 @@ Some (rather awful) testing forms are
         (set-indices-in-fa-table
          (effective-fat fat32-in-memory)
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                 (d-e-cc fat32-in-memory (car d-e-list)))
          (make-list-ac
           (len
            (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                   (d-e-cc fat32-in-memory (car d-e-list))))
           0 nil))
         1))
       (len (explode (lofat-file->contents file)))))
@@ -20587,12 +20587,12 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                (d-e-cc fat32-in-memory (car d-e-list)))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                  (d-e-cc fat32-in-memory (car d-e-list))))
                 0 nil))
               1))
             (len (explode (lofat-file->contents file)))))
@@ -20609,10 +20609,10 @@ Some (rather awful) testing forms are
                   (effective-fat fat32-in-memory)
                   (mv-nth
                    0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                   (d-e-cc fat32-in-memory (car d-e-list)))
                   (make-list-ac
                    (len (mv-nth 0
-                                (d-e-clusterchain
+                                (d-e-cc
                                  fat32-in-memory (car d-e-list))))
                    0 nil))
                  1))
@@ -20624,18 +20624,18 @@ Some (rather awful) testing forms are
                    (set-indices-in-fa-table
                     (effective-fat fat32-in-memory)
                     (mv-nth 0
-                            (d-e-clusterchain
+                            (d-e-cc
                              fat32-in-memory (car d-e-list)))
                     (make-list-ac
                      (len (mv-nth 0
-                                  (d-e-clusterchain
+                                  (d-e-cc
                                    fat32-in-memory (car d-e-list))))
                      0 nil))
                    1))
                  fat32-in-memory)
                 268435455)
                (mv-nth 0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster (car d-e-list))
                         (d-e-file-size (car d-e-list))))))))
@@ -20648,12 +20648,12 @@ Some (rather awful) testing forms are
                 (effective-fat fat32-in-memory)
                 (mv-nth
                  0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                 (d-e-cc fat32-in-memory (car d-e-list)))
                 (make-list-ac
                  (len
                   (mv-nth
                    0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                   (d-e-cc fat32-in-memory (car d-e-list))))
                  0 nil))
                1))
              (fat32-update-lower-28
@@ -20665,10 +20665,10 @@ Some (rather awful) testing forms are
                   (effective-fat fat32-in-memory)
                   (mv-nth
                    0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                   (d-e-cc fat32-in-memory (car d-e-list)))
                   (make-list-ac
                    (len (mv-nth 0
-                                (d-e-clusterchain
+                                (d-e-cc
                                  fat32-in-memory (car d-e-list))))
                    0 nil))
                  1))
@@ -20676,7 +20676,7 @@ Some (rather awful) testing forms are
               268435455)
              (mv-nth
               0
-              (clear-clusterchain fat32-in-memory
+              (clear-cc fat32-in-memory
                                   (d-e-first-cluster (car d-e-list))
                                   (d-e-file-size (car d-e-list))))))))
          (- (length (lofat-file->contents file))))
@@ -20686,10 +20686,10 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory
-    (disable d-e-clusterchain-contents-of-place-contents-coincident-2)
+    (disable d-e-cc-contents-of-place-contents-coincident-2)
     :use
     (:instance
-     d-e-clusterchain-contents-of-place-contents-coincident-2
+     d-e-cc-contents-of-place-contents-coincident-2
      (d-e2
       (d-e-set-first-cluster-file-size
        (car d-e-list)
@@ -20699,12 +20699,12 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                  (d-e-cc fat32-in-memory (car d-e-list)))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
            0 nil))
          1))
        (len (explode (lofat-file->contents file)))))
@@ -20715,11 +20715,11 @@ Some (rather awful) testing forms are
         (set-indices-in-fa-table
          (effective-fat fat32-in-memory)
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                 (d-e-cc fat32-in-memory (car d-e-list)))
          (make-list-ac
           (len
            (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                   (d-e-cc fat32-in-memory (car d-e-list))))
           0 nil))
         1)))
      (file-length (len (explode (lofat-file->contents file))))
@@ -20733,12 +20733,12 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                  (d-e-cc fat32-in-memory (car d-e-list)))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))
+             (d-e-cc fat32-in-memory (car d-e-list))))
            0 nil))
          1))
        (fat32-update-lower-28
@@ -20749,18 +20749,18 @@ Some (rather awful) testing forms are
            (set-indices-in-fa-table
             (effective-fat fat32-in-memory)
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                    (d-e-cc fat32-in-memory (car d-e-list)))
             (make-list-ac
              (len
               (mv-nth
                0
-               (d-e-clusterchain fat32-in-memory (car d-e-list))))
+               (d-e-cc fat32-in-memory (car d-e-list))))
              0 nil))
            1))
          fat32-in-memory)
         268435455)
        (mv-nth 0
-               (clear-clusterchain fat32-in-memory
+               (clear-cc fat32-in-memory
                                    (d-e-first-cluster (car d-e-list))
                                    (d-e-file-size (car d-e-list))))))))))
 
@@ -20777,7 +20777,7 @@ Some (rather awful) testing forms are
          (effective-fat fat32-in-memory)
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory
+          (d-e-cc fat32-in-memory
                                 (mv-nth 0
                                         (find-d-e d-e-list
                                                       filename))))
@@ -20785,14 +20785,14 @@ Some (rather awful) testing forms are
           (len
            (mv-nth
             0
-            (d-e-clusterchain fat32-in-memory
+            (d-e-cc fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e d-e-list
                                                         filename)))))
           0 nil))
         1))
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory
+              (d-e-cc fat32-in-memory
                                     (mv-nth 0
                                             (find-d-e d-e-list
                                                           filename))))))
@@ -20822,7 +20822,7 @@ Some (rather awful) testing forms are
          (effective-fat fat32-in-memory)
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory
+          (d-e-cc fat32-in-memory
                                 (mv-nth 0
                                         (find-d-e d-e-list
                                                       filename))))
@@ -20830,7 +20830,7 @@ Some (rather awful) testing forms are
           (len
            (mv-nth
             0
-            (d-e-clusterchain fat32-in-memory
+            (d-e-cc fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e d-e-list
                                                         filename)))))
@@ -20849,7 +20849,7 @@ Some (rather awful) testing forms are
       (val 0)
       (index-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory
+               (d-e-cc fat32-in-memory
                                      (mv-nth 0
                                              (find-d-e d-e-list
                                                            filename)))))
@@ -20862,7 +20862,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e d-e-list
                                                        filename))))
@@ -20870,7 +20870,7 @@ Some (rather awful) testing forms are
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (mv-nth 0
                                            (find-d-e d-e-list
                                                          filename)))))
@@ -20883,7 +20883,7 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory
+                (d-e-cc fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e d-e-list
                                                             filename))))
@@ -20891,7 +20891,7 @@ Some (rather awful) testing forms are
          (len
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e d-e-list
                                                        filename)))))
@@ -20917,7 +20917,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -20938,7 +20938,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        (+ -1 entry-limit)))
      0)
     (not
@@ -20950,7 +20950,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))
         (+ -1 entry-limit)))
       (mv-nth
        2
@@ -20966,7 +20966,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit)))))))))))
    (not-intersectp-list
@@ -20977,7 +20977,7 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory
+                (d-e-cc fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             filename))))
@@ -20985,7 +20985,7 @@ Some (rather awful) testing forms are
          (len
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e (cdr d-e-list)
                                                        filename)))))
@@ -20998,7 +20998,7 @@ Some (rather awful) testing forms are
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+        (d-e-cc-contents fat32-in-memory (car d-e-list))))
       (+ -1 entry-limit)))))
   :hints
   (("goal"
@@ -21014,7 +21014,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))
         (+ -1 entry-limit))))
      (index-list
       (list
@@ -21025,7 +21025,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e (cdr d-e-list)
                                                        filename))))
@@ -21033,7 +21033,7 @@ Some (rather awful) testing forms are
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (mv-nth 0
                                            (find-d-e (cdr d-e-list)
                                                          filename)))))
@@ -21043,7 +21043,7 @@ Some (rather awful) testing forms are
       (set-indices-in-fa-table
        (effective-fat fat32-in-memory)
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory
+               (d-e-cc fat32-in-memory
                                      (mv-nth 0
                                              (find-d-e (cdr d-e-list)
                                                            filename))))
@@ -21051,7 +21051,7 @@ Some (rather awful) testing forms are
         (len
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory
+          (d-e-cc fat32-in-memory
                                 (mv-nth 0
                                         (find-d-e (cdr d-e-list)
                                                       filename)))))
@@ -21065,7 +21065,7 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (equal (mv-nth 3
                    (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
@@ -21073,7 +21073,7 @@ Some (rather awful) testing forms are
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                     (+ -1 entry-limit))))
@@ -21093,7 +21093,7 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory
+                (d-e-cc fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             filename))))
@@ -21101,14 +21101,14 @@ Some (rather awful) testing forms are
          (len
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e (cdr d-e-list)
                                                        filename)))))
          0 nil))
        1))
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list))))))
+             (d-e-cc fat32-in-memory (car d-e-list))))))
   :hints
   (("goal"
     :in-theory (disable (:rewrite non-free-index-listp-correctness-2 . 1))
@@ -21116,7 +21116,7 @@ Some (rather awful) testing forms are
     ((:instance
       (:rewrite non-free-index-listp-correctness-2 . 1)
       (x (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                 (d-e-cc fat32-in-memory (car d-e-list))))
       (key
        (nth
         0
@@ -21125,7 +21125,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e (cdr d-e-list)
                                                        filename))))
@@ -21133,7 +21133,7 @@ Some (rather awful) testing forms are
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (mv-nth 0
                                            (find-d-e (cdr d-e-list)
                                                          filename)))))
@@ -21143,7 +21143,7 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory
+                (d-e-cc fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             filename))))
@@ -21151,7 +21151,7 @@ Some (rather awful) testing forms are
          (len
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e (cdr d-e-list)
                                                        filename)))))
@@ -21195,7 +21195,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -21227,7 +21227,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -21245,7 +21245,7 @@ Some (rather awful) testing forms are
      (entry-limit2 entry-limit)
      (d-e-list (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory
                              (mv-nth 0
                                      (find-d-e (cdr d-e-list)
@@ -21298,7 +21298,7 @@ Some (rather awful) testing forms are
          (nats=>string
           (insert-d-e
            (string=>nats (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -21333,7 +21333,7 @@ Some (rather awful) testing forms are
              (effective-fat fat32-in-memory)
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory
+              (d-e-cc fat32-in-memory
                                     (mv-nth 0
                                             (find-d-e (cdr d-e-list)
                                                           filename1))))
@@ -21341,7 +21341,7 @@ Some (rather awful) testing forms are
               (len
                (mv-nth
                 0
-                (d-e-clusterchain fat32-in-memory
+                (d-e-cc fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             filename1)))))
@@ -21355,7 +21355,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e (cdr d-e-list)
@@ -21400,7 +21400,7 @@ Some (rather awful) testing forms are
         (nats=>string
          (insert-d-e
           (string=>nats (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e (cdr d-e-list)
@@ -21435,7 +21435,7 @@ Some (rather awful) testing forms are
             (effective-fat fat32-in-memory)
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (mv-nth 0
                                            (find-d-e (cdr d-e-list)
                                                          filename1))))
@@ -21443,7 +21443,7 @@ Some (rather awful) testing forms are
              (len
               (mv-nth
                0
-               (d-e-clusterchain fat32-in-memory
+               (d-e-cc fat32-in-memory
                                      (mv-nth 0
                                              (find-d-e (cdr d-e-list)
                                                            filename1)))))
@@ -21456,7 +21456,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -21473,7 +21473,7 @@ Some (rather awful) testing forms are
      (entry-limit2 entry-limit)
      (d-e-list
       (make-d-e-list (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -21526,7 +21526,7 @@ Some (rather awful) testing forms are
          (nats=>string
           (insert-d-e
            (string=>nats (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -21580,7 +21580,7 @@ Some (rather awful) testing forms are
          (nats=>string
           (insert-d-e
            (string=>nats (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e (cdr d-e-list)
@@ -21641,7 +21641,7 @@ Some (rather awful) testing forms are
             (insert-d-e
              (string=>nats
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e (cdr d-e-list)
@@ -21716,7 +21716,7 @@ Some (rather awful) testing forms are
       (cons (cons (d-e-filename (car d-e-list))
                   (m1-file (car d-e-list)
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory (car d-e-list)))))
             (mv-nth 0
                     (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
@@ -21753,7 +21753,7 @@ Some (rather awful) testing forms are
            (explode
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                0
@@ -21761,7 +21761,7 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (car path)))))))
           (cluster-size fat32-in-memory)))
         (ceiling
@@ -21771,7 +21771,7 @@ Some (rather awful) testing forms are
            (explode
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                0
@@ -21779,7 +21779,7 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (car path))))))))
          (cluster-size fat32-in-memory))))
       (and
@@ -21792,7 +21792,7 @@ Some (rather awful) testing forms are
            (explode
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                0
@@ -21800,7 +21800,7 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (car path))))))))
          (cluster-size fat32-in-memory))
         (+
@@ -21810,7 +21810,7 @@ Some (rather awful) testing forms are
            (explode
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                0
@@ -21818,7 +21818,7 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (car path)))))))
           (cluster-size fat32-in-memory)))))))
     :hints (("goal" :do-not-induct t)))
@@ -21832,7 +21832,7 @@ Some (rather awful) testing forms are
        (ceiling
         (len
          (explode (mv-nth 0
-                          (d-e-clusterchain-contents
+                          (d-e-cc-contents
                            fat32-in-memory root-d-e))))
         (cluster-size fat32-in-memory))
        (ceiling
@@ -21840,7 +21840,7 @@ Some (rather awful) testing forms are
          32
          (len
           (explode (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory root-d-e)))))
         (cluster-size fat32-in-memory)))
       (>=
@@ -21849,7 +21849,7 @@ Some (rather awful) testing forms are
         (ceiling
          (len
           (explode (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory root-d-e))))
          (cluster-size fat32-in-memory)))
        (ceiling
@@ -21857,7 +21857,7 @@ Some (rather awful) testing forms are
          32
          (len
           (explode (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory root-d-e)))))
         (cluster-size fat32-in-memory)))))
     :rule-classes :linear))
@@ -21869,16 +21869,16 @@ Some (rather awful) testing forms are
     (lofat-fs-p fat32-in-memory)
     (equal
      (mv-nth 1
-             (d-e-clusterchain-contents fat32-in-memory root-d-e))
+             (d-e-cc-contents fat32-in-memory root-d-e))
      0))
    (<=
     (len
      (make-clusters
       (mv-nth 0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e))
+              (d-e-cc-contents fat32-in-memory root-d-e))
       (cluster-size fat32-in-memory)))
     (len (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory root-d-e)))))
+                 (d-e-cc fat32-in-memory root-d-e)))))
   :rule-classes (:rewrite :linear)
   :hints (("goal" :in-theory (enable len-of-make-clusters
                                      lofat-to-hifat-inversion-lemma-15))))
@@ -21896,7 +21896,7 @@ Some (rather awful) testing forms are
         (explode
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -21904,7 +21904,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path)))))))
        (cluster-size fat32-in-memory))))
     (lofat-fs-p fat32-in-memory)
@@ -21915,23 +21915,23 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit)))
     (equal
      (mv-nth 1
-             (d-e-clusterchain-contents fat32-in-memory root-d-e))
+             (d-e-cc-contents fat32-in-memory root-d-e))
      0)
     (<=
      2
@@ -21942,7 +21942,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (<
      (d-e-first-cluster
@@ -21952,7 +21952,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (not
@@ -21964,7 +21964,7 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          '0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            '0
@@ -21972,7 +21972,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               '0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))))
         (make-list-ac
          (ceiling
@@ -21980,13 +21980,13 @@ Some (rather awful) testing forms are
            (explode$inline
             (mv-nth
              '0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                '0
                (find-d-e (make-d-e-list
                               (mv-nth '0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path)))))))
           (cluster-size fat32-in-memory))
@@ -21994,7 +21994,7 @@ Some (rather awful) testing forms are
          'nil))
        '1))
      (mv-nth '0
-             (d-e-clusterchain fat32-in-memory root-d-e)))))
+             (d-e-cc fat32-in-memory root-d-e)))))
   :hints
   (("goal"
     :in-theory (e/d (lofat-to-hifat-inversion-lemma-15)
@@ -22008,7 +22008,7 @@ Some (rather awful) testing forms are
         (effective-fat fat32-in-memory)
         (mv-nth
          0
-         (d-e-clusterchain
+         (d-e-cc
           fat32-in-memory
           (mv-nth
            0
@@ -22016,7 +22016,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))))
         (make-list-ac
          (ceiling
@@ -22024,19 +22024,19 @@ Some (rather awful) testing forms are
            (explode
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                0
                (find-d-e (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path)))))))
           (cluster-size fat32-in-memory))
          0 nil)))
       (x (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory root-d-e)))
+                 (d-e-cc fat32-in-memory root-d-e)))
       (key
        (nth
         0
@@ -22045,7 +22045,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -22053,7 +22053,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))))
           (make-list-ac
            (ceiling
@@ -22061,13 +22061,13 @@ Some (rather awful) testing forms are
              (explode
               (mv-nth
                0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 fat32-in-memory
                 (mv-nth 0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path)))))))
             (cluster-size fat32-in-memory))
@@ -22095,13 +22095,13 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents
+              (d-e-cc-contents
                fat32-in-memory
                (mv-nth 0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))))
             entry-limit)))))
@@ -22119,13 +22119,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                0
                (find-d-e (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path))))))
            entry-limit)))))
@@ -22149,13 +22149,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                0
                (find-d-e (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path))))))
            entry-limit))))))
@@ -22172,13 +22172,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               fat32-in-memory
               (mv-nth
                0
                (find-d-e (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path))))))
            entry-limit)))))))))
@@ -22198,7 +22198,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -22206,7 +22206,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path)))))))))
      (cluster-size fat32-in-memory))
     (ceiling
@@ -22218,7 +22218,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -22226,7 +22226,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path)))))))))
      (cluster-size fat32-in-memory))))
   :hints
@@ -22244,7 +22244,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -22252,7 +22252,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))))))))
      (i2
       (+
@@ -22263,7 +22263,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -22271,7 +22271,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))))))))))))
   :rule-classes :linear)
 
@@ -22354,7 +22354,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth 0
                   (lofat-place-file fat32-in-memory
                                     (mv-nth 0
@@ -22379,7 +22379,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth 0
                   (lofat-place-file fat32-in-memory
                                     (mv-nth 0
@@ -22398,7 +22398,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e (cdr d-e-list)
@@ -22412,7 +22412,7 @@ Some (rather awful) testing forms are
           (find-d-e
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e (cdr d-e-list)
@@ -22438,7 +22438,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e (cdr d-e-list)
@@ -22456,7 +22456,7 @@ Some (rather awful) testing forms are
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents
+       (d-e-cc-contents
         (mv-nth 0
                 (lofat-place-file fat32-in-memory
                                   (mv-nth 0
@@ -22477,7 +22477,7 @@ Some (rather awful) testing forms are
      (make-d-e-list
       (mv-nth
        0
-       (d-e-clusterchain-contents
+       (d-e-cc-contents
         (mv-nth 0
                 (lofat-place-file fat32-in-memory
                                   (mv-nth 0
@@ -22499,7 +22499,7 @@ Some (rather awful) testing forms are
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth 0
                  (lofat-place-file fat32-in-memory
                                    (mv-nth 0
@@ -22527,7 +22527,7 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (equal
      (mv-nth
@@ -22543,13 +22543,13 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -22563,18 +22563,18 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))
     (not
      (intersectp-equal
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory root-d-e))
+              (d-e-cc fat32-in-memory root-d-e))
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory (car d-e-list)))))
+              (d-e-cc fat32-in-memory (car d-e-list)))))
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -22588,7 +22588,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))
     (not (zp entry-limit))
@@ -22620,7 +22620,7 @@ Some (rather awful) testing forms are
                                    268435455)
             (mv-nth
              0
-             (clear-clusterchain fat32-in-memory
+             (clear-cc fat32-in-memory
                                  (d-e-first-cluster (car d-e-list))
                                  2097152)))
            (car d-e-list)
@@ -22633,7 +22633,7 @@ Some (rather awful) testing forms are
            (string=>nats
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (d-e-set-first-cluster-file-size (car d-e-list)
                                                 i 0)))))
        (cdr d-e-list)
@@ -22655,7 +22655,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory (car d-e-list))))
             (+ -1 entry-limit)))))))))))
   :hints (("goal" :do-not-induct t
@@ -22687,7 +22687,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -22711,7 +22711,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))
     (cons
@@ -22730,7 +22730,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))))
   :hints (("goal" :in-theory (enable hifat-equiv
@@ -22744,13 +22744,13 @@ Some (rather awful) testing forms are
    (member-equal
     i
     (mv-nth 0
-            (d-e-clusterchain fat32-in-memory (car d-e-list))))
+            (d-e-cc fat32-in-memory (car d-e-list))))
    (d-e-directory-p (mv-nth 0
                                 (find-d-e (cdr d-e-list) name)))
    (equal
     (mv-nth
      1
-     (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+     (d-e-cc-contents fat32-in-memory (car d-e-list)))
     0)
    (equal (mv-nth 3
                   (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
@@ -22758,7 +22758,7 @@ Some (rather awful) testing forms are
           0)
    (not-intersectp-list
     (mv-nth 0
-            (d-e-clusterchain fat32-in-memory (car d-e-list)))
+            (d-e-cc fat32-in-memory (car d-e-list)))
     (mv-nth 2
             (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                    (+ -1 entry-limit))))
@@ -22771,7 +22771,7 @@ Some (rather awful) testing forms are
      (set-indices-in-fa-table
       (effective-fat fat32-in-memory)
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory
+              (d-e-cc fat32-in-memory
                                     (mv-nth 0
                                             (find-d-e (cdr d-e-list)
                                                           name))))
@@ -22779,7 +22779,7 @@ Some (rather awful) testing forms are
        (len
         (mv-nth
          0
-         (d-e-clusterchain fat32-in-memory
+         (d-e-cc fat32-in-memory
                                (mv-nth 0
                                        (find-d-e (cdr d-e-list)
                                                      name)))))
@@ -22800,7 +22800,7 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (equal (mv-nth 3
                    (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
@@ -22808,7 +22808,7 @@ Some (rather awful) testing forms are
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                     (+ -1 entry-limit))))
@@ -22819,7 +22819,7 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory
+                (d-e-cc fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             name))))
@@ -22827,7 +22827,7 @@ Some (rather awful) testing forms are
          (len
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e (cdr d-e-list)
                                                        name)))))
@@ -22837,13 +22837,13 @@ Some (rather awful) testing forms are
    (equal
     (mv-nth
      1
-     (d-e-clusterchain-contents
+     (d-e-cc-contents
       (update-fati
        i
        (fat32-update-lower-28 (fati i fat32-in-memory)
                               268435455)
        (mv-nth 0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth 0
@@ -22868,7 +22868,7 @@ Some (rather awful) testing forms are
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory (cdr d-e-list)
                                     (+ -1 entry-limit))))
@@ -22880,7 +22880,7 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory
+                (d-e-cc fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             name))))
@@ -22888,7 +22888,7 @@ Some (rather awful) testing forms are
          (len
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e (cdr d-e-list)
                                                        name)))))
@@ -22899,7 +22899,7 @@ Some (rather awful) testing forms are
      (member-equal
       i
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory root-d-e)))))
+              (d-e-cc fat32-in-memory root-d-e)))))
    (hifat-equiv
     (cons
      (cons
@@ -22908,7 +22908,7 @@ Some (rather awful) testing forms are
        (car d-e-list)
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
           (update-dir-contents
@@ -22921,7 +22921,7 @@ Some (rather awful) testing forms are
                                      268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth 0
@@ -22938,7 +22938,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth 0
                       (find-d-e (cdr d-e-list) name))
@@ -22956,7 +22956,7 @@ Some (rather awful) testing forms are
        (car d-e-list)
        (mv-nth
         0
-        (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))))
+        (d-e-cc-contents fat32-in-memory (car d-e-list)))))
      (put-assoc-equal
       name (m1-file d-e nil)
       (mv-nth 0
@@ -22969,12 +22969,12 @@ Some (rather awful) testing forms are
      intersectp-member
      (a i)
      (y (mv-nth 0
-                (d-e-clusterchain fat32-in-memory
+                (d-e-cc fat32-in-memory
                                       (mv-nth 0
                                               (find-d-e (cdr d-e-list)
                                                             name)))))
      (x (mv-nth 0
-                (d-e-clusterchain fat32-in-memory root-d-e)))))))
+                (d-e-cc fat32-in-memory root-d-e)))))))
 
 (defthm lofat-place-file-correctness-lemma-24
   (implies
@@ -22984,21 +22984,21 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (not
      (intersectp-equal
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory root-d-e))
+              (d-e-cc fat32-in-memory root-d-e))
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory (car d-e-list)))))
+              (d-e-cc fat32-in-memory (car d-e-list)))))
     (fat32-masked-entry-p i)
     (useful-d-e-list-p d-e-list)
     (case-split
      (member-equal
       i
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory root-d-e)))))
+              (d-e-cc fat32-in-memory root-d-e)))))
    (not
     (equal
      (fat32-entry-mask
@@ -23007,11 +23007,11 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                (d-e-cc fat32-in-memory (car d-e-list)))
         (make-list-ac
          (len
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                  (d-e-cc fat32-in-memory (car d-e-list))))
          0 nil))))
      0)))
   :hints
@@ -23020,9 +23020,9 @@ Some (rather awful) testing forms are
     :use (:instance intersectp-member
                     (a i)
                     (y (mv-nth 0
-                               (d-e-clusterchain fat32-in-memory root-d-e)))
+                               (d-e-cc fat32-in-memory root-d-e)))
                     (x (mv-nth 0
-                               (d-e-clusterchain fat32-in-memory
+                               (d-e-cc fat32-in-memory
                                                      (car d-e-list))))))))
 
 (defthm
@@ -23033,7 +23033,7 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (equal
      (mv-nth
@@ -23049,13 +23049,13 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory (car d-e-list)))
+             (d-e-cc fat32-in-memory (car d-e-list)))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -23069,7 +23069,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))
     (fat32-masked-entry-p i)
@@ -23080,11 +23080,11 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                (d-e-cc fat32-in-memory (car d-e-list)))
         (make-list-ac
          (len
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                  (d-e-cc fat32-in-memory (car d-e-list))))
          0 nil))))
      0)
     (useful-d-e-list-p d-e-list))
@@ -23105,7 +23105,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (binary-+ -1 entry-limit)))))))))))
   :hints
@@ -23120,7 +23120,7 @@ Some (rather awful) testing forms are
       (val 0)
       (index-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory (car d-e-list))))
+               (d-e-cc fat32-in-memory (car d-e-list))))
       (fa-table (effective-fat fat32-in-memory))
       (n i))
      (:instance
@@ -23129,11 +23129,11 @@ Some (rather awful) testing forms are
        (make-list-ac
         (len
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                 (d-e-cc fat32-in-memory (car d-e-list))))
         0 nil))
       (index-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory (car d-e-list))))
+               (d-e-cc fat32-in-memory (car d-e-list))))
       (fa-table (effective-fat fat32-in-memory))
       (n i))))))
 
@@ -23146,13 +23146,13 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))
+      (d-e-cc-contents fat32-in-memory (car d-e-list)))
      0)
     (not
      (intersectp-equal
       x
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory (car d-e-list)))))
+              (d-e-cc fat32-in-memory (car d-e-list)))))
     (fat32-masked-entry-p i)
     (useful-d-e-list-p d-e-list)
     (case-split (member-equal i x)))
@@ -23164,11 +23164,11 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory (car d-e-list)))
+                (d-e-cc fat32-in-memory (car d-e-list)))
         (make-list-ac
          (len
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                  (d-e-cc fat32-in-memory (car d-e-list))))
          0 nil))))
      0)))
   :hints
@@ -23180,7 +23180,7 @@ Some (rather awful) testing forms are
     ((:instance intersectp-member
       (a i)
       (y (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                 (d-e-cc fat32-in-memory (car d-e-list))))
       (x x))
      (:instance
       (:rewrite set-indices-in-fa-table-correctness-3)
@@ -23188,11 +23188,11 @@ Some (rather awful) testing forms are
        (make-list-ac
         (len
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory (car d-e-list))))
+                 (d-e-cc fat32-in-memory (car d-e-list))))
         0 nil))
       (index-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory (car d-e-list))))
+               (d-e-cc fat32-in-memory (car d-e-list))))
       (fa-table (effective-fat fat32-in-memory))
       (n i))))))
 
@@ -23215,7 +23215,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-place-file fat32-in-memory
@@ -23240,7 +23240,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-place-file fat32-in-memory
@@ -23259,7 +23259,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list
@@ -23285,7 +23285,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-place-file fat32-in-memory
@@ -23310,7 +23310,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-place-file fat32-in-memory
@@ -23329,7 +23329,7 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (make-d-e-list
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list
@@ -23348,7 +23348,7 @@ Some (rather awful) testing forms are
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth
           0
           (lofat-place-file fat32-in-memory
@@ -23375,7 +23375,7 @@ Some (rather awful) testing forms are
     (< (d-e-first-cluster root-d-e)
        (+ 2 (count-of-clusters fat32-in-memory)))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (equal (mv-nth 3
                    (lofat-to-hifat-helper fat32-in-memory
@@ -23383,30 +23383,30 @@ Some (rather awful) testing forms are
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
                                     d-e-list entry-limit)))
     (d-e-p d-e)
     (useful-d-e-list-p d-e-list))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth 0
              (lofat-place-file fat32-in-memory
                                (mv-nth 0 (find-d-e d-e-list name))
                                path file))
      d-e)
-    (d-e-clusterchain-contents fat32-in-memory d-e)))
+    (d-e-cc-contents fat32-in-memory d-e)))
   :hints
   (("goal"
     :do-not-induct t
     :in-theory
     (e/d
      (useful-d-e-list-p)
-     ((:rewrite d-e-clusterchain-contents-of-lofat-place-file-disjoint)))
+     ((:rewrite d-e-cc-contents-of-lofat-place-file-disjoint)))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-contents-of-lofat-place-file-disjoint)
+     (:rewrite d-e-cc-contents-of-lofat-place-file-disjoint)
      (d-e d-e)
      (root-d-e (mv-nth 0 (find-d-e d-e-list name)))
      (entry-limit entry-limit)))))
@@ -23484,7 +23484,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0 (find-d-e d-e-list name)))))
        entry-limit1))
@@ -23496,7 +23496,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
               entry-limit2))
@@ -23509,7 +23509,7 @@ Some (rather awful) testing forms are
         fat32-in-memory
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0 (find-d-e d-e-list name)))))
         entry-limit2)))
@@ -23526,7 +23526,7 @@ Some (rather awful) testing forms are
       (d-e-list
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e d-e-list name))))))))))
@@ -23548,7 +23548,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0 (find-d-e d-e-list name)))))
          entry-limit1))
@@ -23559,7 +23559,7 @@ Some (rather awful) testing forms are
                fat32-in-memory
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0 (find-d-e d-e-list name)))))
                entry-limit2))
@@ -23621,12 +23621,12 @@ Some (rather awful) testing forms are
   (implies (equal d-e (d-e-fix nil))
            (not-intersectp-list
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory d-e))
+                    (d-e-cc fat32-in-memory d-e))
             (mv-nth 2
                     (lofat-to-hifat-helper fat32-in-memory
                                            d-e-list entry-limit))))
   :hints (("goal" :do-not-induct t
-           :in-theory (enable d-e-clusterchain
+           :in-theory (enable d-e-cc
                               fat32-build-index-list))))
 
 (defthmd
@@ -23646,7 +23646,7 @@ Some (rather awful) testing forms are
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain fat32-in-memory
+      (d-e-cc fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name))))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
@@ -23658,7 +23658,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper not-intersectp-list)
      ((:rewrite lofat-place-file-correctness-1-lemma-14)
       (:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+       d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
        . 1)
       (:rewrite nfix-when-zp)
       (:rewrite nth-of-nats=>chars)
@@ -23682,7 +23682,7 @@ Some (rather awful) testing forms are
       (equal x
              (mv-nth
               0
-              (d-e-clusterchain fat32-in-memory
+              (d-e-cc fat32-in-memory
                                     (mv-nth 0 (find-d-e d-e-list name)))))
       (<= 2
           (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name))))
@@ -23721,7 +23721,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper not-intersectp-list find-d-e)
      ((:rewrite lofat-place-file-correctness-1-lemma-14)
       (:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+       d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
        . 1)
       (:rewrite nfix-when-zp)
       (:rewrite nth-of-nats=>chars)
@@ -23794,7 +23794,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0 (find-d-e d-e-list name)))))
        entry-limit1))
@@ -23805,7 +23805,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
               entry-limit1))
@@ -23816,7 +23816,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory
                        (mv-nth 0 (find-d-e d-e-list name)))))
              entry-limit2))
@@ -23833,7 +23833,7 @@ Some (rather awful) testing forms are
       (d-e-list
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e d-e-list name)))))))))))
@@ -23879,7 +23879,7 @@ Some (rather awful) testing forms are
       fat32-in-memory
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 fat32-in-memory
                 (mv-nth 0 (find-d-e d-e-list name)))))
       entry-limit))
@@ -23893,7 +23893,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper not-intersectp-list find-d-e)
      ((:rewrite lofat-place-file-correctness-1-lemma-14)
       (:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+       d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
        . 1)
       (:rewrite nfix-when-zp)
       (:rewrite nth-of-nats=>chars)
@@ -23928,19 +23928,19 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (d-e-clusterchain fat32-in-memory
+      (d-e-cc fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name))))
      0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0 (find-d-e d-e-list name)))))
        entry-limit)))
@@ -23948,14 +23948,14 @@ Some (rather awful) testing forms are
      (intersectp-equal
       (mv-nth
        0
-       (d-e-clusterchain fat32-in-memory
+       (d-e-cc fat32-in-memory
                              (mv-nth 0 (find-d-e d-e-list name))))
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory d-e))))
+              (d-e-cc fat32-in-memory d-e))))
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain fat32-in-memory
+      (d-e-cc fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name))))
      (mv-nth
       2
@@ -23963,31 +23963,31 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0 (find-d-e d-e-list name)))))
        entry-limit)))
     (equal (mv-nth 1
-                   (d-e-clusterchain fat32-in-memory d-e))
+                   (d-e-cc fat32-in-memory d-e))
            0)
     (<= 2 (d-e-first-cluster d-e))
     (<= 2
         (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))))
    (equal
-    (d-e-clusterchain
+    (d-e-cc
      (mv-nth 0
              (lofat-place-file fat32-in-memory
                                (mv-nth 0 (find-d-e d-e-list name))
                                path file))
      d-e)
-    (d-e-clusterchain fat32-in-memory d-e)))
+    (d-e-cc fat32-in-memory d-e)))
   :hints
   (("goal"
     :do-not-induct t
     :in-theory (disable lofat-find-file-correctness-1-lemma-6
-                        d-e-clusterchain-of-lofat-place-file-disjoint)
+                        d-e-cc-of-lofat-place-file-disjoint)
     :use
-    ((:instance d-e-clusterchain-of-lofat-place-file-disjoint
+    ((:instance d-e-cc-of-lofat-place-file-disjoint
                 (root-d-e (mv-nth 0 (find-d-e d-e-list name))))
      lofat-find-file-correctness-1-lemma-6))))
 
@@ -24070,7 +24070,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory d-e)))
               entry-limit))
      0)
@@ -24081,7 +24081,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory d-e)))
                name))))
     (<
@@ -24090,7 +24090,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory d-e)))
                name)))
      (+ 2 (count-of-clusters fat32-in-memory))))
@@ -24104,18 +24104,18 @@ Some (rather awful) testing forms are
         (len
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory d-e)))
+          (d-e-cc fat32-in-memory d-e)))
         (len
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
             (find-d-e
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory d-e)))
              name))))))))
      0)))
@@ -24190,7 +24190,7 @@ Some (rather awful) testing forms are
      0))
    (not-intersectp-list
     (mv-nth 0
-            (d-e-clusterchain
+            (d-e-cc
              fat32-in-memory
              (mv-nth 0 (find-d-e d-e-list name))))
     (mv-nth
@@ -24318,7 +24318,7 @@ Some (rather awful) testing forms are
    (member-equal
     (mv-nth
      0
-     (d-e-clusterchain fat32-in-memory
+     (d-e-cc fat32-in-memory
                            (mv-nth 0 (find-d-e d-e-list name))))
     (mv-nth 2
             (lofat-to-hifat-helper fat32-in-memory
@@ -24333,7 +24333,7 @@ Some (rather awful) testing forms are
      i
      (mv-nth
       0
-      (d-e-clusterchain fat32-in-memory
+      (d-e-cc fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list2 name)))))
     (<= 2
         (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list2 name))))
@@ -24364,7 +24364,7 @@ Some (rather awful) testing forms are
           (:rewrite lofat-place-file-correctness-1-lemma-14)
           (:definition member-intersectp-equal)
           (:rewrite lofat-place-file-correctness-1-lemma-17)
-          (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
+          (:rewrite lofat-to-hifat-helper-of-clear-cc)
           (:rewrite lofat-place-file-correctness-lemma-56)
           (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
           (:rewrite lofat-place-file-correctness-1-lemma-11)
@@ -24378,7 +24378,7 @@ Some (rather awful) testing forms are
       ((y
         (mv-nth
          0
-         (d-e-clusterchain fat32-in-memory
+         (d-e-cc fat32-in-memory
                                (mv-nth 0
                                        (find-d-e d-e-list2 name)))))))
      (intersectp-member-when-not-member-intersectp
@@ -24406,7 +24406,7 @@ Some (rather awful) testing forms are
      i
      (mv-nth
       0
-      (d-e-clusterchain fat32-in-memory
+      (d-e-cc fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name)))))
     (equal
      (mv-nth
@@ -24423,7 +24423,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents fat32-in-memory d-e)))
+                     (d-e-cc-contents fat32-in-memory d-e)))
             (+ -1 entry-limit))))))))
      0)
     (equal
@@ -24439,7 +24439,7 @@ Some (rather awful) testing forms are
            (fat32-update-lower-28 (fati i fat32-in-memory)
                                   268435455)
            (mv-nth 0
-                   (clear-clusterchain
+                   (clear-cc
                     fat32-in-memory
                     (d-e-first-cluster
                      (mv-nth 0 (find-d-e d-e-list name)))
@@ -24465,7 +24465,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (+ -1 entry-limit)))))))))
      (strip-cars
       (mv-nth
@@ -24483,7 +24483,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (+ -1 entry-limit))))))))))
     (< i
        (+ 2 (count-of-clusters fat32-in-memory)))
@@ -24499,7 +24499,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory d-e)))
+                (d-e-cc-contents fat32-in-memory d-e)))
        (+ -1 entry-limit)))
      0)
     (not
@@ -24510,7 +24510,7 @@ Some (rather awful) testing forms are
         fat32-in-memory
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents fat32-in-memory d-e)))
+                 (d-e-cc-contents fat32-in-memory d-e)))
         (+ -1 entry-limit)))
       (mv-nth
        2
@@ -24527,7 +24527,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (+ -1 entry-limit))))))))))
     (consp
      (assoc-equal
@@ -24543,7 +24543,7 @@ Some (rather awful) testing forms are
            (fat32-update-lower-28 (fati i fat32-in-memory)
                                   268435455)
            (mv-nth 0
-                   (clear-clusterchain
+                   (clear-cc
                     fat32-in-memory
                     (d-e-first-cluster
                      (mv-nth 0 (find-d-e d-e-list name)))
@@ -24574,7 +24574,7 @@ Some (rather awful) testing forms are
                                        268435455)
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0 (find-d-e d-e-list name)))
@@ -24587,7 +24587,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory d-e)))
+               (d-e-cc-contents fat32-in-memory d-e)))
              (+ -1 entry-limit)))))))))))
    (equal
     (mv-nth
@@ -24599,7 +24599,7 @@ Some (rather awful) testing forms are
                               268435455)
        (mv-nth
         0
-        (clear-clusterchain
+        (clear-cc
          fat32-in-memory
          (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
          (d-e-file-size (mv-nth 0 (find-d-e d-e-list name))))))
@@ -24624,7 +24624,7 @@ Some (rather awful) testing forms are
                                      268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth 0 (find-d-e d-e-list name)))
@@ -24636,7 +24636,7 @@ Some (rather awful) testing forms are
              i))
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents fat32-in-memory d-e)))
+                    (d-e-cc-contents fat32-in-memory d-e)))
            (+ -1 entry-limit))))))))
     0))
   :hints
@@ -24650,7 +24650,7 @@ Some (rather awful) testing forms are
           (:definition member-intersectp-equal)
           (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
           (:rewrite lofat-place-file-correctness-lemma-56)
-          (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
+          (:rewrite lofat-to-hifat-helper-of-clear-cc)
           (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
                     . 3)
           (:rewrite lofat-place-file-correctness-1-lemma-11)
@@ -24682,7 +24682,7 @@ Some (rather awful) testing forms are
     (member-equal
      i
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (mv-nth 0
                                            (find-d-e (cdr d-e-list)
                                                          name)))))
@@ -24700,7 +24700,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -24718,7 +24718,7 @@ Some (rather awful) testing forms are
                                   268435455)
            (mv-nth
             0
-            (clear-clusterchain
+            (clear-cc
              fat32-in-memory
              (d-e-first-cluster
               (mv-nth 0
@@ -24747,7 +24747,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit)))))))))
      (strip-cars
@@ -24765,7 +24765,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit))))))))))
     (< i
@@ -24783,7 +24783,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        (+ -1 entry-limit)))
      0)
     (not
@@ -24795,7 +24795,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+          (d-e-cc-contents fat32-in-memory (car d-e-list))))
         (+ -1 entry-limit)))
       (mv-nth
        2
@@ -24811,7 +24811,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit)))))))))))
    (not
@@ -24830,7 +24830,7 @@ Some (rather awful) testing forms are
                                   268435455)
            (mv-nth
             0
-            (clear-clusterchain
+            (clear-cc
              fat32-in-memory
              (d-e-first-cluster
               (mv-nth 0
@@ -24865,7 +24865,7 @@ Some (rather awful) testing forms are
                                        268435455)
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0
@@ -24880,7 +24880,7 @@ Some (rather awful) testing forms are
                i))
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit))))))))))))
   :hints
@@ -24890,7 +24890,7 @@ Some (rather awful) testing forms are
     (disable (:rewrite member-of-strip-cars)
              (:rewrite lofat-place-file-correctness-1-lemma-13)
              (:rewrite lofat-place-file-correctness-1-lemma-14)
-             (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
+             (:rewrite lofat-to-hifat-helper-of-clear-cc)
              (:rewrite lofat-place-file-correctness-1-lemma-11)
              (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
              (:rewrite lofat-place-file-correctness-1-lemma-17)
@@ -24914,7 +24914,7 @@ Some (rather awful) testing forms are
                                   268435455)
            (mv-nth
             0
-            (clear-clusterchain
+            (clear-cc
              fat32-in-memory
              (d-e-first-cluster
               (mv-nth 0
@@ -24949,7 +24949,7 @@ Some (rather awful) testing forms are
                                        268435455)
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0
@@ -24964,7 +24964,7 @@ Some (rather awful) testing forms are
                i))
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory (car d-e-list))))
              (+ -1 entry-limit)))))))))
      (x (d-e-filename (car d-e-list)))))))
@@ -24986,22 +24986,22 @@ Some (rather awful) testing forms are
                   fa-table))
   :hints (("goal" :in-theory (enable set-indices-in-fa-table))))
 
-(defthm get-clusterchain-under-iff
+(defthm get-cc-under-iff
   (implies (lofat-fs-p fat32-in-memory)
            (iff (mv-nth 0
-                        (get-clusterchain fat32-in-memory
+                        (get-cc fat32-in-memory
                                           masked-next-cluster length))
                 (not (zp length))))
   :hints (("goal" :in-theory (enable fat32-build-index-list))))
 
-(defthm d-e-clusterchain-under-iff
+(defthm d-e-cc-under-iff
   (implies (lofat-fs-p fat32-in-memory)
            (iff (mv-nth 0
-                        (d-e-clusterchain fat32-in-memory d-e))
+                        (d-e-cc fat32-in-memory d-e))
                 (or (d-e-directory-p d-e)
                     (not (zp (d-e-file-size d-e))))))
-  :hints (("goal" :in-theory (e/d (d-e-clusterchain)
-                                  (get-clusterchain-alt))))
+  :hints (("goal" :in-theory (e/d (d-e-cc)
+                                  (get-cc-alt))))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -25009,11 +25009,11 @@ Some (rather awful) testing forms are
     (implies (lofat-fs-p fat32-in-memory)
              (equal
               (consp (mv-nth 0
-                             (d-e-clusterchain fat32-in-memory d-e)))
+                             (d-e-cc fat32-in-memory d-e)))
               (or (d-e-directory-p d-e)
                   (not (zp (d-e-file-size d-e))))))
     :hints (("goal" :in-theory (e/d ()
-                                    (get-clusterchain-alt)))))
+                                    (get-cc-alt)))))
    (:rewrite
     :corollary
     (implies (and
@@ -25022,13 +25022,13 @@ Some (rather awful) testing forms are
               (not (d-e-directory-p d-e)))
              (equal
               (mv-nth 0
-                      (d-e-clusterchain fat32-in-memory d-e))
+                      (d-e-cc fat32-in-memory d-e))
               nil)))))
 
 (defthm lofat-place-file-correctness-lemma-118
-  (equal (clear-clusterchain fat32-in-memory first-cluster 0)
+  (equal (clear-cc fat32-in-memory first-cluster 0)
          (mv fat32-in-memory (- *eio*)))
-  :hints (("goal" :in-theory (enable clear-clusterchain
+  :hints (("goal" :in-theory (enable clear-cc
                                      fat32-build-index-list))))
 
 ;; (defthm
@@ -25043,7 +25043,7 @@ Some (rather awful) testing forms are
 ;;      i
 ;;      (mv-nth
 ;;       0
-;;       (d-e-clusterchain fat32-in-memory
+;;       (d-e-cc fat32-in-memory
 ;;                             (mv-nth 0 (find-d-e d-e-list name)))))
 ;;     (equal (mv-nth 3
 ;;                    (lofat-to-hifat-helper fat32-in-memory
@@ -25062,7 +25062,7 @@ Some (rather awful) testing forms are
 ;;                                  268435455)
 ;;           (mv-nth
 ;;            0
-;;            (clear-clusterchain
+;;            (clear-cc
 ;;             fat32-in-memory
 ;;             (d-e-first-cluster
 ;;              (mv-nth 0 (find-d-e d-e-list name)))
@@ -25089,11 +25089,11 @@ Some (rather awful) testing forms are
 ;;           (effective-fat fat32-in-memory)
 ;;           (mv-nth
 ;;            0
-;;            (d-e-clusterchain fat32-in-memory
+;;            (d-e-cc fat32-in-memory
 ;;                                  (mv-nth 0 (find-d-e d-e-list name))))
 ;;           (make-list-ac
 ;;            (len (mv-nth 0
-;;                         (d-e-clusterchain
+;;                         (d-e-cc
 ;;                          fat32-in-memory
 ;;                          (mv-nth 0 (find-d-e d-e-list name)))))
 ;;            0 nil)))
@@ -25103,7 +25103,7 @@ Some (rather awful) testing forms are
 ;;       (remove-equal
 ;;        (mv-nth
 ;;         0
-;;         (d-e-clusterchain fat32-in-memory
+;;         (d-e-cc fat32-in-memory
 ;;                               (mv-nth 0 (find-d-e d-e-list name))))
 ;;        (mv-nth 2
 ;;                (lofat-to-hifat-helper fat32-in-memory
@@ -25112,17 +25112,17 @@ Some (rather awful) testing forms are
 ;;        (+ 2 (count-of-clusters fat32-in-memory)))
 ;;     (useful-d-e-list-p d-e-list)
 ;;     (equal (mv-nth 1
-;;                    (d-e-clusterchain-contents fat32-in-memory d-e))
+;;                    (d-e-cc-contents fat32-in-memory d-e))
 ;;            0)
 ;;     (not-intersectp-list
 ;;      (mv-nth 0
-;;              (d-e-clusterchain fat32-in-memory d-e))
+;;              (d-e-cc fat32-in-memory d-e))
 ;;      (mv-nth 2
 ;;              (lofat-to-hifat-helper fat32-in-memory
 ;;                                     d-e-list entry-limit))))
 ;;    (not-intersectp-list
 ;;     (mv-nth 0
-;;             (d-e-clusterchain fat32-in-memory d-e))
+;;             (d-e-cc fat32-in-memory d-e))
 ;;     (mv-nth
 ;;      2
 ;;      (lofat-to-hifat-helper
@@ -25135,7 +25135,7 @@ Some (rather awful) testing forms are
 ;;                                 268435455)
 ;;          (mv-nth
 ;;           0
-;;           (clear-clusterchain
+;;           (clear-cc
 ;;            fat32-in-memory
 ;;            (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
 ;;            (d-e-file-size (mv-nth 0 (find-d-e d-e-list name))))))
@@ -25164,7 +25164,7 @@ Some (rather awful) testing forms are
 ;;                                 268435455)
 ;;          (mv-nth
 ;;           0
-;;           (clear-clusterchain
+;;           (clear-cc
 ;;            fat32-in-memory
 ;;            (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
 ;;            (d-e-file-size (mv-nth 0 (find-d-e d-e-list name))))))
@@ -25190,11 +25190,11 @@ Some (rather awful) testing forms are
 ;;          (effective-fat fat32-in-memory)
 ;;          (mv-nth
 ;;           0
-;;           (d-e-clusterchain fat32-in-memory
+;;           (d-e-cc fat32-in-memory
 ;;                                 (mv-nth 0 (find-d-e d-e-list name))))
 ;;          (make-list-ac
 ;;           (len (mv-nth 0
-;;                        (d-e-clusterchain
+;;                        (d-e-cc
 ;;                         fat32-in-memory
 ;;                         (mv-nth 0 (find-d-e d-e-list name)))))
 ;;           0 nil)))
@@ -25204,7 +25204,7 @@ Some (rather awful) testing forms are
 ;;      (remove-equal
 ;;       (mv-nth
 ;;        0
-;;        (d-e-clusterchain fat32-in-memory
+;;        (d-e-cc fat32-in-memory
 ;;                              (mv-nth 0 (find-d-e d-e-list name))))
 ;;       (mv-nth 2
 ;;               (lofat-to-hifat-helper fat32-in-memory
@@ -25247,7 +25247,7 @@ Some (rather awful) testing forms are
                                 268435455)
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            fat32-in-memory
            (d-e-first-cluster
             (mv-nth 0
@@ -25279,7 +25279,7 @@ Some (rather awful) testing forms are
          (effective-fat fat32-in-memory)
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory
+          (d-e-cc fat32-in-memory
                                 (mv-nth 0
                                         (find-d-e d-e-list
                                                       name))))
@@ -25287,7 +25287,7 @@ Some (rather awful) testing forms are
           (len
            (mv-nth
             0
-            (d-e-clusterchain fat32-in-memory
+            (d-e-cc fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e d-e-list
                                                         name)))))
@@ -25297,7 +25297,7 @@ Some (rather awful) testing forms are
                               (cluster-size fat32-in-memory))))))
      (remove-equal
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory
+              (d-e-cc fat32-in-memory
                                     (mv-nth 0
                                             (find-d-e d-e-list
                                                           name))))
@@ -25317,7 +25317,7 @@ Some (rather awful) testing forms are
          (effective-fat fat32-in-memory)
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory
+          (d-e-cc fat32-in-memory
                                 (mv-nth 0
                                         (find-d-e d-e-list
                                                       name))))
@@ -25325,7 +25325,7 @@ Some (rather awful) testing forms are
           (len
            (mv-nth
             0
-            (d-e-clusterchain fat32-in-memory
+            (d-e-cc fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e d-e-list
                                                         name)))))
@@ -25334,10 +25334,10 @@ Some (rather awful) testing forms are
           (len (make-clusters (lofat-file->contents file)
                               (cluster-size fat32-in-memory))))))
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (remove-equal
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory
+              (d-e-cc fat32-in-memory
                                     (mv-nth 0
                                             (find-d-e d-e-list
                                                           name))))
@@ -25346,7 +25346,7 @@ Some (rather awful) testing forms are
                                      entry-limit))))
     (cons
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e))
+             (d-e-cc fat32-in-memory d-e))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -25359,7 +25359,7 @@ Some (rather awful) testing forms are
                                  268435455)
           (mv-nth
            0
-           (clear-clusterchain
+           (clear-cc
             fat32-in-memory
             (d-e-first-cluster
              (mv-nth 0
@@ -25394,7 +25394,7 @@ Some (rather awful) testing forms are
                                 268435455)
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            fat32-in-memory
            (d-e-first-cluster
             (mv-nth 0
@@ -25426,7 +25426,7 @@ Some (rather awful) testing forms are
          (effective-fat fat32-in-memory)
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory
+          (d-e-cc fat32-in-memory
                                 (mv-nth 0
                                         (find-d-e d-e-list
                                                       name))))
@@ -25434,7 +25434,7 @@ Some (rather awful) testing forms are
           (len
            (mv-nth
             0
-            (d-e-clusterchain fat32-in-memory
+            (d-e-cc fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e d-e-list
                                                         name)))))
@@ -25444,7 +25444,7 @@ Some (rather awful) testing forms are
                               (cluster-size fat32-in-memory))))))
      (remove-equal
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory
+              (d-e-cc fat32-in-memory
                                     (mv-nth 0
                                             (find-d-e d-e-list
                                                           name))))
@@ -25481,7 +25481,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory d-e)))
                    entry-limit)))))))
      0)
@@ -25498,7 +25498,7 @@ Some (rather awful) testing forms are
                                  268435455)
           (mv-nth
            0
-           (clear-clusterchain
+           (clear-cc
             fat32-in-memory
             (d-e-first-cluster
              (mv-nth 0
@@ -25526,7 +25526,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory d-e)))
                    entry-limit)))))))
      (cons
@@ -25541,7 +25541,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain fat32-in-memory
+           (d-e-cc fat32-in-memory
                                  (mv-nth 0
                                          (find-d-e d-e-list
                                                        name))))
@@ -25549,7 +25549,7 @@ Some (rather awful) testing forms are
            (len
             (mv-nth
              0
-             (d-e-clusterchain fat32-in-memory
+             (d-e-cc fat32-in-memory
                                    (mv-nth 0
                                            (find-d-e d-e-list
                                                          name)))))
@@ -25559,7 +25559,7 @@ Some (rather awful) testing forms are
                                (cluster-size fat32-in-memory))))))
       (remove-equal
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory
+               (d-e-cc fat32-in-memory
                                      (mv-nth 0
                                              (find-d-e d-e-list
                                                            name))))
@@ -25577,7 +25577,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory d-e)))
               entry-limit))))))))))
     (< i
@@ -25592,7 +25592,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory d-e)))
+         (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      0)
     (not
@@ -25604,7 +25604,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory d-e)))
+          (d-e-cc-contents fat32-in-memory d-e)))
         entry-limit))
       (mv-nth
        2
@@ -25620,7 +25620,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory d-e)))
              entry-limit))))))))))
    (not
@@ -25632,7 +25632,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory d-e)))
+         (d-e-cc-contents fat32-in-memory d-e)))
        entry-limit))
      (mv-nth
       2
@@ -25646,7 +25646,7 @@ Some (rather awful) testing forms are
                                  268435455)
           (mv-nth
            0
-           (clear-clusterchain
+           (clear-cc
             fat32-in-memory
             (d-e-first-cluster
              (mv-nth 0
@@ -25674,7 +25674,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory d-e)))
                    entry-limit))))))))))
   :instructions
@@ -25692,7 +25692,7 @@ Some (rather awful) testing forms are
                                 268435455)
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            fat32-in-memory
            (d-e-first-cluster
             (mv-nth 0
@@ -25720,7 +25720,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory d-e)))
                   entry-limit)))))))
     (cons
@@ -25735,7 +25735,7 @@ Some (rather awful) testing forms are
          (effective-fat fat32-in-memory)
          (mv-nth
           0
-          (d-e-clusterchain fat32-in-memory
+          (d-e-cc fat32-in-memory
                                 (mv-nth 0
                                         (find-d-e d-e-list
                                                       name))))
@@ -25743,7 +25743,7 @@ Some (rather awful) testing forms are
           (len
            (mv-nth
             0
-            (d-e-clusterchain fat32-in-memory
+            (d-e-cc fat32-in-memory
                                   (mv-nth 0
                                           (find-d-e d-e-list
                                                         name)))))
@@ -25753,7 +25753,7 @@ Some (rather awful) testing forms are
                               (cluster-size fat32-in-memory))))))
      (remove-equal
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory
+              (d-e-cc fat32-in-memory
                                     (mv-nth 0
                                             (find-d-e d-e-list
                                                           name))))
@@ -25771,7 +25771,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory d-e)))
              entry-limit)))))))))
     :equiv flatten-equiv)
@@ -25784,7 +25784,7 @@ Some (rather awful) testing forms are
   (i fat32-in-memory d-e-list name file)
   (mv-nth
    0
-   (d-e-clusterchain
+   (d-e-cc
     (mv-nth
      0
      (place-contents
@@ -25794,7 +25794,7 @@ Some (rather awful) testing forms are
                               268435455)
        (mv-nth
         0
-        (clear-clusterchain
+        (clear-cc
          fat32-in-memory
          (d-e-first-cluster
           (mv-nth 0
@@ -25816,7 +25816,7 @@ Some (rather awful) testing forms are
   (fat32-in-memory d-e-list name entry-limit)
   (remove-equal
    (mv-nth 0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth 0
                     (find-d-e d-e-list name))))
@@ -25892,7 +25892,7 @@ Some (rather awful) testing forms are
       (:rewrite m1-regular-file-p-correctness-1)
       (:rewrite hifat-no-dups-p-of-cdr)
       (:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+       d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
        . 1)))))
 
   (defthm
@@ -25954,7 +25954,7 @@ Some (rather awful) testing forms are
         (insert-d-e
          (string=>nats
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory d-e)))
+                  (d-e-cc-contents fat32-in-memory d-e)))
          (d-e-set-first-cluster-file-size
           (mv-nth 0 (find-d-e d-e-list name))
           (nth
@@ -25963,12 +25963,12 @@ Some (rather awful) testing forms are
             (set-indices-in-fa-table
              (effective-fat fat32-in-memory)
              (mv-nth 0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth 0 (find-d-e d-e-list name))))
              (make-list-ac
               (len (mv-nth 0
-                           (d-e-clusterchain
+                           (d-e-cc
                             fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name)))))
               0 nil))
@@ -25980,11 +25980,11 @@ Some (rather awful) testing forms are
       (- (len (make-clusters (lofat-file->contents file)
                              (cluster-size fat32-in-memory))))
       (len (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory d-e)))
+                   (d-e-cc fat32-in-memory d-e)))
       (len
        (mv-nth
         0
-        (d-e-clusterchain fat32-in-memory
+        (d-e-cc fat32-in-memory
                               (mv-nth 0 (find-d-e d-e-list name)))))))
     (lofat-fs-p fat32-in-memory))
    (not
@@ -25995,11 +25995,11 @@ Some (rather awful) testing forms are
       (- (len (make-clusters (lofat-file->contents file)
                              (cluster-size fat32-in-memory))))
       (len (mv-nth 0
-                   (d-e-clusterchain fat32-in-memory d-e)))
+                   (d-e-cc fat32-in-memory d-e)))
       (len
        (mv-nth
         0
-        (d-e-clusterchain fat32-in-memory
+        (d-e-cc fat32-in-memory
                               (mv-nth 0 (find-d-e d-e-list name))))))
      0)))
   :hints (("Goal" :do-not-induct t)))
@@ -26016,7 +26016,7 @@ Some (rather awful) testing forms are
                     (:rewrite intersectp-when-subsetp)
                     (:linear nth-when-d-e-p)
                     (:rewrite
-                     d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-3)
+                     d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-3)
                     (:definition find-d-e)
                     (:rewrite append-atom-under-list-equiv)
                     (:rewrite
@@ -26027,7 +26027,7 @@ Some (rather awful) testing forms are
                     (:rewrite
                      d-e-p-when-member-equal-of-d-e-list-p)
                     (:rewrite
-                     d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-11)
+                     d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-11)
                     (:definition place-d-e)
                     (:rewrite
                      lofat-place-file-correctness-lemma-5)
@@ -26043,7 +26043,7 @@ Some (rather awful) testing forms are
                     (:rewrite
                      fat32-masked-entry-fix-when-fat32-masked-entry-p)
                     (:rewrite
-                     lofat-to-hifat-helper-of-clear-clusterchain)
+                     lofat-to-hifat-helper-of-clear-cc)
                     (:rewrite
                      lofat-place-file-correctness-1-lemma-17)
                     (:rewrite
@@ -26064,7 +26064,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -26072,13 +26072,13 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (fat32-filename-fix (car path))))))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -26086,13 +26086,13 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (fat32-filename-fix (car path)))))))
            0 nil))
          1))
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -26100,7 +26100,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (fat32-filename-fix (car path)))))))
       (equal
        (mv-nth
@@ -26109,7 +26109,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))
        0)
       (d-e-directory-p
@@ -26118,7 +26118,7 @@ Some (rather awful) testing forms are
         (find-d-e
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          (fat32-filename-fix (car path)))))
       (not-intersectp-list
        x
@@ -26128,7 +26128,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))))
      (not
       (member-equal
@@ -26139,7 +26139,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -26147,13 +26147,13 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (fat32-filename-fix (car path))))))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -26161,7 +26161,7 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (fat32-filename-fix (car path)))))))
            0 nil))
          1))
@@ -26177,7 +26177,7 @@ Some (rather awful) testing forms are
         (index-list
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
@@ -26185,7 +26185,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (fat32-filename-fix (car path)))))))
         (fa-table (effective-fat fat32-in-memory))
         (n
@@ -26196,7 +26196,7 @@ Some (rather awful) testing forms are
             (effective-fat fat32-in-memory)
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -26204,19 +26204,19 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (fat32-filename-fix (car path))))))
             (make-list-ac
              (len
               (mv-nth
                0
-               (d-e-clusterchain
+               (d-e-cc
                 fat32-in-memory
                 (mv-nth
                  0
                  (find-d-e (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (fat32-filename-fix (car path)))))))
              0 nil))
@@ -26231,7 +26231,7 @@ Some (rather awful) testing forms are
             (effective-fat fat32-in-memory)
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -26239,19 +26239,19 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (fat32-filename-fix (car path))))))
             (make-list-ac
              (len
               (mv-nth
                0
-               (d-e-clusterchain
+               (d-e-cc
                 fat32-in-memory
                 (mv-nth
                  0
                  (find-d-e (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (fat32-filename-fix (car path)))))))
              0 nil))
@@ -26273,26 +26273,26 @@ Some (rather awful) testing forms are
              (effective-fat fat32-in-memory)
              (mv-nth
               0
-              (d-e-clusterchain
+              (d-e-cc
                fat32-in-memory
                (mv-nth
                 0
                 (find-d-e
                  (make-d-e-list (mv-nth 0
-                                            (d-e-clusterchain-contents
+                                            (d-e-cc-contents
                                              fat32-in-memory root-d-e)))
                  (fat32-filename-fix (car path))))))
              (make-list-ac
               (len
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path)))))))
               0 nil))
@@ -26306,27 +26306,27 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path))))))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path)))))))
                 0 nil))
@@ -26335,7 +26335,7 @@ Some (rather awful) testing forms are
            268435455)
           (mv-nth
            0
-           (clear-clusterchain
+           (clear-cc
             fat32-in-memory
             (d-e-first-cluster
              (mv-nth
@@ -26344,7 +26344,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (fat32-filename-fix (car path)))))
             2097152)))
          (mv-nth
@@ -26353,7 +26353,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (fat32-filename-fix (car path))))
          (make-empty-subdir-contents
           (nth
@@ -26363,26 +26363,26 @@ Some (rather awful) testing forms are
              (effective-fat fat32-in-memory)
              (mv-nth
               0
-              (d-e-clusterchain
+              (d-e-cc
                fat32-in-memory
                (mv-nth
                 0
                 (find-d-e
                  (make-d-e-list (mv-nth 0
-                                            (d-e-clusterchain-contents
+                                            (d-e-cc-contents
                                              fat32-in-memory root-d-e)))
                  (fat32-filename-fix (car path))))))
              (make-list-ac
               (len
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path)))))))
               0 nil))
@@ -26396,7 +26396,7 @@ Some (rather awful) testing forms are
             (effective-fat fat32-in-memory)
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -26404,19 +26404,19 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (fat32-filename-fix (car path))))))
             (make-list-ac
              (len
               (mv-nth
                0
-               (d-e-clusterchain
+               (d-e-cc
                 fat32-in-memory
                 (mv-nth
                  0
                  (find-d-e (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (fat32-filename-fix (car path)))))))
              0 nil))
@@ -26431,7 +26431,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -26439,13 +26439,13 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (fat32-filename-fix (car path))))))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -26453,13 +26453,13 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (fat32-filename-fix (car path)))))))
            0 nil))
          1))
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -26467,7 +26467,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (fat32-filename-fix (car path)))))))
       (equal
        (mv-nth
@@ -26484,27 +26484,27 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path))))))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path)))))))
                 0 nil))
@@ -26518,28 +26518,28 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path))))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (fat32-filename-fix (car path)))))))
                   0 nil))
@@ -26548,14 +26548,14 @@ Some (rather awful) testing forms are
              268435455)
             (mv-nth
              0
-             (clear-clusterchain
+             (clear-cc
               fat32-in-memory
               (d-e-first-cluster
                (mv-nth
                 0
                 (find-d-e
                  (make-d-e-list (mv-nth 0
-                                            (d-e-clusterchain-contents
+                                            (d-e-cc-contents
                                              fat32-in-memory root-d-e)))
                  (fat32-filename-fix (car path)))))
               2097152)))
@@ -26565,7 +26565,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (fat32-filename-fix (car path))))
            (make-empty-subdir-contents
             (nth
@@ -26575,27 +26575,27 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path))))))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path)))))))
                 0 nil))
@@ -26609,26 +26609,26 @@ Some (rather awful) testing forms are
               (effective-fat fat32-in-memory)
               (mv-nth
                0
-               (d-e-clusterchain
+               (d-e-cc
                 fat32-in-memory
                 (mv-nth
                  0
                  (find-d-e (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (fat32-filename-fix (car path))))))
               (make-list-ac
                (len
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (fat32-filename-fix (car path)))))))
                0 nil))
@@ -26639,7 +26639,7 @@ Some (rather awful) testing forms are
            (string=>nats
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (d-e-set-first-cluster-file-size
             (mv-nth
              0
@@ -26647,7 +26647,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (fat32-filename-fix (car path))))
             (nth
              0
@@ -26656,27 +26656,27 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path))))))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path)))))))
                 0 nil))
@@ -26687,7 +26687,7 @@ Some (rather awful) testing forms are
       (not (intersectp-equal
             x
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory root-d-e))))
+                    (d-e-cc fat32-in-memory root-d-e))))
       (equal
        (mv-nth
         3
@@ -26695,25 +26695,25 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))
        0)
       (lofat-fs-p fat32-in-memory)
       (d-e-p root-d-e)
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory root-d-e))
+               (d-e-cc fat32-in-memory root-d-e))
        (mv-nth
         2
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit)))
       (equal
        (mv-nth 1
-               (d-e-clusterchain-contents fat32-in-memory root-d-e))
+               (d-e-cc-contents fat32-in-memory root-d-e))
        0)
       (<
        (d-e-first-cluster
@@ -26723,7 +26723,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (fat32-filename-fix (car path)))))
        (+ 2 (count-of-clusters fat32-in-memory)))
       (d-e-directory-p
@@ -26732,7 +26732,7 @@ Some (rather awful) testing forms are
         (find-d-e
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          (fat32-filename-fix (car path)))))
       (<=
        (+
@@ -26743,7 +26743,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e))))))
+            (d-e-cc-contents fat32-in-memory root-d-e))))))
        2097152)
       (not-intersectp-list
        x
@@ -26753,14 +26753,14 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))))
      (not
       (intersectp-equal
        x
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          (mv-nth
           0
           (update-dir-contents
@@ -26775,28 +26775,28 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path))))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (fat32-filename-fix (car path)))))))
                   0 nil))
@@ -26810,28 +26810,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (fat32-filename-fix (car path))))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (fat32-filename-fix (car path)))))))
                     0 nil))
@@ -26840,14 +26840,14 @@ Some (rather awful) testing forms are
                268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path)))))
                 2097152)))
@@ -26857,7 +26857,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (fat32-filename-fix (car path))))
              (make-empty-subdir-contents
               (nth
@@ -26867,28 +26867,28 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path))))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (fat32-filename-fix (car path)))))))
                   0 nil))
@@ -26902,27 +26902,27 @@ Some (rather awful) testing forms are
                 (effective-fat fat32-in-memory)
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (fat32-filename-fix (car path))))))
                 (make-list-ac
                  (len
                   (mv-nth
                    0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth
                      0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (fat32-filename-fix (car path)))))))
                  0 nil))
@@ -26933,7 +26933,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth
                0
@@ -26941,7 +26941,7 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (fat32-filename-fix (car path))))
               (nth
                0
@@ -26950,28 +26950,28 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path))))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (fat32-filename-fix (car path)))))))
                   0 nil))
@@ -26982,7 +26982,7 @@ Some (rather awful) testing forms are
              :in-theory (e/d
                          (update-dir-contents)
                          ((:rewrite
-                           d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+                           d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
                            . 5))))))
 
   (defthm
@@ -26997,7 +26997,7 @@ Some (rather awful) testing forms are
       (not (intersectp-equal
             x
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory root-d-e))))
+                    (d-e-cc fat32-in-memory root-d-e))))
       (equal
        (mv-nth
         3
@@ -27005,7 +27005,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))
        0)
       (lofat-fs-p fat32-in-memory)
@@ -27018,29 +27018,29 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit)))
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory root-d-e))
+               (d-e-cc fat32-in-memory root-d-e))
        (mv-nth
         2
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit)))
       (equal
        (mv-nth '1
-               (d-e-clusterchain-contents fat32-in-memory root-d-e))
+               (d-e-cc-contents fat32-in-memory root-d-e))
        '0))
      (not
       (intersectp-equal
        x
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          (mv-nth 0
                  (lofat-place-file fat32-in-memory root-d-e path file))
          root-d-e)))))
@@ -27050,7 +27050,7 @@ Some (rather awful) testing forms are
              :in-theory
              (e/d ()
                   ((:rewrite
-                    d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+                    d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
                     . 5))))))
 
   (defthm
@@ -27065,30 +27065,30 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))
        0)
       (lofat-fs-p fat32-in-memory)
       (d-e-p root-d-e)
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory root-d-e))
+               (d-e-cc fat32-in-memory root-d-e))
        (mv-nth
         2
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit)))
       (equal
        (mv-nth '1
-               (d-e-clusterchain-contents fat32-in-memory root-d-e))
+               (d-e-cc-contents fat32-in-memory root-d-e))
        '0))
      (equal
       (mv-nth
        1
-       (d-e-clusterchain-contents
+       (d-e-cc-contents
         (mv-nth 0
                 (lofat-place-file fat32-in-memory root-d-e path file))
         root-d-e))
@@ -27099,7 +27099,7 @@ Some (rather awful) testing forms are
              :in-theory
              (e/d ()
                   ((:rewrite
-                    d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+                    d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
                     . 5))))))
 
   (defthm
@@ -27118,26 +27118,26 @@ Some (rather awful) testing forms are
              (effective-fat fat32-in-memory)
              (mv-nth
               0
-              (d-e-clusterchain
+              (d-e-cc
                fat32-in-memory
                (mv-nth
                 0
                 (find-d-e
                  (make-d-e-list (mv-nth 0
-                                            (d-e-clusterchain-contents
+                                            (d-e-cc-contents
                                              fat32-in-memory root-d-e)))
                  (fat32-filename-fix (car path))))))
              (make-list-ac
               (len
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path)))))))
               0 nil))
@@ -27151,27 +27151,27 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path))))))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path)))))))
                 0 nil))
@@ -27180,7 +27180,7 @@ Some (rather awful) testing forms are
            268435455)
           (mv-nth
            0
-           (clear-clusterchain
+           (clear-cc
             fat32-in-memory
             (d-e-first-cluster
              (mv-nth
@@ -27189,7 +27189,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (fat32-filename-fix (car path)))))
             2097152)))
          (mv-nth
@@ -27198,7 +27198,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (fat32-filename-fix (car path))))
          (make-empty-subdir-contents
           (nth
@@ -27208,26 +27208,26 @@ Some (rather awful) testing forms are
              (effective-fat fat32-in-memory)
              (mv-nth
               0
-              (d-e-clusterchain
+              (d-e-cc
                fat32-in-memory
                (mv-nth
                 0
                 (find-d-e
                  (make-d-e-list (mv-nth 0
-                                            (d-e-clusterchain-contents
+                                            (d-e-cc-contents
                                              fat32-in-memory root-d-e)))
                  (fat32-filename-fix (car path))))))
              (make-list-ac
               (len
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path)))))))
               0 nil))
@@ -27241,7 +27241,7 @@ Some (rather awful) testing forms are
             (effective-fat fat32-in-memory)
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -27249,19 +27249,19 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (fat32-filename-fix (car path))))))
             (make-list-ac
              (len
               (mv-nth
                0
-               (d-e-clusterchain
+               (d-e-cc
                 fat32-in-memory
                 (mv-nth
                  0
                  (find-d-e (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (fat32-filename-fix (car path)))))))
              0 nil))
@@ -27276,7 +27276,7 @@ Some (rather awful) testing forms are
           (effective-fat fat32-in-memory)
           (mv-nth
            0
-           (d-e-clusterchain
+           (d-e-cc
             fat32-in-memory
             (mv-nth
              0
@@ -27284,13 +27284,13 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (fat32-filename-fix (car path))))))
           (make-list-ac
            (len
             (mv-nth
              0
-             (d-e-clusterchain
+             (d-e-cc
               fat32-in-memory
               (mv-nth
                0
@@ -27298,13 +27298,13 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (fat32-filename-fix (car path)))))))
            0 nil))
          1))
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -27312,7 +27312,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (fat32-filename-fix (car path)))))))
       (equal
        (mv-nth
@@ -27329,27 +27329,27 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path))))))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path)))))))
                 0 nil))
@@ -27363,28 +27363,28 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path))))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (fat32-filename-fix (car path)))))))
                   0 nil))
@@ -27393,14 +27393,14 @@ Some (rather awful) testing forms are
              268435455)
             (mv-nth
              0
-             (clear-clusterchain
+             (clear-cc
               fat32-in-memory
               (d-e-first-cluster
                (mv-nth
                 0
                 (find-d-e
                  (make-d-e-list (mv-nth 0
-                                            (d-e-clusterchain-contents
+                                            (d-e-cc-contents
                                              fat32-in-memory root-d-e)))
                  (fat32-filename-fix (car path)))))
               2097152)))
@@ -27410,7 +27410,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (fat32-filename-fix (car path))))
            (make-empty-subdir-contents
             (nth
@@ -27420,27 +27420,27 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path))))))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path)))))))
                 0 nil))
@@ -27454,26 +27454,26 @@ Some (rather awful) testing forms are
               (effective-fat fat32-in-memory)
               (mv-nth
                0
-               (d-e-clusterchain
+               (d-e-cc
                 fat32-in-memory
                 (mv-nth
                  0
                  (find-d-e (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (fat32-filename-fix (car path))))))
               (make-list-ac
                (len
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (fat32-filename-fix (car path)))))))
                0 nil))
@@ -27484,7 +27484,7 @@ Some (rather awful) testing forms are
            (string=>nats
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (d-e-set-first-cluster-file-size
             (mv-nth
              0
@@ -27492,7 +27492,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (fat32-filename-fix (car path))))
             (nth
              0
@@ -27501,27 +27501,27 @@ Some (rather awful) testing forms are
                (effective-fat fat32-in-memory)
                (mv-nth
                 0
-                (d-e-clusterchain
+                (d-e-cc
                  fat32-in-memory
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path))))))
                (make-list-ac
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path)))))))
                 0 nil))
@@ -27532,7 +27532,7 @@ Some (rather awful) testing forms are
       (not (intersectp-equal
             x
             (mv-nth 0
-                    (d-e-clusterchain fat32-in-memory root-d-e))))
+                    (d-e-cc fat32-in-memory root-d-e))))
       (equal
        (mv-nth
         3
@@ -27540,25 +27540,25 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))
        0)
       (lofat-fs-p fat32-in-memory)
       (d-e-p root-d-e)
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory root-d-e))
+               (d-e-cc fat32-in-memory root-d-e))
        (mv-nth
         2
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit)))
       (equal
        (mv-nth 1
-               (d-e-clusterchain-contents fat32-in-memory root-d-e))
+               (d-e-cc-contents fat32-in-memory root-d-e))
        0)
       (<
        (d-e-first-cluster
@@ -27568,7 +27568,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (fat32-filename-fix (car path)))))
        (+ 2 (count-of-clusters fat32-in-memory)))
       (d-e-directory-p
@@ -27577,7 +27577,7 @@ Some (rather awful) testing forms are
         (find-d-e
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          (fat32-filename-fix (car path)))))
       (<=
        (+
@@ -27588,7 +27588,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e))))))
+            (d-e-cc-contents fat32-in-memory root-d-e))))))
        2097152)
       (not-intersectp-list
        x
@@ -27598,14 +27598,14 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))))
      (not
       (intersectp-equal
        x
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          (mv-nth
           0
           (update-dir-contents
@@ -27620,28 +27620,28 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path))))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (fat32-filename-fix (car path)))))))
                   0 nil))
@@ -27655,28 +27655,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (fat32-filename-fix (car path))))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (fat32-filename-fix (car path)))))))
                     0 nil))
@@ -27685,14 +27685,14 @@ Some (rather awful) testing forms are
                268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth 0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (fat32-filename-fix (car path)))))
                 2097152)))
@@ -27702,7 +27702,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (fat32-filename-fix (car path))))
              (make-empty-subdir-contents
               (nth
@@ -27712,28 +27712,28 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path))))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (fat32-filename-fix (car path)))))))
                   0 nil))
@@ -27747,27 +27747,27 @@ Some (rather awful) testing forms are
                 (effective-fat fat32-in-memory)
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (fat32-filename-fix (car path))))))
                 (make-list-ac
                  (len
                   (mv-nth
                    0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth
                      0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (fat32-filename-fix (car path)))))))
                  0 nil))
@@ -27778,7 +27778,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth
                0
@@ -27786,7 +27786,7 @@ Some (rather awful) testing forms are
                 (make-d-e-list
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (fat32-filename-fix (car path))))
               (nth
                0
@@ -27795,28 +27795,28 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth
                     0
                     (find-d-e
                      (make-d-e-list
                       (mv-nth 0
-                              (d-e-clusterchain-contents
+                              (d-e-cc-contents
                                fat32-in-memory root-d-e)))
                      (fat32-filename-fix (car path))))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (fat32-filename-fix (car path)))))))
                   0 nil))
@@ -27827,7 +27827,7 @@ Some (rather awful) testing forms are
              :in-theory (e/d
                          (update-dir-contents)
                          ((:rewrite
-                           d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+                           d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
                            . 5)))))))
 
 (defthm
@@ -27866,15 +27866,15 @@ Some (rather awful) testing forms are
   (implies
    (and
     (equal (len (mv-nth 0
-                        (d-e-clusterchain fat32-in-memory d-e)))
+                        (d-e-cc fat32-in-memory d-e)))
            (+ 1
               (- (count-free-clusters (effective-fat fat32-in-memory)))))
     (equal (mv-nth 1
-                   (d-e-clusterchain-contents fat32-in-memory d-e))
+                   (d-e-cc-contents fat32-in-memory d-e))
            0)
     (no-duplicatesp-equal
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory d-e)))
+             (d-e-cc fat32-in-memory d-e)))
     (fat32-masked-entry-p i)
     (<= 2 i)
     (< i
@@ -27886,7 +27886,7 @@ Some (rather awful) testing forms are
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory d-e))
+                (d-e-cc fat32-in-memory d-e))
         (make-list-ac
          (+ 1
             (- (count-free-clusters (effective-fat fat32-in-memory))))
@@ -27901,7 +27901,7 @@ Some (rather awful) testing forms are
       (set-indices-in-fa-table
        (effective-fat fat32-in-memory)
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory d-e))
+               (d-e-cc fat32-in-memory d-e))
        (make-list-ac
         (+ 1
            (- (count-free-clusters (effective-fat fat32-in-memory))))
@@ -27920,7 +27920,7 @@ Some (rather awful) testing forms are
      ((:rewrite nth-of-nats=>chars)
       (:linear nth-when-d-e-p)
       (:rewrite explode-of-d-e-filename)
-      (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
+      (:rewrite lofat-to-hifat-helper-of-clear-cc)
       (:rewrite subdir-contents-p-when-zero-length)
       (:rewrite natp-of-car-when-nat-listp)
       (:rewrite count-free-clusters-of-set-indices-in-fa-table-lemma-1)
@@ -27928,7 +27928,7 @@ Some (rather awful) testing forms are
       (:rewrite make-d-e-list-of-clear-d-e-lemma-1)
       (:rewrite subsetp-when-atom-right)
       (:rewrite
-       d-e-clusterchain-contents-of-update-dir-contents-coincident)
+       d-e-cc-contents-of-update-dir-contents-coincident)
       (:definition char)
       (:definition binary-append)
       (:rewrite free-index-list-listp-of-update-nth-lemma-1)
@@ -27941,7 +27941,7 @@ Some (rather awful) testing forms are
        fat32-build-index-list-of-effective-fat-of-place-contents-disjoint)
       (:rewrite member-when-atom)
       (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-      (:rewrite d-e-clusterchain-contents-of-update-dir-contents-disjoint)
+      (:rewrite d-e-cc-contents-of-update-dir-contents-disjoint)
       (:rewrite non-free-index-listp-of-update-nth)
       (:rewrite nth-of-set-indices-in-fa-table-when-member)
       (:rewrite lofat-place-file-correctness-1-lemma-16)
@@ -27967,9 +27967,9 @@ Some (rather awful) testing forms are
       (:rewrite free-index-listp-correctness-1)
       (:rewrite stringp-when-nonempty-stringp)
       (:rewrite m1-file-alist-p-when-subsetp-equal)
-      (:rewrite d-e-clusterchain-of-update-dir-contents)
-      (:rewrite d-e-clusterchain-of-clear-clusterchain)
-      (:rewrite d-e-clusterchain-contents-of-clear-clusterchain)
+      (:rewrite d-e-cc-of-update-dir-contents)
+      (:rewrite d-e-cc-of-clear-cc)
+      (:rewrite d-e-cc-contents-of-clear-cc)
       (:rewrite lofat-find-file-correctness-1-lemma-7)
       (:rewrite lofat-to-hifat-helper-of-update-dir-contents)
       (:rewrite lofat-to-hifat-helper-after-delete-and-clear-1-lemma-3)
@@ -27978,21 +27978,21 @@ Some (rather awful) testing forms are
       (:rewrite natp-of-caar-when-file-table-p)
       (:rewrite natp-of-caar-when-fd-table-p)
       (:rewrite
-       d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-9)
+       d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-9)
       (:rewrite m1-regular-file-p-correctness-1)
       (:rewrite member-intersectp-is-commutative-lemma-2)
-      (:rewrite fati-of-clear-clusterchain . 3)
+      (:rewrite fati-of-clear-cc . 3)
       (:rewrite hifat-no-dups-p-of-cdr)
       (:rewrite file-table-p-when-subsetp-equal)
       (:rewrite fd-table-p-when-subsetp-equal)
       (:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+       d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
        . 1)
-      (:rewrite effective-fat-of-clear-clusterchain . 3)
-      (:rewrite effective-fat-of-clear-clusterchain . 2)
+      (:rewrite effective-fat-of-clear-cc . 3)
+      (:rewrite effective-fat-of-clear-cc . 2)
       (:rewrite file-table-p-when-not-consp)
       (:rewrite
-       d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-4)
+       d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-4)
       (:definition len)
       (:rewrite m1-file-p-of-cdar-when-m1-file-alist-p)
       (:rewrite m1-file-alist-p-of-lofat-to-hifat-helper)
@@ -28009,15 +28009,15 @@ Some (rather awful) testing forms are
     (implies
      (and
       (equal (len (mv-nth 0
-                          (d-e-clusterchain fat32-in-memory d-e)))
+                          (d-e-cc fat32-in-memory d-e)))
              (+ 1
                 (- (count-free-clusters (effective-fat fat32-in-memory)))))
       (equal (mv-nth 1
-                     (d-e-clusterchain-contents fat32-in-memory d-e))
+                     (d-e-cc-contents fat32-in-memory d-e))
              0)
       (no-duplicatesp-equal
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory d-e)))
+               (d-e-cc fat32-in-memory d-e)))
       (fat32-masked-entry-p i)
       (<= 2 i)
       (< i
@@ -28029,7 +28029,7 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory d-e))
+                  (d-e-cc fat32-in-memory d-e))
           (make-list-ac
            (+ 1
               (- (count-free-clusters (effective-fat fat32-in-memory))))
@@ -28044,7 +28044,7 @@ Some (rather awful) testing forms are
         (set-indices-in-fa-table
          (effective-fat fat32-in-memory)
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory d-e))
+                 (d-e-cc fat32-in-memory d-e))
          (make-list-ac
           (+ 1
              (- (count-free-clusters (effective-fat fat32-in-memory))))
@@ -28080,7 +28080,7 @@ Some (rather awful) testing forms are
                                           d-e-list entry-limit))
            0))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth '0
              (lofat-place-file fat32-in-memory
                                (mv-nth '0
@@ -28097,7 +28097,7 @@ Some (rather awful) testing forms are
          (insert-d-e
           (string=>nats
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0 (find-d-e d-e-list name)))))
           (cond
@@ -28113,7 +28113,7 @@ Some (rather awful) testing forms are
                  (find-d-e
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name)))))
                   (car path)))))
@@ -28126,7 +28126,7 @@ Some (rather awful) testing forms are
                    (make-d-e-list
                     (mv-nth
                      0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0 (find-d-e d-e-list name)))))
                    (car path))))
@@ -28137,7 +28137,7 @@ Some (rather awful) testing forms are
                  (find-d-e
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name)))))
                   (car path)))
@@ -28148,7 +28148,7 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
@@ -28156,7 +28156,7 @@ Some (rather awful) testing forms are
                        (make-d-e-list
                         (mv-nth
                          0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0 (find-d-e d-e-list name)))))
                        (car path)))))
@@ -28164,7 +28164,7 @@ Some (rather awful) testing forms are
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
@@ -28172,7 +28172,7 @@ Some (rather awful) testing forms are
                          (make-d-e-list
                           (mv-nth
                            0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name)))))
                          (car path))))))
@@ -28187,7 +28187,7 @@ Some (rather awful) testing forms are
                  (find-d-e
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name)))))
                   (car path)))
@@ -28203,7 +28203,7 @@ Some (rather awful) testing forms are
                 (find-d-e
                  (make-d-e-list
                   (mv-nth 0
-                          (d-e-clusterchain-contents
+                          (d-e-cc-contents
                            fat32-in-memory
                            (mv-nth 0 (find-d-e d-e-list name)))))
                  (car path)))
@@ -28214,7 +28214,7 @@ Some (rather awful) testing forms are
                 (find-d-e
                  (make-d-e-list
                   (mv-nth 0
-                          (d-e-clusterchain-contents
+                          (d-e-cc-contents
                            fat32-in-memory
                            (mv-nth 0 (find-d-e d-e-list name)))))
                  (car path)))
@@ -28241,7 +28241,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0 (find-d-e d-e-list name)))))
                (car path)))
@@ -28252,7 +28252,7 @@ Some (rather awful) testing forms are
               (find-d-e
                (make-d-e-list
                 (mv-nth 0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0 (find-d-e d-e-list name)))))
                (car path)))
@@ -28273,7 +28273,7 @@ Some (rather awful) testing forms are
                (insert-d-e
                 (string=>nats
                  (mv-nth 0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0 (find-d-e d-e-list name)))))
                 (cond
@@ -28290,7 +28290,7 @@ Some (rather awful) testing forms are
                         (make-d-e-list
                          (mv-nth
                           0
-                          (d-e-clusterchain-contents
+                          (d-e-cc-contents
                            fat32-in-memory
                            (mv-nth 0 (find-d-e d-e-list name)))))
                         (car path)))))
@@ -28303,7 +28303,7 @@ Some (rather awful) testing forms are
                          (make-d-e-list
                           (mv-nth
                            0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list name)))))
                          (car path))))
@@ -28315,7 +28315,7 @@ Some (rather awful) testing forms are
                         (make-d-e-list
                          (mv-nth
                           0
-                          (d-e-clusterchain-contents
+                          (d-e-cc-contents
                            fat32-in-memory
                            (mv-nth 0 (find-d-e d-e-list name)))))
                         (car path)))
@@ -28326,7 +28326,7 @@ Some (rather awful) testing forms are
                          (effective-fat fat32-in-memory)
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
@@ -28334,7 +28334,7 @@ Some (rather awful) testing forms are
                              (make-d-e-list
                               (mv-nth
                                0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory
                                 (mv-nth 0 (find-d-e d-e-list name)))))
                              (car path)))))
@@ -28342,7 +28342,7 @@ Some (rather awful) testing forms are
                           (len
                            (mv-nth
                             0
-                            (d-e-clusterchain
+                            (d-e-cc
                              fat32-in-memory
                              (mv-nth
                               0
@@ -28350,7 +28350,7 @@ Some (rather awful) testing forms are
                                (make-d-e-list
                                 (mv-nth
                                  0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory
                                   (mv-nth
                                    0 (find-d-e d-e-list name)))))
@@ -28367,7 +28367,7 @@ Some (rather awful) testing forms are
                         (make-d-e-list
                          (mv-nth
                           0
-                          (d-e-clusterchain-contents
+                          (d-e-cc-contents
                            fat32-in-memory
                            (mv-nth 0 (find-d-e d-e-list name)))))
                         (car path)))
@@ -28385,7 +28385,7 @@ Some (rather awful) testing forms are
                        (make-d-e-list
                         (mv-nth
                          0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0 (find-d-e d-e-list name)))))
                        (car path)))
@@ -28397,7 +28397,7 @@ Some (rather awful) testing forms are
                        (make-d-e-list
                         (mv-nth
                          0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0 (find-d-e d-e-list name)))))
                        (car path)))
@@ -28427,7 +28427,7 @@ Some (rather awful) testing forms are
                      (make-d-e-list
                       (mv-nth
                        0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
                      (car path)))
@@ -28439,7 +28439,7 @@ Some (rather awful) testing forms are
                      (make-d-e-list
                       (mv-nth
                        0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
                      (car path)))
@@ -28456,7 +28456,7 @@ Some (rather awful) testing forms are
              (insert-d-e
               (string=>nats
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
               (cond
@@ -28473,7 +28473,7 @@ Some (rather awful) testing forms are
                       (make-d-e-list
                        (mv-nth
                         0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0 (find-d-e d-e-list name)))))
                       (car path)))))
@@ -28486,7 +28486,7 @@ Some (rather awful) testing forms are
                        (make-d-e-list
                         (mv-nth
                          0
-                         (d-e-clusterchain-contents
+                         (d-e-cc-contents
                           fat32-in-memory
                           (mv-nth 0 (find-d-e d-e-list name)))))
                        (car path))))
@@ -28498,7 +28498,7 @@ Some (rather awful) testing forms are
                       (make-d-e-list
                        (mv-nth
                         0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0 (find-d-e d-e-list name)))))
                       (car path)))
@@ -28509,7 +28509,7 @@ Some (rather awful) testing forms are
                        (effective-fat fat32-in-memory)
                        (mv-nth
                         0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth
                           0
@@ -28517,7 +28517,7 @@ Some (rather awful) testing forms are
                            (make-d-e-list
                             (mv-nth
                              0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory
                               (mv-nth 0 (find-d-e d-e-list name)))))
                            (car path)))))
@@ -28525,7 +28525,7 @@ Some (rather awful) testing forms are
                         (len
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
@@ -28533,7 +28533,7 @@ Some (rather awful) testing forms are
                              (make-d-e-list
                               (mv-nth
                                0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory
                                 (mv-nth 0 (find-d-e d-e-list name)))))
                              (car path))))))
@@ -28549,7 +28549,7 @@ Some (rather awful) testing forms are
                       (make-d-e-list
                        (mv-nth
                         0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth 0 (find-d-e d-e-list name)))))
                       (car path)))
@@ -28566,7 +28566,7 @@ Some (rather awful) testing forms are
                      (make-d-e-list
                       (mv-nth
                        0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
                      (car path)))
@@ -28578,7 +28578,7 @@ Some (rather awful) testing forms are
                      (make-d-e-list
                       (mv-nth
                        0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
                      (car path)))
@@ -28606,7 +28606,7 @@ Some (rather awful) testing forms are
                    (make-d-e-list
                     (mv-nth
                      0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0 (find-d-e d-e-list name)))))
                    (car path)))
@@ -28618,7 +28618,7 @@ Some (rather awful) testing forms are
                    (make-d-e-list
                     (mv-nth
                      0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0 (find-d-e d-e-list name)))))
                    (car path)))
@@ -28631,7 +28631,7 @@ Some (rather awful) testing forms are
          (code-char 0)
          nil)))
       0)
-     (d-e-clusterchain-contents
+     (d-e-cc-contents
       fat32-in-memory
       (mv-nth 0 (find-d-e d-e-list name))))))
   :hints
@@ -28639,16 +28639,16 @@ Some (rather awful) testing forms are
     :do-not-induct t
     :in-theory
     (disable
-     (:rewrite d-e-clusterchain-contents-of-lofat-place-file-coincident-1)
+     (:rewrite d-e-cc-contents-of-lofat-place-file-coincident-1)
      (:rewrite
-      d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+      d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
       . 5)
      (:rewrite lofat-find-file-correctness-1-lemma-6)
      lofat-place-file)
     :use
     ((:instance
       (:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-1)
+       d-e-cc-contents-of-lofat-place-file-coincident-1)
       (file file)
       (path path)
       (d-e (mv-nth 0 (find-d-e d-e-list name)))
@@ -28665,14 +28665,14 @@ Some (rather awful) testing forms are
          (effective-fat fat32-in-memory)
          (mv-nth
           '0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             '0
             (find-d-e
              (make-d-e-list
               (mv-nth '0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory
                        (mv-nth '0
                                (find-d-e d-e-list name)))))
@@ -28681,14 +28681,14 @@ Some (rather awful) testing forms are
           (len
            (mv-nth
             '0
-            (d-e-clusterchain
+            (d-e-cc
              fat32-in-memory
              (mv-nth
               '0
               (find-d-e
                (make-d-e-list
                 (mv-nth '0
-                        (d-e-clusterchain-contents
+                        (d-e-cc-contents
                          fat32-in-memory
                          (mv-nth '0
                                  (find-d-e d-e-list name)))))
@@ -28698,14 +28698,14 @@ Some (rather awful) testing forms are
         '1))
       (mv-nth
        '0
-       (d-e-clusterchain
+       (d-e-cc
         fat32-in-memory
         (mv-nth
          '0
          (find-d-e
           (make-d-e-list
            (mv-nth '0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth '0
                             (find-d-e d-e-list name)))))
@@ -28889,7 +28889,7 @@ Some (rather awful) testing forms are
         (case-split (not (< '0 (d-e-file-size d-e)))))
    (not-intersectp-list
     (mv-nth 0
-            (d-e-clusterchain fat32-in-memory d-e))
+            (d-e-cc fat32-in-memory d-e))
     (mv-nth
      2
      (lofat-to-hifat-helper
@@ -28900,7 +28900,7 @@ Some (rather awful) testing forms are
       (make-d-e-list
        (mv-nth
         0
-        (d-e-clusterchain-contents
+        (d-e-cc-contents
          (mv-nth 0
                  (lofat-place-file fat32-in-memory
                                    (mv-nth 0 (find-d-e d-e-list name))
@@ -28991,7 +28991,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        entry-limit))
      0)
     (hifat-equiv
@@ -29004,7 +29004,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list))))
        entry-limit))
      (mv-nth
       0
@@ -29014,7 +29014,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory (car d-e-list))))
          (+ -1 entry-limit)))
        path (m1-file d-e nil))))
@@ -29032,7 +29032,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit))))))))
      0)
@@ -29046,7 +29046,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory (car d-e-list))))
          (+ -1 entry-limit))))
       (hifat-entry-count
@@ -29064,7 +29064,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory (car d-e-list))))
               (+ -1 entry-limit))))))))))
      entry-limit)
@@ -29083,7 +29083,7 @@ Some (rather awful) testing forms are
                  (lofat-place-file fat32-in-memory (car d-e-list)
                                    path file))
          (make-d-e-list (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory (car d-e-list))))
          (+ -1 entry-limit)))))
      (mv-nth
@@ -29102,7 +29102,7 @@ Some (rather awful) testing forms are
                                       path file))
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory (car d-e-list))))
             (+ -1 entry-limit)))))))))
     (cons
@@ -29118,7 +29118,7 @@ Some (rather awful) testing forms are
                   fat32-in-memory
                   (make-d-e-list
                    (mv-nth 0
-                           (d-e-clusterchain-contents
+                           (d-e-cc-contents
                             fat32-in-memory (car d-e-list))))
                   (+ -1 entry-limit)))
          path (m1-file d-e nil)))))
@@ -29135,7 +29135,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))))))
   :hints
@@ -29154,7 +29154,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (entry-limit2
@@ -29167,7 +29167,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))
         (hifat-entry-count
@@ -29181,7 +29181,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory (car d-e-list))))
               (+ -1 entry-limit)))
             path))))))
@@ -29199,7 +29199,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (entry-limit2
@@ -29212,7 +29212,7 @@ Some (rather awful) testing forms are
                    fat32-in-memory
                    (make-d-e-list
                     (mv-nth 0
-                            (d-e-clusterchain-contents
+                            (d-e-cc-contents
                              fat32-in-memory (car d-e-list))))
                    (+ -1 entry-limit)))))))
       (d-e-list (cdr d-e-list))
@@ -29225,7 +29225,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents fat32-in-memory (car d-e-list)))))
+         (d-e-cc-contents fat32-in-memory (car d-e-list)))))
       (fat32-in-memory
        (mv-nth 0
                (lofat-place-file fat32-in-memory (car d-e-list)
@@ -29326,7 +29326,7 @@ Some (rather awful) testing forms are
                  fat32-in-memory
                  (make-d-e-list
                   (mv-nth 0
-                          (d-e-clusterchain-contents
+                          (d-e-cc-contents
                            fat32-in-memory
                            (mv-nth 0
                                    (find-d-e d-e-list
@@ -29344,7 +29344,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list
@@ -29360,7 +29360,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list
@@ -29375,7 +29375,7 @@ Some (rather awful) testing forms are
     lofat-to-hifat-helper-correctness-4
     (d-e-list
      (make-d-e-list (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                      fat32-in-memory
                                      (mv-nth 0
                                              (find-d-e d-e-list
@@ -29401,7 +29401,7 @@ Some (rather awful) testing forms are
            fat32-in-memory
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0 (find-d-e d-e-list2 name)))))
            entry-limit1))
@@ -29417,7 +29417,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0 (find-d-e d-e-list2 name)))))
        entry-limit1))
@@ -29446,7 +29446,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0 (find-d-e d-e-list2 name)))))
             entry-limit2))
@@ -29466,7 +29466,7 @@ Some (rather awful) testing forms are
      (d-e-list
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 fat32-in-memory
                 (mv-nth 0 (find-d-e d-e-list2 name))))))
      (fat32-in-memory fat32-in-memory)))))
@@ -29491,7 +29491,7 @@ Some (rather awful) testing forms are
         fat32-in-memory
         (make-d-e-list
          (mv-nth 0
-                 (d-e-clusterchain-contents
+                 (d-e-cc-contents
                   fat32-in-memory
                   (mv-nth 0 (find-d-e d-e-list2 name)))))
         entry-limit1))))
@@ -29502,7 +29502,7 @@ Some (rather awful) testing forms are
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain fat32-in-memory
+      (d-e-cc fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list2 name))))
      (mv-nth
       2
@@ -29510,31 +29510,31 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents
+                (d-e-cc-contents
                  fat32-in-memory
                  (mv-nth 0 (find-d-e d-e-list2 name)))))
        entry-limit1)))
     (not-intersectp-list
      (mv-nth
       0
-      (d-e-clusterchain fat32-in-memory
+      (d-e-cc fat32-in-memory
                             (mv-nth 0 (find-d-e d-e-list2 name))))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
                                     d-e-list1 entry-limit2)))
     (lofat-fs-p fat32-in-memory)
     (d-e-directory-p (mv-nth 0 (find-d-e d-e-list2 name)))
-    (let ((mv (d-e-clusterchain-contents
+    (let ((mv (d-e-cc-contents
                fat32-in-memory
                (mv-nth 0 (find-d-e d-e-list2 name))))
           (root-d-e (mv-nth 0 (find-d-e d-e-list2 name))))
          (let ((ignore-0 (hide (mv-nth 0 mv)))
                (error-code (mv-nth 1 mv)))
-              (mv-let (clusterchain ignore-0)
-                (d-e-clusterchain fat32-in-memory root-d-e)
+              (mv-let (cc ignore-0)
+                (d-e-cc fat32-in-memory root-d-e)
                 (declare (ignore ignore-0))
                 (and (equal error-code 0)
-                     (no-duplicatesp-equal clusterchain))))))
+                     (no-duplicatesp-equal cc))))))
    (equal
     (lofat-to-hifat-helper
      (mv-nth 0
@@ -29579,9 +29579,9 @@ Some (rather awful) testing forms are
      (:rewrite
       not-intersectp-list-of-set-difference$-lemma-1)
      (:rewrite
-      d-e-clusterchain-of-clear-clusterchain)
+      d-e-cc-of-clear-cc)
      (:rewrite
-      d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-10)
+      d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-10)
      (:rewrite
       nat-listp-if-fat32-masked-entry-list-p)
      (:rewrite member-of-append)
@@ -29619,13 +29619,13 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory (car d-e-list))))
               (+ -1 entry-limit)))))))
         fat32-in-memory
         (append
          (mv-nth 0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory (car d-e-list)))
          (flatten
           (mv-nth
@@ -29634,7 +29634,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory (car d-e-list))))
             (+ -1 entry-limit))))
          x)))
@@ -29653,7 +29653,7 @@ Some (rather awful) testing forms are
         fat32-in-memory
         (append
          (mv-nth 0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory (car d-e-list)))
          x)))
       ((and
@@ -29676,14 +29676,14 @@ Some (rather awful) testing forms are
   ;;     (make-d-e-list
   ;;      (mv-nth
   ;;       0
-  ;;       (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+  ;;       (d-e-cc-contents fat32-in-memory root-d-e)))
   ;;     d-e-list)
   ;;    (equal path (list filename)))
   ;;   :hints :none)
   ;;  (:=
   ;;   (make-d-e-list
   ;;    (mv-nth 0
-  ;;            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+  ;;            (d-e-cc-contents fat32-in-memory root-d-e)))
   ;;   d-e-list)
   ;;  (:= path (list filename))
   ;;  :drop :bash)
@@ -29727,13 +29727,13 @@ Some (rather awful) testing forms are
             (set-indices-in-fa-table
              (effective-fat fat32-in-memory)
              (mv-nth 0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth 0
                               (find-d-e d-e-list filename))))
              (make-list-ac
               (len (mv-nth 0
-                           (d-e-clusterchain
+                           (d-e-cc
                             fat32-in-memory
                             (mv-nth 0
                                     (find-d-e d-e-list filename)))))
@@ -29747,14 +29747,14 @@ Some (rather awful) testing forms are
               (set-indices-in-fa-table
                (effective-fat fat32-in-memory)
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename))))
                (make-list-ac
                 (len
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename)))))
@@ -29764,7 +29764,7 @@ Some (rather awful) testing forms are
            268435455)
           (mv-nth
            0
-           (clear-clusterchain
+           (clear-cc
             fat32-in-memory
             (d-e-first-cluster
              (mv-nth 0 (find-d-e d-e-list filename)))
@@ -29779,13 +29779,13 @@ Some (rather awful) testing forms are
            (set-indices-in-fa-table
             (effective-fat fat32-in-memory)
             (mv-nth 0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename))))
             (make-list-ac
              (len (mv-nth 0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth 0
                                    (find-d-e d-e-list filename)))))
@@ -29807,14 +29807,14 @@ Some (rather awful) testing forms are
               (set-indices-in-fa-table
                (effective-fat fat32-in-memory)
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename))))
                (make-list-ac
                 (len
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename)))))
@@ -29828,14 +29828,14 @@ Some (rather awful) testing forms are
                 (set-indices-in-fa-table
                  (effective-fat fat32-in-memory)
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename))))
                  (make-list-ac
                   (len
                    (mv-nth 0
-                           (d-e-clusterchain
+                           (d-e-cc
                             fat32-in-memory
                             (mv-nth 0
                                     (find-d-e d-e-list filename)))))
@@ -29844,7 +29844,7 @@ Some (rather awful) testing forms are
               fat32-in-memory)
              268435455)
             (mv-nth 0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth 0 (find-d-e d-e-list filename)))
@@ -29860,14 +29860,14 @@ Some (rather awful) testing forms are
              (set-indices-in-fa-table
               (effective-fat fat32-in-memory)
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename))))
               (make-list-ac
                (len
                 (mv-nth 0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e d-e-list filename)))))
@@ -29883,14 +29883,14 @@ Some (rather awful) testing forms are
              (set-indices-in-fa-table
               (effective-fat fat32-in-memory)
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename))))
               (make-list-ac
                (len
                 (mv-nth 0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e d-e-list filename)))))
@@ -29912,14 +29912,14 @@ Some (rather awful) testing forms are
               (set-indices-in-fa-table
                (effective-fat fat32-in-memory)
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename))))
                (make-list-ac
                 (len
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename)))))
@@ -29933,14 +29933,14 @@ Some (rather awful) testing forms are
                 (set-indices-in-fa-table
                  (effective-fat fat32-in-memory)
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename))))
                  (make-list-ac
                   (len
                    (mv-nth 0
-                           (d-e-clusterchain
+                           (d-e-cc
                             fat32-in-memory
                             (mv-nth 0
                                     (find-d-e d-e-list filename)))))
@@ -29949,7 +29949,7 @@ Some (rather awful) testing forms are
               fat32-in-memory)
              268435455)
             (mv-nth 0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth 0 (find-d-e d-e-list filename)))
@@ -29965,14 +29965,14 @@ Some (rather awful) testing forms are
              (set-indices-in-fa-table
               (effective-fat fat32-in-memory)
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename))))
               (make-list-ac
                (len
                 (mv-nth 0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e d-e-list filename)))))
@@ -29988,14 +29988,14 @@ Some (rather awful) testing forms are
              (set-indices-in-fa-table
               (effective-fat fat32-in-memory)
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename))))
               (make-list-ac
                (len
                 (mv-nth 0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e d-e-list filename)))))
@@ -30018,7 +30018,7 @@ Some (rather awful) testing forms are
               (set-indices-in-fa-table
                (effective-fat fat32-in-memory)
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename))))
@@ -30026,7 +30026,7 @@ Some (rather awful) testing forms are
                 (len
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list filename)))))
@@ -30041,7 +30041,7 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list filename))))
@@ -30049,7 +30049,7 @@ Some (rather awful) testing forms are
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename)))))
@@ -30059,7 +30059,7 @@ Some (rather awful) testing forms are
              268435455)
             (mv-nth
              0
-             (clear-clusterchain
+             (clear-cc
               fat32-in-memory
               (d-e-first-cluster
                (mv-nth 0 (find-d-e d-e-list filename)))
@@ -30075,7 +30075,7 @@ Some (rather awful) testing forms are
              (set-indices-in-fa-table
               (effective-fat fat32-in-memory)
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename))))
@@ -30083,7 +30083,7 @@ Some (rather awful) testing forms are
                (len
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e d-e-list filename)))))
@@ -30099,7 +30099,7 @@ Some (rather awful) testing forms are
              (set-indices-in-fa-table
               (effective-fat fat32-in-memory)
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename))))
@@ -30107,7 +30107,7 @@ Some (rather awful) testing forms are
                (len
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e d-e-list filename)))))
@@ -30125,14 +30125,14 @@ Some (rather awful) testing forms are
                 (set-indices-in-fa-table
                  (effective-fat fat32-in-memory)
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename))))
                  (make-list-ac
                   (len
                    (mv-nth 0
-                           (d-e-clusterchain
+                           (d-e-cc
                             fat32-in-memory
                             (mv-nth 0
                                     (find-d-e d-e-list filename)))))
@@ -30149,7 +30149,7 @@ Some (rather awful) testing forms are
       (e/d
        (lofat-to-hifat-helper not-intersectp-list)
        ((:rewrite
-         d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+         d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
          . 1)
         (:rewrite lofat-place-file-correctness-1-lemma-13)
         (:rewrite nth-of-nats=>chars)
@@ -30158,7 +30158,7 @@ Some (rather awful) testing forms are
         (:rewrite explode-of-d-e-filename)
         (:rewrite take-of-len-free)
         (:rewrite lofat-place-file-correctness-1-lemma-17)
-        (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
+        (:rewrite lofat-to-hifat-helper-of-clear-cc)
         (:rewrite lofat-place-file-correctness-1-lemma-15)
         (:rewrite subdir-contents-p-when-zero-length)
         (:linear lofat-to-hifat-helper-correctness-3)))
@@ -30214,13 +30214,13 @@ Some (rather awful) testing forms are
               (set-indices-in-fa-table
                (effective-fat fat32-in-memory)
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename))))
                (make-list-ac
                 (len (mv-nth 0
-                             (d-e-clusterchain
+                             (d-e-cc
                               fat32-in-memory
                               (mv-nth 0
                                       (find-d-e d-e-list filename)))))
@@ -30234,14 +30234,14 @@ Some (rather awful) testing forms are
                 (set-indices-in-fa-table
                  (effective-fat fat32-in-memory)
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename))))
                  (make-list-ac
                   (len
                    (mv-nth 0
-                           (d-e-clusterchain
+                           (d-e-cc
                             fat32-in-memory
                             (mv-nth 0
                                     (find-d-e d-e-list filename)))))
@@ -30251,7 +30251,7 @@ Some (rather awful) testing forms are
              268435455)
             (mv-nth
              0
-             (clear-clusterchain
+             (clear-cc
               fat32-in-memory
               (d-e-first-cluster
                (mv-nth 0 (find-d-e d-e-list filename)))
@@ -30266,13 +30266,13 @@ Some (rather awful) testing forms are
              (set-indices-in-fa-table
               (effective-fat fat32-in-memory)
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename))))
               (make-list-ac
                (len (mv-nth 0
-                            (d-e-clusterchain
+                            (d-e-cc
                              fat32-in-memory
                              (mv-nth 0
                                      (find-d-e d-e-list filename)))))
@@ -30293,14 +30293,14 @@ Some (rather awful) testing forms are
                (set-indices-in-fa-table
                 (effective-fat fat32-in-memory)
                 (mv-nth 0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e d-e-list filename))))
                 (make-list-ac
                  (len
                   (mv-nth 0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth 0
                                    (find-d-e d-e-list filename)))))
@@ -30314,14 +30314,14 @@ Some (rather awful) testing forms are
                  (set-indices-in-fa-table
                   (effective-fat fat32-in-memory)
                   (mv-nth 0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth 0
                                    (find-d-e d-e-list filename))))
                   (make-list-ac
                    (len
                     (mv-nth 0
-                            (d-e-clusterchain
+                            (d-e-cc
                              fat32-in-memory
                              (mv-nth 0
                                      (find-d-e d-e-list filename)))))
@@ -30330,7 +30330,7 @@ Some (rather awful) testing forms are
                fat32-in-memory)
               268435455)
              (mv-nth 0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (mv-nth 0 (find-d-e d-e-list filename)))
@@ -30346,14 +30346,14 @@ Some (rather awful) testing forms are
               (set-indices-in-fa-table
                (effective-fat fat32-in-memory)
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename))))
                (make-list-ac
                 (len
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename)))))
@@ -30369,14 +30369,14 @@ Some (rather awful) testing forms are
               (set-indices-in-fa-table
                (effective-fat fat32-in-memory)
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename))))
                (make-list-ac
                 (len
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename)))))
@@ -30417,7 +30417,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            fat32-in-memory
            (d-e-first-cluster
             (mv-nth 0 (find-d-e d-e-list filename)))
@@ -30436,7 +30436,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth
           0
-          (clear-clusterchain
+          (clear-cc
            fat32-in-memory
            (d-e-first-cluster
             (mv-nth 0 (find-d-e d-e-list filename)))
@@ -30452,7 +30452,7 @@ Some (rather awful) testing forms are
         0
         (lofat-to-hifat-helper
          (mv-nth 0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0 (find-d-e d-e-list filename)))
@@ -30479,7 +30479,7 @@ Some (rather awful) testing forms are
       (e/d
        (lofat-to-hifat-helper not-intersectp-list)
        ((:rewrite
-         d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+         d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
          . 1)
         (:rewrite lofat-place-file-correctness-1-lemma-13)
         (:rewrite nth-of-nats=>chars)
@@ -30488,7 +30488,7 @@ Some (rather awful) testing forms are
         (:rewrite explode-of-d-e-filename)
         (:rewrite take-of-len-free)
         (:rewrite lofat-place-file-correctness-1-lemma-17)
-        (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
+        (:rewrite lofat-to-hifat-helper-of-clear-cc)
         (:rewrite lofat-place-file-correctness-1-lemma-15)
         (:rewrite subdir-contents-p-when-zero-length)
         (:linear lofat-to-hifat-helper-correctness-3)))
@@ -30537,7 +30537,7 @@ Some (rather awful) testing forms are
          (lofat-to-hifat-helper
           (mv-nth
            0
-           (clear-clusterchain
+           (clear-cc
             fat32-in-memory
             (d-e-first-cluster
              (mv-nth 0 (find-d-e d-e-list filename)))
@@ -30565,7 +30565,7 @@ Some (rather awful) testing forms are
         (place-contents
          (update-fati i
                       (fat32-update-lower-28 (fati i fat32-in-memory)
-                                             *ms-end-of-clusterchain*)
+                                             *ms-end-of-cc*)
                       fat32-in-memory)
          (d-e-install-directory-bit (make-d-e-with-filename name)
                                         t)
@@ -30581,7 +30581,7 @@ Some (rather awful) testing forms are
              0)
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory root-d-e))
+               (d-e-cc fat32-in-memory root-d-e))
        (mv-nth 2
                (lofat-to-hifat-helper fat32-in-memory
                                       d-e-list entry-limit)))
@@ -30615,7 +30615,7 @@ Some (rather awful) testing forms are
             (place-contents
              (update-fati i
                           (fat32-update-lower-28 (fati i fat32-in-memory)
-                                                 *ms-end-of-clusterchain*)
+                                                 *ms-end-of-cc*)
                           fat32-in-memory)
              (d-e-install-directory-bit (make-d-e-with-filename name)
                                             t)
@@ -30627,7 +30627,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (d-e-install-directory-bit (make-d-e-with-filename name)
                                              t)
@@ -30652,7 +30652,7 @@ Some (rather awful) testing forms are
             (place-contents
              (update-fati i
                           (fat32-update-lower-28 (fati i fat32-in-memory)
-                                                 *ms-end-of-clusterchain*)
+                                                 *ms-end-of-cc*)
                           fat32-in-memory)
              (d-e-install-directory-bit (make-d-e-with-filename name)
                                             t)
@@ -30664,7 +30664,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (d-e-install-directory-bit (make-d-e-with-filename name)
                                              t)
@@ -30694,7 +30694,7 @@ Some (rather awful) testing forms are
             (place-contents
              (update-fati i
                           (fat32-update-lower-28 (fati i fat32-in-memory)
-                                                 *ms-end-of-clusterchain*)
+                                                 *ms-end-of-cc*)
                           fat32-in-memory)
              (d-e-install-directory-bit (make-d-e-with-filename name)
                                             t)
@@ -30706,7 +30706,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (d-e-install-directory-bit (make-d-e-with-filename name)
                                              t)
@@ -30725,7 +30725,7 @@ Some (rather awful) testing forms are
        (lofat-to-hifat-helper not-intersectp-list hifat-entry-count)
        ((:e d-e-fix)
         (:rewrite
-         d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+         d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
          . 1)
         (:rewrite lofat-place-file-correctness-1-lemma-13)
         (:rewrite nth-of-nats=>chars)
@@ -30733,13 +30733,13 @@ Some (rather awful) testing forms are
         (:linear nth-when-d-e-p)
         (:rewrite explode-of-d-e-filename)
         (:rewrite lofat-place-file-correctness-1-lemma-17)
-        (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
+        (:rewrite lofat-to-hifat-helper-of-clear-cc)
         (:rewrite lofat-place-file-correctness-1-lemma-15)
         (:rewrite subdir-contents-p-when-zero-length)
         (:linear lofat-to-hifat-helper-correctness-3)
         (:rewrite lofat-to-hifat-helper-of-update-dir-contents)
         (:rewrite
-         d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-15)
+         d-e-cc-contents-of-lofat-place-file-coincident-lemma-15)
         (:rewrite natp-of-car-when-nat-listp)
         (:rewrite count-free-clusters-of-set-indices-in-fa-table-lemma-1)
         (:rewrite integerp-of-car-when-integer-listp)
@@ -30747,7 +30747,7 @@ Some (rather awful) testing forms are
         (:rewrite make-d-e-list-of-clear-d-e-lemma-1)
         (:rewrite subsetp-when-atom-right)
         (:rewrite
-         d-e-clusterchain-contents-of-update-dir-contents-coincident)
+         d-e-cc-contents-of-update-dir-contents-coincident)
         (:definition char)
         (:definition binary-append)
         (:rewrite free-index-list-listp-of-update-nth-lemma-1)
@@ -30784,7 +30784,7 @@ Some (rather awful) testing forms are
           (place-contents
            (update-fati i
                         (fat32-update-lower-28 (fati i fat32-in-memory)
-                                               *ms-end-of-clusterchain*)
+                                               *ms-end-of-cc*)
                         fat32-in-memory)
            (d-e-install-directory-bit (make-d-e-with-filename name)
                                           t)
@@ -30800,7 +30800,7 @@ Some (rather awful) testing forms are
                0)
         (not-intersectp-list
          (mv-nth 0
-                 (d-e-clusterchain fat32-in-memory root-d-e))
+                 (d-e-cc fat32-in-memory root-d-e))
          (mv-nth 2
                  (lofat-to-hifat-helper fat32-in-memory
                                         d-e-list entry-limit)))
@@ -30834,7 +30834,7 @@ Some (rather awful) testing forms are
              (place-contents
               (update-fati i
                            (fat32-update-lower-28 (fati i fat32-in-memory)
-                                                  *ms-end-of-clusterchain*)
+                                                  *ms-end-of-cc*)
                            fat32-in-memory)
               (d-e-install-directory-bit (make-d-e-with-filename name)
                                              t)
@@ -30846,7 +30846,7 @@ Some (rather awful) testing forms are
               (string=>nats
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (d-e-set-first-cluster-file-size
                (d-e-install-directory-bit (make-d-e-with-filename name)
                                               t)
@@ -30883,7 +30883,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents
+            (d-e-cc-contents
              (mv-nth 0
                      (lofat-place-file fat32-in-memory
                                        (mv-nth 0 (find-d-e d-e-list name))
@@ -30903,7 +30903,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents
+            (d-e-cc-contents
              (mv-nth 0
                      (lofat-place-file fat32-in-memory
                                        (mv-nth 0 (find-d-e d-e-list name))
@@ -30922,7 +30922,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0 (find-d-e d-e-list name)))))
             entry-limit)))
@@ -30936,7 +30936,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents
+             (d-e-cc-contents
               (mv-nth
                0
                (lofat-place-file fat32-in-memory
@@ -30955,7 +30955,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents
+            (d-e-cc-contents
              (mv-nth 0
                      (lofat-place-file fat32-in-memory
                                        (mv-nth 0 (find-d-e d-e-list name))
@@ -30971,7 +30971,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0 (find-d-e d-e-list name)))))
             entry-limit))
@@ -30986,7 +30986,7 @@ Some (rather awful) testing forms are
               0)
        (not-intersectp-list
         (mv-nth 0
-                (d-e-clusterchain fat32-in-memory root-d-e))
+                (d-e-cc fat32-in-memory root-d-e))
         (mv-nth 2
                 (lofat-to-hifat-helper fat32-in-memory
                                        d-e-list entry-limit)))
@@ -31021,7 +31021,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0 (find-d-e d-e-list name)))))
             entry-limit))
@@ -31049,7 +31049,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
               entry-limit))
@@ -31107,7 +31107,7 @@ Some (rather awful) testing forms are
          (:rewrite nats=>chars-of-take)
          (:rewrite lofat-place-file-correctness-lemma-40)
          (:rewrite lofat-place-file-correctness-lemma-57)
-         (:rewrite d-e-clusterchain-under-iff . 2)
+         (:rewrite d-e-cc-under-iff . 2)
          (:rewrite intersectp-when-subsetp)
          (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
                    . 1)
@@ -31122,13 +31122,13 @@ Some (rather awful) testing forms are
          (:rewrite fat32-filename-p-of-caar-when-m1-file-alist-p)
          (:rewrite car-of-append)
          (:rewrite subdir-contents-p-when-zero-length)
-         (:rewrite d-e-clusterchain-contents-of-lofat-place-file-disjoint)
+         (:rewrite d-e-cc-contents-of-lofat-place-file-disjoint)
          (:rewrite hifat-no-dups-p-of-cdr)
          (:type-prescription binary-append)
          (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
                    . 1)
          (:type-prescription intersectp-equal)
-         (:rewrite d-e-clusterchain-of-lofat-place-file-disjoint)
+         (:rewrite d-e-cc-of-lofat-place-file-disjoint)
          (:rewrite intersectp-member . 1)
          (:rewrite intersect-with-subset . 6)
          (:rewrite intersect-with-subset . 5)
@@ -31137,7 +31137,7 @@ Some (rather awful) testing forms are
          (:rewrite consp-of-append)
          (:rewrite not-intersectp-list-of-set-difference$-lemma-3)
          (:rewrite member-intersectp-with-subset)
-         (:rewrite d-e-clusterchain-under-iff . 3)
+         (:rewrite d-e-cc-under-iff . 3)
          (:rewrite lofat-place-file-correctness-lemma-68
                    . 1)
          (:rewrite subsetp-when-atom-right)
@@ -31161,7 +31161,7 @@ Some (rather awful) testing forms are
          (:linear len-of-explode-when-m1-file-contents-p-1)
          (:definition nthcdr)
          (:rewrite then-subseq-empty-1)
-         (:linear length-of-d-e-clusterchain-contents
+         (:linear length-of-d-e-cc-contents
                   . 3)
          (:rewrite unsigned-byte-listp-when-d-e-p)
          (:rewrite d-e-p-of-chars=>nats)
@@ -31172,9 +31172,9 @@ Some (rather awful) testing forms are
          (:rewrite explode-of-d-e-filename)
          (:linear len-when-hifat-bounded-file-alist-p . 2)
          (:linear len-when-hifat-bounded-file-alist-p . 1)
-         (:linear length-of-d-e-clusterchain-contents
+         (:linear length-of-d-e-cc-contents
                   . 2)
-         (:rewrite effective-fat-of-clear-clusterchain . 3)
+         (:rewrite effective-fat-of-clear-cc . 3)
          (:rewrite find-n-free-clusters-when-zp)
          (:rewrite str::consp-of-explode)
          (:rewrite hifat-to-lofat-inversion-lemma-2)
@@ -31186,7 +31186,7 @@ Some (rather awful) testing forms are
          (:rewrite m1-file->contents$inline-of-m1-file-fix-x-normalize-const)
          (:type-prescription fat32-filename-fix)
          (:rewrite lofat-directory-file-p-when-lofat-file-p)
-         (:rewrite fati-of-clear-clusterchain . 3)
+         (:rewrite fati-of-clear-cc . 3)
          (:rewrite m1-file-p-of-m1-file-fix)
          (:rewrite natp-of-place-contents)
          (:rewrite len-of-find-n-free-clusters)
@@ -31244,7 +31244,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents
+              (d-e-cc-contents
                (mv-nth 0
                        (lofat-place-file fat32-in-memory
                                          (mv-nth 0 (find-d-e d-e-list name))
@@ -31264,7 +31264,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents
+              (d-e-cc-contents
                (mv-nth 0
                        (lofat-place-file fat32-in-memory
                                          (mv-nth 0 (find-d-e d-e-list name))
@@ -31283,7 +31283,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
               entry-limit)))
@@ -31297,7 +31297,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 (mv-nth
                  0
                  (lofat-place-file fat32-in-memory
@@ -31316,7 +31316,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents
+              (d-e-cc-contents
                (mv-nth 0
                        (lofat-place-file fat32-in-memory
                                          (mv-nth 0 (find-d-e d-e-list name))
@@ -31332,7 +31332,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory
                         (mv-nth 0 (find-d-e d-e-list name)))))
               entry-limit))
@@ -31347,7 +31347,7 @@ Some (rather awful) testing forms are
                 0)
          (not-intersectp-list
           (mv-nth 0
-                  (d-e-clusterchain fat32-in-memory root-d-e))
+                  (d-e-cc fat32-in-memory root-d-e))
           (mv-nth 2
                   (lofat-to-hifat-helper fat32-in-memory
                                          d-e-list entry-limit)))
@@ -31411,7 +31411,7 @@ Some (rather awful) testing forms are
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
                                     d-e-list entry-limit)))
@@ -31452,7 +31452,7 @@ Some (rather awful) testing forms are
            (string=>nats
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (d-e-set-first-cluster-file-size
             (d-e-install-directory-bit (make-d-e-with-filename name)
                                            t)
@@ -31489,7 +31489,7 @@ Some (rather awful) testing forms are
            (string=>nats
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (d-e-set-first-cluster-file-size
             (d-e-install-directory-bit (make-d-e-with-filename name)
                                            t)
@@ -31543,13 +31543,13 @@ Some (rather awful) testing forms are
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e d-e-list filename))))
            (make-list-ac
             (len (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename)))))
@@ -31563,14 +31563,14 @@ Some (rather awful) testing forms are
             (set-indices-in-fa-table
              (effective-fat fat32-in-memory)
              (mv-nth 0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth 0
                               (find-d-e d-e-list filename))))
              (make-list-ac
               (len
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename)))))
@@ -31580,7 +31580,7 @@ Some (rather awful) testing forms are
          268435455)
         (mv-nth
          0
-         (clear-clusterchain
+         (clear-cc
           fat32-in-memory
           (d-e-first-cluster
            (mv-nth 0 (find-d-e d-e-list filename)))
@@ -31595,13 +31595,13 @@ Some (rather awful) testing forms are
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e d-e-list filename))))
           (make-list-ac
            (len (mv-nth 0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth 0
                                  (find-d-e d-e-list filename)))))
@@ -31622,14 +31622,14 @@ Some (rather awful) testing forms are
             (set-indices-in-fa-table
              (effective-fat fat32-in-memory)
              (mv-nth 0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth 0
                               (find-d-e d-e-list filename))))
              (make-list-ac
               (len
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename)))))
@@ -31643,14 +31643,14 @@ Some (rather awful) testing forms are
               (set-indices-in-fa-table
                (effective-fat fat32-in-memory)
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename))))
                (make-list-ac
                 (len
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename)))))
@@ -31659,7 +31659,7 @@ Some (rather awful) testing forms are
             fat32-in-memory)
            268435455)
           (mv-nth 0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth 0 (find-d-e d-e-list filename)))
@@ -31675,14 +31675,14 @@ Some (rather awful) testing forms are
            (set-indices-in-fa-table
             (effective-fat fat32-in-memory)
             (mv-nth 0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename))))
             (make-list-ac
              (len
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename)))))
@@ -31698,14 +31698,14 @@ Some (rather awful) testing forms are
            (set-indices-in-fa-table
             (effective-fat fat32-in-memory)
             (mv-nth 0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename))))
             (make-list-ac
              (len
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename)))))
@@ -31728,14 +31728,14 @@ Some (rather awful) testing forms are
             (set-indices-in-fa-table
              (effective-fat fat32-in-memory)
              (mv-nth 0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth 0
                               (find-d-e d-e-list filename))))
              (make-list-ac
               (len
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename)))))
@@ -31749,14 +31749,14 @@ Some (rather awful) testing forms are
               (set-indices-in-fa-table
                (effective-fat fat32-in-memory)
                (mv-nth 0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth 0
                                 (find-d-e d-e-list filename))))
                (make-list-ac
                 (len
                  (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename)))))
@@ -31765,7 +31765,7 @@ Some (rather awful) testing forms are
             fat32-in-memory)
            268435455)
           (mv-nth 0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth 0 (find-d-e d-e-list filename)))
@@ -31781,14 +31781,14 @@ Some (rather awful) testing forms are
            (set-indices-in-fa-table
             (effective-fat fat32-in-memory)
             (mv-nth 0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename))))
             (make-list-ac
              (len
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename)))))
@@ -31804,14 +31804,14 @@ Some (rather awful) testing forms are
            (set-indices-in-fa-table
             (effective-fat fat32-in-memory)
             (mv-nth 0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth 0
                              (find-d-e d-e-list filename))))
             (make-list-ac
              (len
               (mv-nth 0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth 0
                                (find-d-e d-e-list filename)))))
@@ -31830,13 +31830,13 @@ Some (rather awful) testing forms are
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth 0
                             (find-d-e d-e-list filename))))
            (make-list-ac
             (len (mv-nth 0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth 0
                                   (find-d-e d-e-list filename)))))
@@ -31875,7 +31875,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (clear-clusterchain
+        (clear-cc
          fat32-in-memory
          (d-e-first-cluster
           (mv-nth 0 (find-d-e d-e-list filename)))
@@ -31893,7 +31893,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (clear-clusterchain
+        (clear-cc
          fat32-in-memory
          (d-e-first-cluster
           (mv-nth 0 (find-d-e d-e-list filename)))
@@ -31928,7 +31928,7 @@ Some (rather awful) testing forms are
         (< 0 len)
         (< 0 (cluster-size fat32-in-memory))
         (unsigned-byte-p 32 len))
-   (equal (d-e-clusterchain
+   (equal (d-e-cc
            (update-fati i
                         (fat32-update-lower-28 (fati i fat32-in-memory)
                                                268435455)
@@ -31936,7 +31936,7 @@ Some (rather awful) testing forms are
            (d-e-set-first-cluster-file-size d-e i len))
           (mv (list i) 0)))
   :hints (("goal" :do-not-induct t
-           :in-theory (enable d-e-clusterchain
+           :in-theory (enable d-e-cc
                               fat32-build-index-list))))
 
 (defthm
@@ -31953,7 +31953,7 @@ Some (rather awful) testing forms are
         (<= 1
             (count-free-clusters (effective-fat fat32-in-memory))))
    (equal
-    (d-e-clusterchain
+    (d-e-cc
      (mv-nth
       0
       (place-contents
@@ -32020,12 +32020,12 @@ Some (rather awful) testing forms are
           (:definition place-d-e)
           (:rewrite d-e-p-when-member-equal-of-d-e-list-p)
           (:rewrite lofat-fs-p-of-lofat-place-file-lemma-1)
-          (:rewrite clear-clusterchain-reversibility-lemma-1)
-          (:rewrite d-e-clusterchain-of-place-contents-coincident-2)))
+          (:rewrite clear-cc-reversibility-lemma-1)
+          (:rewrite d-e-cc-of-place-contents-coincident-2)))
     :restrict ((put-assoc-under-hifat-equiv-3 ((file2 (m1-file d-e "")))))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-of-place-contents-coincident-2)
+     (:rewrite d-e-cc-of-place-contents-coincident-2)
      (d-e1
       (d-e-set-first-cluster-file-size
        (d-e-install-directory-bit
@@ -32073,7 +32073,7 @@ Some (rather awful) testing forms are
         (< 0
            (len (explode (lofat-file->contents file)))))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth
       '0
       (place-contents
@@ -32125,10 +32125,10 @@ Some (rather awful) testing forms are
     :do-not-induct t
     :in-theory
     (disable
-     (:rewrite d-e-clusterchain-contents-of-place-contents-coincident-2))
+     (:rewrite d-e-cc-contents-of-place-contents-coincident-2))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-contents-of-place-contents-coincident-2)
+     (:rewrite d-e-cc-contents-of-place-contents-coincident-2)
      (d-e2
       (d-e-set-first-cluster-file-size
        (d-e-install-directory-bit
@@ -32277,12 +32277,12 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (< 0
        (len (explode (lofat-file->contents file)))))
    (equal
-    (d-e-clusterchain-contents
+    (d-e-cc-contents
      (mv-nth
       0
       (place-contents
@@ -32303,7 +32303,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))
        (lofat-file->contents file)
        (len (explode (lofat-file->contents file)))
@@ -32317,7 +32317,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))
       (nth 0
            (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -32338,7 +32338,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))
             (nth 0
                  (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -32390,7 +32390,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (nth 0
              (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -32417,7 +32417,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (lofat-file->contents file)
         (len (explode (lofat-file->contents file)))
@@ -32437,7 +32437,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (nth 0
              (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -32459,7 +32459,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (nth 0
              (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -32519,7 +32519,7 @@ Some (rather awful) testing forms are
            (find-n-free-clusters (effective-fat fat32-in-memory)
                                  1))))
     :hints :none)
-   (:rewrite d-e-clusterchain-contents-of-place-contents-coincident-2)
+   (:rewrite d-e-cc-contents-of-place-contents-coincident-2)
    :top
    :bash :bash))
 
@@ -32533,7 +32533,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (<=
@@ -32545,7 +32545,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (<
      (d-e-first-cluster
@@ -32555,7 +32555,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (<
@@ -32566,7 +32566,7 @@ Some (rather awful) testing forms are
       (len
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -32574,7 +32574,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))))))
      1)))
   :hints (("goal" :do-not-induct t))
@@ -32620,7 +32620,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (< 0
        (len (explode (lofat-file->contents file))))
@@ -32629,10 +32629,10 @@ Some (rather awful) testing forms are
    (not
     (intersectp-equal
      (mv-nth '0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       '0
-      (d-e-clusterchain
+      (d-e-cc
        (mv-nth
         '0
         (place-contents
@@ -32653,7 +32653,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              '0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (lofat-file->contents$inline file)
          (len (explode$inline (lofat-file->contents$inline file)))
@@ -32667,7 +32667,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             '0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (nth '0
              (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -32677,10 +32677,10 @@ Some (rather awful) testing forms are
   (("goal"
     :do-not-induct t
     :in-theory
-    (disable (:rewrite d-e-clusterchain-of-place-contents-coincident-2))
+    (disable (:rewrite d-e-cc-of-place-contents-coincident-2))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-of-place-contents-coincident-2)
+     (:rewrite d-e-cc-of-place-contents-coincident-2)
      (d-e1
       (d-e-set-first-cluster-file-size
        (mv-nth
@@ -32689,7 +32689,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))
        (nth 0
             (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -32707,7 +32707,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (fat32-in-memory
       (update-fati
@@ -32739,7 +32739,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (< 0
        (len (explode (lofat-file->contents file))))
@@ -32748,10 +32748,10 @@ Some (rather awful) testing forms are
    (not
     (intersectp-equal
      (mv-nth '0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth
       '0
-      (d-e-clusterchain
+      (d-e-cc
        (mv-nth
         '0
         (place-contents
@@ -32772,7 +32772,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              '0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (lofat-file->contents$inline file)
          (len (explode$inline (lofat-file->contents$inline file)))
@@ -32786,7 +32786,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             '0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (nth '0
              (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -32812,7 +32812,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (< 0
        (len (explode (lofat-file->contents file))))
@@ -32823,7 +32823,7 @@ Some (rather awful) testing forms are
      x
      (mv-nth
       0
-      (d-e-clusterchain
+      (d-e-cc
        (mv-nth
         0
         (place-contents
@@ -32844,7 +32844,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (lofat-file->contents file)
          (len (explode (lofat-file->contents file)))
@@ -32858,7 +32858,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (nth 0
              (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -32868,10 +32868,10 @@ Some (rather awful) testing forms are
   (("goal"
     :do-not-induct t
     :in-theory
-    (disable (:rewrite d-e-clusterchain-of-place-contents-coincident-2))
+    (disable (:rewrite d-e-cc-of-place-contents-coincident-2))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-of-place-contents-coincident-2)
+     (:rewrite d-e-cc-of-place-contents-coincident-2)
      (d-e1
       (d-e-set-first-cluster-file-size
        (mv-nth
@@ -32880,7 +32880,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))
        (nth 0
             (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -32898,7 +32898,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (fat32-in-memory
       (update-fati
@@ -32925,7 +32925,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (<=
@@ -32937,7 +32937,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (<
      (d-e-first-cluster
@@ -32947,7 +32947,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (not
@@ -32959,7 +32959,7 @@ Some (rather awful) testing forms are
          (effective-fat fat32-in-memory)
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
@@ -32967,26 +32967,26 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path)))))
          (make-list-ac
           (len
            (mv-nth
             0
-            (d-e-clusterchain
+            (d-e-cc
              fat32-in-memory
              (mv-nth
               0
               (find-d-e
                (make-d-e-list (mv-nth 0
-                                          (d-e-clusterchain-contents
+                                          (d-e-cc-contents
                                            fat32-in-memory root-d-e)))
                (car path))))))
           0 nil))
         1))
       (mv-nth
        0
-       (d-e-clusterchain
+       (d-e-cc
         fat32-in-memory
         (mv-nth
          0
@@ -32994,7 +32994,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path))))))))
    (equal
     (fat32-entry-mask
@@ -33006,26 +33006,26 @@ Some (rather awful) testing forms are
          (effective-fat fat32-in-memory)
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
             (find-d-e
              (make-d-e-list (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
              (car path)))))
          (make-list-ac
           (len
            (mv-nth
             0
-            (d-e-clusterchain
+            (d-e-cc
              fat32-in-memory
              (mv-nth 0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))))
           0 nil))
@@ -33045,7 +33045,7 @@ Some (rather awful) testing forms are
        (effective-fat fat32-in-memory)
        (mv-nth
         0
-        (d-e-clusterchain
+        (d-e-cc
          fat32-in-memory
          (mv-nth
           0
@@ -33053,13 +33053,13 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))))
        (make-list-ac
         (len
          (mv-nth
           0
-          (d-e-clusterchain
+          (d-e-cc
            fat32-in-memory
            (mv-nth
             0
@@ -33067,7 +33067,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path))))))
         0 nil)))
      (n2 0)))))
@@ -33084,7 +33084,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (lofat-regular-file-p file)
@@ -33100,14 +33100,14 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (< 0
        (len (explode (lofat-file->contents file)))))
    (no-duplicatesp-equal
     (mv-nth
      0
-     (d-e-clusterchain
+     (d-e-cc
       (mv-nth
        0
        (place-contents
@@ -33128,7 +33128,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (lofat-file->contents file)
         (len (explode (lofat-file->contents file)))
@@ -33142,7 +33142,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))
        (nth 0
             (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -33152,10 +33152,10 @@ Some (rather awful) testing forms are
   (("goal"
     :do-not-induct t
     :in-theory
-    (disable (:rewrite d-e-clusterchain-of-place-contents-coincident-2))
+    (disable (:rewrite d-e-cc-of-place-contents-coincident-2))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-of-place-contents-coincident-2)
+     (:rewrite d-e-cc-of-place-contents-coincident-2)
      (d-e1
       (d-e-set-first-cluster-file-size
        (mv-nth
@@ -33164,7 +33164,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))
        (nth 0
             (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -33182,7 +33182,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (fat32-in-memory
       (update-fati
@@ -33209,7 +33209,7 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-d-e-list
         (mv-nth 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
        entry-limit))
      0)
     (lofat-regular-file-p file)
@@ -33225,14 +33225,14 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path)))))
     (< 0
        (len (explode (lofat-file->contents file)))))
    (free-index-listp
     (mv-nth
      0
-     (d-e-clusterchain
+     (d-e-cc
       (mv-nth
        0
        (place-contents
@@ -33253,7 +33253,7 @@ Some (rather awful) testing forms are
           (make-d-e-list
            (mv-nth
             0
-            (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+            (d-e-cc-contents fat32-in-memory root-d-e)))
           (car path)))
         (lofat-file->contents file)
         (len (explode (lofat-file->contents file)))
@@ -33267,7 +33267,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))
        (nth 0
             (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -33278,10 +33278,10 @@ Some (rather awful) testing forms are
   (("goal"
     :do-not-induct t
     :in-theory
-    (disable (:rewrite d-e-clusterchain-of-place-contents-coincident-2))
+    (disable (:rewrite d-e-cc-of-place-contents-coincident-2))
     :use
     (:instance
-     (:rewrite d-e-clusterchain-of-place-contents-coincident-2)
+     (:rewrite d-e-cc-of-place-contents-coincident-2)
      (d-e1
       (d-e-set-first-cluster-file-size
        (mv-nth
@@ -33290,7 +33290,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+           (d-e-cc-contents fat32-in-memory root-d-e)))
          (car path)))
        (nth 0
             (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -33308,7 +33308,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+          (d-e-cc-contents fat32-in-memory root-d-e)))
         (car path))))
      (fat32-in-memory
       (update-fati
@@ -33340,7 +33340,7 @@ Some (rather awful) testing forms are
    (member-equal
     (mv-nth
      0
-     (d-e-clusterchain fat32-in-memory
+     (d-e-cc fat32-in-memory
                            (mv-nth 0 (find-d-e d-e-list name))))
     (mv-nth 2
             (lofat-to-hifat-helper fat32-in-memory
@@ -33351,7 +33351,7 @@ Some (rather awful) testing forms are
     (e/d
      (find-d-e lofat-to-hifat-helper hifat-entry-count)
      ((:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+       d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
        . 1)
       (:rewrite nth-of-effective-fat)
       (:rewrite nth-of-nats=>chars)
@@ -33412,7 +33412,7 @@ Some (rather awful) testing forms are
       fat32-in-memory
       (make-d-e-list
        (mv-nth 0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 fat32-in-memory
                 (mv-nth 0 (find-d-e d-e-list name)))))
       entry-limit))
@@ -33426,7 +33426,7 @@ Some (rather awful) testing forms are
      (find-d-e lofat-to-hifat-helper hifat-entry-count
                    lofat-to-hifat-helper-correctness-4)
      ((:rewrite
-       d-e-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+       d-e-cc-contents-of-lofat-place-file-coincident-lemma-13
        . 1)
       (:rewrite nth-of-effective-fat)
       (:rewrite nth-of-nats=>chars)
@@ -33461,7 +33461,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-place-file fat32-in-memory
@@ -33482,7 +33482,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-place-file fat32-in-memory
@@ -33502,7 +33502,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0 (find-d-e d-e-list name)))))
          entry-limit)))
@@ -33516,7 +33516,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            (mv-nth
             0
             (lofat-place-file fat32-in-memory
@@ -33535,7 +33535,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-place-file fat32-in-memory
@@ -33552,7 +33552,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0 (find-d-e d-e-list name)))))
          entry-limit))
@@ -33567,7 +33567,7 @@ Some (rather awful) testing forms are
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
                                     d-e-list entry-limit)))
@@ -33615,7 +33615,7 @@ Some (rather awful) testing forms are
            fat32-in-memory
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0 (find-d-e d-e-list name)))))
            entry-limit))
@@ -33660,7 +33660,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            (mv-nth 0
                    (lofat-place-file fat32-in-memory
                                      (mv-nth 0 (find-d-e d-e-list name))
@@ -33680,7 +33680,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            (mv-nth 0
                    (lofat-place-file fat32-in-memory
                                      (mv-nth 0 (find-d-e d-e-list name))
@@ -33699,7 +33699,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0 (find-d-e d-e-list name)))))
           entry-limit)))
@@ -33713,7 +33713,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth
              0
              (lofat-place-file fat32-in-memory
@@ -33732,7 +33732,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            (mv-nth 0
                    (lofat-place-file fat32-in-memory
                                      (mv-nth 0 (find-d-e d-e-list name))
@@ -33748,7 +33748,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory
                     (mv-nth 0 (find-d-e d-e-list name)))))
           entry-limit))
@@ -33762,7 +33762,7 @@ Some (rather awful) testing forms are
             0)
      (not-intersectp-list
       (mv-nth 0
-              (d-e-clusterchain fat32-in-memory root-d-e))
+              (d-e-cc fat32-in-memory root-d-e))
       (mv-nth 2
               (lofat-to-hifat-helper fat32-in-memory
                                      d-e-list entry-limit)))
@@ -33813,7 +33813,7 @@ Some (rather awful) testing forms are
             fat32-in-memory
             (make-d-e-list
              (mv-nth 0
-                     (d-e-clusterchain-contents
+                     (d-e-cc-contents
                       fat32-in-memory
                       (mv-nth 0 (find-d-e d-e-list name)))))
             entry-limit))
@@ -33865,7 +33865,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-place-file fat32-in-memory
@@ -33886,7 +33886,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0 (find-d-e d-e-list name)))))
          entry-limit)))
@@ -33900,7 +33900,7 @@ Some (rather awful) testing forms are
         (make-d-e-list
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            (mv-nth
             0
             (lofat-place-file fat32-in-memory
@@ -33919,7 +33919,7 @@ Some (rather awful) testing forms are
        (make-d-e-list
         (mv-nth
          0
-         (d-e-clusterchain-contents
+         (d-e-cc-contents
           (mv-nth
            0
            (lofat-place-file fat32-in-memory
@@ -33936,7 +33936,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0 (find-d-e d-e-list name)))))
          entry-limit))
@@ -33949,7 +33949,7 @@ Some (rather awful) testing forms are
            0)
     (not-intersectp-list
      (mv-nth 0
-             (d-e-clusterchain fat32-in-memory root-d-e))
+             (d-e-cc fat32-in-memory root-d-e))
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
                                     d-e-list entry-limit)))
@@ -33991,7 +33991,7 @@ Some (rather awful) testing forms are
            fat32-in-memory
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory
                      (mv-nth 0 (find-d-e d-e-list name)))))
            entry-limit))
@@ -34017,7 +34017,7 @@ Some (rather awful) testing forms are
      lofat-place-file-correctness-lemma-94
      lofat-place-file
      (:rewrite
-      d-e-clusterchain-contents-of-lofat-place-file-coincident-1))
+      d-e-cc-contents-of-lofat-place-file-coincident-1))
     :use (:instance lofat-place-file-correctness-lemma-94
                     (x nil))
     :do-not-induct t)))
@@ -34043,7 +34043,7 @@ Some (rather awful) testing forms are
              fat32-in-memory
              (make-d-e-list
               (mv-nth 0
-                      (d-e-clusterchain-contents
+                      (d-e-cc-contents
                        fat32-in-memory root-d-e)))
              entry-limit)))))
         (m1-directory-file-p
@@ -34057,7 +34057,7 @@ Some (rather awful) testing forms are
               fat32-in-memory
               (make-d-e-list
                (mv-nth 0
-                       (d-e-clusterchain-contents
+                       (d-e-cc-contents
                         fat32-in-memory root-d-e)))
               entry-limit)))))))
        (induction-scheme
@@ -34068,7 +34068,7 @@ Some (rather awful) testing forms are
          (find-d-e
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory root-d-e)))
           (car path)))
         (append
@@ -34080,7 +34080,7 @@ Some (rather awful) testing forms are
                     fat32-in-memory
                     (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory root-d-e)))
                     entry-limit))
            (mv-nth 2
@@ -34088,13 +34088,13 @@ Some (rather awful) testing forms are
                     fat32-in-memory
                     (make-d-e-list
                      (mv-nth 0
-                             (d-e-clusterchain-contents
+                             (d-e-cc-contents
                               fat32-in-memory (mv-nth
                                                0
                                                (find-d-e
                                                 (make-d-e-list
                                                  (mv-nth 0
-                                                         (d-e-clusterchain-contents
+                                                         (d-e-cc-contents
                                                           fat32-in-memory root-d-e)))
                                                 (car path))))))
                     entry-limit)))))))
@@ -34121,7 +34121,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))
           (nth 0
                (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -34148,27 +34148,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -34182,42 +34182,42 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
                   1))
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))
                   (d-e-file-size
@@ -34225,20 +34225,20 @@ Some (rather awful) testing forms are
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))))
                268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path))))
                 (d-e-file-size
@@ -34246,7 +34246,7 @@ Some (rather awful) testing forms are
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path)))))))
              (mv-nth
@@ -34255,7 +34255,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
@@ -34266,27 +34266,27 @@ Some (rather awful) testing forms are
                 (effective-fat fat32-in-memory)
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
                    0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth
                      0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))))
                  0 nil))
@@ -34297,7 +34297,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth
                1
@@ -34310,28 +34310,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -34345,35 +34345,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -34381,7 +34381,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -34390,13 +34390,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -34404,7 +34404,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -34413,14 +34413,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -34432,28 +34432,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -34465,27 +34465,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -34494,7 +34494,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth
              0
              (update-dir-contents
@@ -34509,28 +34509,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -34544,35 +34544,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -34580,7 +34580,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -34589,13 +34589,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -34603,7 +34603,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -34612,14 +34612,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -34631,28 +34631,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -34663,7 +34663,7 @@ Some (rather awful) testing forms are
                 (string=>nats
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (d-e-set-first-cluster-file-size
                  (mv-nth
                   1
@@ -34676,28 +34676,28 @@ Some (rather awful) testing forms are
                        (effective-fat fat32-in-memory)
                        (mv-nth
                         0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth
                           0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path))))))
                         0 nil))
@@ -34711,35 +34711,35 @@ Some (rather awful) testing forms are
                          (effective-fat fat32-in-memory)
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
                             0
-                            (d-e-clusterchain
+                            (d-e-cc
                              fat32-in-memory
                              (mv-nth
                               0
                               (find-d-e
                                (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (car path))))))
                           0 nil))
                         1))
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (mv-nth
@@ -34747,7 +34747,7 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
                         (d-e-file-size
@@ -34756,13 +34756,13 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))))
                      268435455)
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (mv-nth
@@ -34770,7 +34770,7 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))
                       (d-e-file-size
@@ -34779,14 +34779,14 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path)))))))
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))
                    (lofat-file->contents file)
@@ -34798,28 +34798,28 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
@@ -34831,28 +34831,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -34882,7 +34882,7 @@ Some (rather awful) testing forms are
             (make-d-e-list
              (mv-nth
               0
-              (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+              (d-e-cc-contents fat32-in-memory root-d-e)))
             (car path)))
           (nth 0
                (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -34908,27 +34908,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -34942,42 +34942,42 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
                   1))
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))
                   (d-e-file-size
@@ -34985,20 +34985,20 @@ Some (rather awful) testing forms are
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))))
                268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path))))
                 (d-e-file-size
@@ -35006,7 +35006,7 @@ Some (rather awful) testing forms are
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path)))))))
              (mv-nth
@@ -35015,7 +35015,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
@@ -35026,27 +35026,27 @@ Some (rather awful) testing forms are
                 (effective-fat fat32-in-memory)
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
                    0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth
                      0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))))
                  0 nil))
@@ -35057,7 +35057,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth
                1
@@ -35070,28 +35070,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -35105,35 +35105,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -35141,7 +35141,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -35150,13 +35150,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -35164,7 +35164,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -35173,14 +35173,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -35192,28 +35192,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -35225,27 +35225,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -35254,7 +35254,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth
              0
              (update-dir-contents
@@ -35269,28 +35269,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -35304,35 +35304,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -35340,7 +35340,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -35349,13 +35349,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -35363,7 +35363,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -35372,14 +35372,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -35391,28 +35391,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -35423,7 +35423,7 @@ Some (rather awful) testing forms are
                 (string=>nats
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (d-e-set-first-cluster-file-size
                  (mv-nth
                   1
@@ -35436,28 +35436,28 @@ Some (rather awful) testing forms are
                        (effective-fat fat32-in-memory)
                        (mv-nth
                         0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth
                           0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path))))))
                         0 nil))
@@ -35471,35 +35471,35 @@ Some (rather awful) testing forms are
                          (effective-fat fat32-in-memory)
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
                             0
-                            (d-e-clusterchain
+                            (d-e-cc
                              fat32-in-memory
                              (mv-nth
                               0
                               (find-d-e
                                (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (car path))))))
                           0 nil))
                         1))
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (mv-nth
@@ -35507,7 +35507,7 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
                         (d-e-file-size
@@ -35516,13 +35516,13 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))))
                      268435455)
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (mv-nth
@@ -35530,7 +35530,7 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))
                       (d-e-file-size
@@ -35539,14 +35539,14 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path)))))))
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))
                    (lofat-file->contents file)
@@ -35558,28 +35558,28 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
@@ -35591,28 +35591,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -35630,7 +35630,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            entry-limit))
          path
          (m1-file
@@ -35641,7 +35641,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path)))
            (nth 0
                 (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -35668,7 +35668,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))))
        (lofat-fs-p fat32-in-memory)
        (<=
@@ -35677,7 +35677,7 @@ Some (rather awful) testing forms are
          (m1-file-contents-fix
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -35685,7 +35685,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))))))))
       (not-intersectp-list
        x
@@ -35706,27 +35706,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -35740,42 +35740,42 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
                   1))
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))
                   (d-e-file-size
@@ -35783,20 +35783,20 @@ Some (rather awful) testing forms are
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))))
                268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path))))
                 (d-e-file-size
@@ -35804,7 +35804,7 @@ Some (rather awful) testing forms are
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path)))))))
              (mv-nth
@@ -35813,7 +35813,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
@@ -35824,27 +35824,27 @@ Some (rather awful) testing forms are
                 (effective-fat fat32-in-memory)
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
                    0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth
                      0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))))
                  0 nil))
@@ -35855,7 +35855,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth
                1
@@ -35868,28 +35868,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -35903,35 +35903,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -35939,7 +35939,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -35948,13 +35948,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -35962,7 +35962,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -35971,14 +35971,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -35990,28 +35990,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -36023,27 +36023,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -36052,7 +36052,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth
              0
              (update-dir-contents
@@ -36067,28 +36067,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -36102,35 +36102,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -36138,7 +36138,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -36147,13 +36147,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -36161,7 +36161,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -36170,14 +36170,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -36189,28 +36189,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -36221,7 +36221,7 @@ Some (rather awful) testing forms are
                 (string=>nats
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (d-e-set-first-cluster-file-size
                  (mv-nth
                   1
@@ -36234,28 +36234,28 @@ Some (rather awful) testing forms are
                        (effective-fat fat32-in-memory)
                        (mv-nth
                         0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth
                           0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path))))))
                         0 nil))
@@ -36269,35 +36269,35 @@ Some (rather awful) testing forms are
                          (effective-fat fat32-in-memory)
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
                             0
-                            (d-e-clusterchain
+                            (d-e-cc
                              fat32-in-memory
                              (mv-nth
                               0
                               (find-d-e
                                (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (car path))))))
                           0 nil))
                         1))
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (mv-nth
@@ -36305,7 +36305,7 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
                         (d-e-file-size
@@ -36314,13 +36314,13 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))))
                      268435455)
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (mv-nth
@@ -36328,7 +36328,7 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))
                       (d-e-file-size
@@ -36337,14 +36337,14 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path)))))))
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))
                    (lofat-file->contents file)
@@ -36356,28 +36356,28 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
@@ -36389,28 +36389,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -36436,11 +36436,11 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -36448,7 +36448,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path)))))))
        (lofat-fs-p fat32-in-memory)
        (not
@@ -36459,7 +36459,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))))
       (not-intersectp-list
        x
@@ -36480,27 +36480,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -36514,42 +36514,42 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
                   1))
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))
                   (d-e-file-size
@@ -36557,20 +36557,20 @@ Some (rather awful) testing forms are
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))))
                268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path))))
                 (d-e-file-size
@@ -36578,7 +36578,7 @@ Some (rather awful) testing forms are
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path)))))))
              (mv-nth
@@ -36587,7 +36587,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
@@ -36598,27 +36598,27 @@ Some (rather awful) testing forms are
                 (effective-fat fat32-in-memory)
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
                    0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth
                      0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))))
                  0 nil))
@@ -36629,7 +36629,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth
                1
@@ -36642,28 +36642,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -36677,35 +36677,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -36713,7 +36713,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -36722,13 +36722,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -36736,7 +36736,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -36745,14 +36745,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -36764,28 +36764,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -36797,27 +36797,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -36826,7 +36826,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth
              0
              (update-dir-contents
@@ -36841,28 +36841,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -36876,35 +36876,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -36912,7 +36912,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -36921,13 +36921,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -36935,7 +36935,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -36944,14 +36944,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -36963,28 +36963,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -36995,7 +36995,7 @@ Some (rather awful) testing forms are
                 (string=>nats
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (d-e-set-first-cluster-file-size
                  (mv-nth
                   1
@@ -37008,28 +37008,28 @@ Some (rather awful) testing forms are
                        (effective-fat fat32-in-memory)
                        (mv-nth
                         0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth
                           0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path))))))
                         0 nil))
@@ -37043,35 +37043,35 @@ Some (rather awful) testing forms are
                          (effective-fat fat32-in-memory)
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
                             0
-                            (d-e-clusterchain
+                            (d-e-cc
                              fat32-in-memory
                              (mv-nth
                               0
                               (find-d-e
                                (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (car path))))))
                           0 nil))
                         1))
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (mv-nth
@@ -37079,7 +37079,7 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
                         (d-e-file-size
@@ -37088,13 +37088,13 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))))
                      268435455)
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (mv-nth
@@ -37102,7 +37102,7 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))
                       (d-e-file-size
@@ -37111,14 +37111,14 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path)))))))
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))
                    (lofat-file->contents file)
@@ -37130,28 +37130,28 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
@@ -37163,28 +37163,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -37210,11 +37210,11 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -37222,7 +37222,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path)))))))
        (lofat-fs-p fat32-in-memory)
        (not
@@ -37233,7 +37233,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))))
       (equal
        (mv-nth
@@ -37253,27 +37253,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -37287,42 +37287,42 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
                   1))
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))
                   (d-e-file-size
@@ -37330,20 +37330,20 @@ Some (rather awful) testing forms are
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))))
                268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path))))
                 (d-e-file-size
@@ -37351,7 +37351,7 @@ Some (rather awful) testing forms are
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path)))))))
              (mv-nth
@@ -37360,7 +37360,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
@@ -37371,27 +37371,27 @@ Some (rather awful) testing forms are
                 (effective-fat fat32-in-memory)
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
                    0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth
                      0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))))
                  0 nil))
@@ -37402,7 +37402,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth
                1
@@ -37415,28 +37415,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -37450,35 +37450,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -37486,7 +37486,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -37495,13 +37495,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -37509,7 +37509,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -37518,14 +37518,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -37537,28 +37537,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -37570,27 +37570,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -37599,7 +37599,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth
              0
              (update-dir-contents
@@ -37614,28 +37614,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -37649,35 +37649,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -37685,7 +37685,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -37694,13 +37694,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -37708,7 +37708,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -37717,14 +37717,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -37736,28 +37736,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -37768,7 +37768,7 @@ Some (rather awful) testing forms are
                 (string=>nats
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (d-e-set-first-cluster-file-size
                  (mv-nth
                   1
@@ -37781,28 +37781,28 @@ Some (rather awful) testing forms are
                        (effective-fat fat32-in-memory)
                        (mv-nth
                         0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth
                           0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path))))))
                         0 nil))
@@ -37816,35 +37816,35 @@ Some (rather awful) testing forms are
                          (effective-fat fat32-in-memory)
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
                             0
-                            (d-e-clusterchain
+                            (d-e-cc
                              fat32-in-memory
                              (mv-nth
                               0
                               (find-d-e
                                (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (car path))))))
                           0 nil))
                         1))
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (mv-nth
@@ -37852,7 +37852,7 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
                         (d-e-file-size
@@ -37861,13 +37861,13 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))))
                      268435455)
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (mv-nth
@@ -37875,7 +37875,7 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))
                       (d-e-file-size
@@ -37884,14 +37884,14 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path)))))))
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))
                    (lofat-file->contents file)
@@ -37903,28 +37903,28 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
@@ -37936,28 +37936,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -37984,11 +37984,11 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))
          (mv-nth
           0
-          (d-e-clusterchain-contents
+          (d-e-cc-contents
            fat32-in-memory
            (mv-nth
             0
@@ -37996,7 +37996,7 @@ Some (rather awful) testing forms are
              (make-d-e-list
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (car path)))))))
        (lofat-fs-p fat32-in-memory)
        (not
@@ -38007,7 +38007,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path))))))
       (equal
        (mv-nth
@@ -38027,27 +38027,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -38061,42 +38061,42 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
                   1))
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))
                   (d-e-file-size
@@ -38104,20 +38104,20 @@ Some (rather awful) testing forms are
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))))
                268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path))))
                 (d-e-file-size
@@ -38125,7 +38125,7 @@ Some (rather awful) testing forms are
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path)))))))
              (mv-nth
@@ -38134,7 +38134,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
@@ -38145,27 +38145,27 @@ Some (rather awful) testing forms are
                 (effective-fat fat32-in-memory)
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
                    0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth
                      0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))))
                  0 nil))
@@ -38176,7 +38176,7 @@ Some (rather awful) testing forms are
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+               (d-e-cc-contents fat32-in-memory root-d-e)))
              (d-e-set-first-cluster-file-size
               (mv-nth
                1
@@ -38189,28 +38189,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -38224,35 +38224,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -38260,7 +38260,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -38269,13 +38269,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -38283,7 +38283,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -38292,14 +38292,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -38311,28 +38311,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -38344,27 +38344,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -38373,7 +38373,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth
              0
              (update-dir-contents
@@ -38388,28 +38388,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -38423,35 +38423,35 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (mv-nth
@@ -38459,7 +38459,7 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path))))
                      (d-e-file-size
@@ -38468,13 +38468,13 @@ Some (rather awful) testing forms are
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))))
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (mv-nth
@@ -38482,7 +38482,7 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))
                    (d-e-file-size
@@ -38491,14 +38491,14 @@ Some (rather awful) testing forms are
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path)))))))
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
@@ -38510,28 +38510,28 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
@@ -38542,7 +38542,7 @@ Some (rather awful) testing forms are
                 (string=>nats
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
                 (d-e-set-first-cluster-file-size
                  (mv-nth
                   1
@@ -38555,28 +38555,28 @@ Some (rather awful) testing forms are
                        (effective-fat fat32-in-memory)
                        (mv-nth
                         0
-                        (d-e-clusterchain
+                        (d-e-cc
                          fat32-in-memory
                          (mv-nth
                           0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path))))))
                         0 nil))
@@ -38590,35 +38590,35 @@ Some (rather awful) testing forms are
                          (effective-fat fat32-in-memory)
                          (mv-nth
                           0
-                          (d-e-clusterchain
+                          (d-e-cc
                            fat32-in-memory
                            (mv-nth
                             0
                             (find-d-e
                              (make-d-e-list
                               (mv-nth 0
-                                      (d-e-clusterchain-contents
+                                      (d-e-cc-contents
                                        fat32-in-memory root-d-e)))
                              (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
                             0
-                            (d-e-clusterchain
+                            (d-e-cc
                              fat32-in-memory
                              (mv-nth
                               0
                               (find-d-e
                                (make-d-e-list
                                 (mv-nth 0
-                                        (d-e-clusterchain-contents
+                                        (d-e-cc-contents
                                          fat32-in-memory root-d-e)))
                                (car path))))))
                           0 nil))
                         1))
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (mv-nth
@@ -38626,7 +38626,7 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))
                         (d-e-file-size
@@ -38635,13 +38635,13 @@ Some (rather awful) testing forms are
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))))
                      268435455)
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (mv-nth
@@ -38649,7 +38649,7 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))
                       (d-e-file-size
@@ -38658,14 +38658,14 @@ Some (rather awful) testing forms are
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path)))))))
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))
                    (lofat-file->contents file)
@@ -38677,28 +38677,28 @@ Some (rather awful) testing forms are
                       (effective-fat fat32-in-memory)
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
                          0
-                         (d-e-clusterchain
+                         (d-e-cc
                           fat32-in-memory
                           (mv-nth
                            0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                        0 nil))
@@ -38710,28 +38710,28 @@ Some (rather awful) testing forms are
                     (effective-fat fat32-in-memory)
                     (mv-nth
                      0
-                     (d-e-clusterchain
+                     (d-e-cc
                       fat32-in-memory
                       (mv-nth
                        0
                        (find-d-e
                         (make-d-e-list
                          (mv-nth 0
-                                 (d-e-clusterchain-contents
+                                 (d-e-cc-contents
                                   fat32-in-memory root-d-e)))
                         (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
                        0
-                       (d-e-clusterchain
+                       (d-e-cc
                         fat32-in-memory
                         (mv-nth
                          0
                          (find-d-e
                           (make-d-e-list
                            (mv-nth 0
-                                   (d-e-clusterchain-contents
+                                   (d-e-cc-contents
                                     fat32-in-memory root-d-e)))
                           (car path))))))
                      0 nil))
@@ -38745,7 +38745,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                  (d-e-cc-contents fat32-in-memory root-d-e)))
          entry-limit))))
      :hints (("goal" :in-theory (enable (:definition butlast)
                                         (:definition nfix)
@@ -38765,7 +38765,7 @@ Some (rather awful) testing forms are
            (make-d-e-list
             (mv-nth
              0
-             (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+             (d-e-cc-contents fat32-in-memory root-d-e)))
            (car path)))))
        (lofat-fs-p fat32-in-memory)
        (<=
@@ -38774,7 +38774,7 @@ Some (rather awful) testing forms are
          (m1-file-contents-fix
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             fat32-in-memory
             (mv-nth
              0
@@ -38782,7 +38782,7 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path)))))))))
       (<
        2097152
@@ -38791,7 +38791,7 @@ Some (rather awful) testing forms are
          (insert-d-e
           (string=>nats
            (mv-nth 0
-                   (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                   (d-e-cc-contents fat32-in-memory root-d-e)))
           (d-e-set-first-cluster-file-size
            (mv-nth
             1
@@ -38804,27 +38804,27 @@ Some (rather awful) testing forms are
                  (effective-fat fat32-in-memory)
                  (mv-nth
                   0
-                  (d-e-clusterchain
+                  (d-e-cc
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path))))))
                   0 nil))
@@ -38838,42 +38838,42 @@ Some (rather awful) testing forms are
                    (effective-fat fat32-in-memory)
                    (mv-nth
                     0
-                    (d-e-clusterchain
+                    (d-e-cc
                      fat32-in-memory
                      (mv-nth
                       0
                       (find-d-e
                        (make-d-e-list
                         (mv-nth 0
-                                (d-e-clusterchain-contents
+                                (d-e-cc-contents
                                  fat32-in-memory root-d-e)))
                        (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
                       0
-                      (d-e-clusterchain
+                      (d-e-cc
                        fat32-in-memory
                        (mv-nth
                         0
                         (find-d-e
                          (make-d-e-list
                           (mv-nth 0
-                                  (d-e-clusterchain-contents
+                                  (d-e-cc-contents
                                    fat32-in-memory root-d-e)))
                          (car path))))))
                     0 nil))
                   1))
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))
                   (d-e-file-size
@@ -38881,20 +38881,20 @@ Some (rather awful) testing forms are
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path)))))))
                268435455)
               (mv-nth
                0
-               (clear-clusterchain
+               (clear-cc
                 fat32-in-memory
                 (d-e-first-cluster
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path))))
                 (d-e-file-size
@@ -38902,7 +38902,7 @@ Some (rather awful) testing forms are
                   0
                   (find-d-e (make-d-e-list
                                  (mv-nth 0
-                                         (d-e-clusterchain-contents
+                                         (d-e-cc-contents
                                           fat32-in-memory root-d-e)))
                                 (car path)))))))
              (mv-nth
@@ -38911,7 +38911,7 @@ Some (rather awful) testing forms are
                (make-d-e-list
                 (mv-nth
                  0
-                 (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                 (d-e-cc-contents fat32-in-memory root-d-e)))
                (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
@@ -38922,27 +38922,27 @@ Some (rather awful) testing forms are
                 (effective-fat fat32-in-memory)
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
                    0
-                   (d-e-clusterchain
+                   (d-e-cc
                     fat32-in-memory
                     (mv-nth
                      0
                      (find-d-e
                       (make-d-e-list
                        (mv-nth 0
-                               (d-e-clusterchain-contents
+                               (d-e-cc-contents
                                 fat32-in-memory root-d-e)))
                       (car path))))))
                  0 nil))
@@ -38954,26 +38954,26 @@ Some (rather awful) testing forms are
               (effective-fat fat32-in-memory)
               (mv-nth
                0
-               (d-e-clusterchain
+               (d-e-cc
                 fat32-in-memory
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path)))))
               (make-list-ac
                (len
                 (mv-nth
                  0
-                 (d-e-clusterchain
+                 (d-e-cc
                   fat32-in-memory
                   (mv-nth 0
                           (find-d-e
                            (make-d-e-list
                             (mv-nth 0
-                                    (d-e-clusterchain-contents
+                                    (d-e-cc-contents
                                      fat32-in-memory root-d-e)))
                            (car path))))))
                0 nil))
@@ -39013,7 +39013,7 @@ Some (rather awful) testing forms are
                 (effective-fat
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (d-e-set-filename
@@ -39030,7 +39030,7 @@ Some (rather awful) testing forms are
                   (effective-fat
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (d-e-set-filename
@@ -39041,7 +39041,7 @@ Some (rather awful) testing forms are
                   1))
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (d-e-set-filename
@@ -39051,7 +39051,7 @@ Some (rather awful) testing forms are
                   0)))
                268435455)
               (mv-nth 0
-                      (clear-clusterchain
+                      (clear-cc
                        fat32-in-memory
                        (d-e-first-cluster
                         (d-e-set-filename
@@ -39070,7 +39070,7 @@ Some (rather awful) testing forms are
                (effective-fat
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (d-e-set-filename
@@ -39086,20 +39086,20 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))
            (nats=>string
             (insert-d-e
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 fat32-in-memory
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path))))))
              (d-e-set-first-cluster-file-size
@@ -39113,7 +39113,7 @@ Some (rather awful) testing forms are
                    (effective-fat
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (d-e-set-filename
@@ -39130,7 +39130,7 @@ Some (rather awful) testing forms are
                      (effective-fat
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (d-e-set-filename
@@ -39141,7 +39141,7 @@ Some (rather awful) testing forms are
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (d-e-set-filename
@@ -39152,7 +39152,7 @@ Some (rather awful) testing forms are
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (d-e-set-filename
@@ -39172,7 +39172,7 @@ Some (rather awful) testing forms are
                   (effective-fat
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (d-e-set-filename
@@ -39187,7 +39187,7 @@ Some (rather awful) testing forms are
                 (effective-fat
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (d-e-set-filename
@@ -39200,7 +39200,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth
              0
              (update-dir-contents
@@ -39214,7 +39214,7 @@ Some (rather awful) testing forms are
                    (effective-fat
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (d-e-set-filename
@@ -39231,7 +39231,7 @@ Some (rather awful) testing forms are
                      (effective-fat
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (d-e-set-filename
@@ -39242,7 +39242,7 @@ Some (rather awful) testing forms are
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (d-e-set-filename
@@ -39253,7 +39253,7 @@ Some (rather awful) testing forms are
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (d-e-set-filename
@@ -39273,7 +39273,7 @@ Some (rather awful) testing forms are
                   (effective-fat
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (d-e-set-filename
@@ -39289,20 +39289,20 @@ Some (rather awful) testing forms are
                  (make-d-e-list
                   (mv-nth
                    0
-                   (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                   (d-e-cc-contents fat32-in-memory root-d-e)))
                  (car path))))
               (nats=>string
                (insert-d-e
                 (string=>nats
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                 (d-e-set-first-cluster-file-size
@@ -39316,7 +39316,7 @@ Some (rather awful) testing forms are
                       (effective-fat
                        (mv-nth
                         0
-                        (clear-clusterchain
+                        (clear-cc
                          fat32-in-memory
                          (d-e-first-cluster
                           (d-e-set-filename
@@ -39333,7 +39333,7 @@ Some (rather awful) testing forms are
                         (effective-fat
                          (mv-nth
                           0
-                          (clear-clusterchain
+                          (clear-cc
                            fat32-in-memory
                            (d-e-first-cluster
                             (d-e-set-filename
@@ -39344,7 +39344,7 @@ Some (rather awful) testing forms are
                         1))
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (d-e-set-filename
@@ -39355,7 +39355,7 @@ Some (rather awful) testing forms are
                      268435455)
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (d-e-set-filename
@@ -39375,7 +39375,7 @@ Some (rather awful) testing forms are
                      (effective-fat
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (d-e-set-filename
@@ -39390,7 +39390,7 @@ Some (rather awful) testing forms are
                    (effective-fat
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (d-e-set-filename
@@ -39442,7 +39442,7 @@ Some (rather awful) testing forms are
                 (effective-fat
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (d-e-set-filename
@@ -39459,7 +39459,7 @@ Some (rather awful) testing forms are
                   (effective-fat
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (d-e-set-filename
@@ -39470,7 +39470,7 @@ Some (rather awful) testing forms are
                   1))
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (d-e-set-filename
@@ -39480,7 +39480,7 @@ Some (rather awful) testing forms are
                   0)))
                268435455)
               (mv-nth 0
-                      (clear-clusterchain
+                      (clear-cc
                        fat32-in-memory
                        (d-e-first-cluster
                         (d-e-set-filename
@@ -39499,7 +39499,7 @@ Some (rather awful) testing forms are
                (effective-fat
                 (mv-nth
                  0
-                 (clear-clusterchain
+                 (clear-cc
                   fat32-in-memory
                   (d-e-first-cluster
                    (d-e-set-filename
@@ -39515,20 +39515,20 @@ Some (rather awful) testing forms are
               (make-d-e-list
                (mv-nth
                 0
-                (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                (d-e-cc-contents fat32-in-memory root-d-e)))
               (car path))))
            (nats=>string
             (insert-d-e
              (string=>nats
               (mv-nth
                0
-               (d-e-clusterchain-contents
+               (d-e-cc-contents
                 fat32-in-memory
                 (mv-nth
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-clusterchain-contents
+                                             (d-e-cc-contents
                                               fat32-in-memory root-d-e)))
                   (car path))))))
              (d-e-set-first-cluster-file-size
@@ -39542,7 +39542,7 @@ Some (rather awful) testing forms are
                    (effective-fat
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (d-e-set-filename
@@ -39559,7 +39559,7 @@ Some (rather awful) testing forms are
                      (effective-fat
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (d-e-set-filename
@@ -39570,7 +39570,7 @@ Some (rather awful) testing forms are
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (d-e-set-filename
@@ -39581,7 +39581,7 @@ Some (rather awful) testing forms are
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (d-e-set-filename
@@ -39601,7 +39601,7 @@ Some (rather awful) testing forms are
                   (effective-fat
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (d-e-set-filename
@@ -39616,7 +39616,7 @@ Some (rather awful) testing forms are
                 (effective-fat
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (d-e-set-filename
@@ -39629,7 +39629,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth
              0
              (update-dir-contents
@@ -39643,7 +39643,7 @@ Some (rather awful) testing forms are
                    (effective-fat
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (d-e-set-filename
@@ -39660,7 +39660,7 @@ Some (rather awful) testing forms are
                      (effective-fat
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (d-e-set-filename
@@ -39671,7 +39671,7 @@ Some (rather awful) testing forms are
                      1))
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (d-e-set-filename
@@ -39682,7 +39682,7 @@ Some (rather awful) testing forms are
                   268435455)
                  (mv-nth
                   0
-                  (clear-clusterchain
+                  (clear-cc
                    fat32-in-memory
                    (d-e-first-cluster
                     (d-e-set-filename
@@ -39702,7 +39702,7 @@ Some (rather awful) testing forms are
                   (effective-fat
                    (mv-nth
                     0
-                    (clear-clusterchain
+                    (clear-cc
                      fat32-in-memory
                      (d-e-first-cluster
                       (d-e-set-filename
@@ -39718,20 +39718,20 @@ Some (rather awful) testing forms are
                  (make-d-e-list
                   (mv-nth
                    0
-                   (d-e-clusterchain-contents fat32-in-memory root-d-e)))
+                   (d-e-cc-contents fat32-in-memory root-d-e)))
                  (car path))))
               (nats=>string
                (insert-d-e
                 (string=>nats
                  (mv-nth
                   0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory
                    (mv-nth 0
                            (find-d-e
                             (make-d-e-list
                              (mv-nth 0
-                                     (d-e-clusterchain-contents
+                                     (d-e-cc-contents
                                       fat32-in-memory root-d-e)))
                             (car path))))))
                 (d-e-set-first-cluster-file-size
@@ -39745,7 +39745,7 @@ Some (rather awful) testing forms are
                       (effective-fat
                        (mv-nth
                         0
-                        (clear-clusterchain
+                        (clear-cc
                          fat32-in-memory
                          (d-e-first-cluster
                           (d-e-set-filename
@@ -39762,7 +39762,7 @@ Some (rather awful) testing forms are
                         (effective-fat
                          (mv-nth
                           0
-                          (clear-clusterchain
+                          (clear-cc
                            fat32-in-memory
                            (d-e-first-cluster
                             (d-e-set-filename
@@ -39773,7 +39773,7 @@ Some (rather awful) testing forms are
                         1))
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (d-e-set-filename
@@ -39784,7 +39784,7 @@ Some (rather awful) testing forms are
                      268435455)
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (d-e-set-filename
@@ -39804,7 +39804,7 @@ Some (rather awful) testing forms are
                      (effective-fat
                       (mv-nth
                        0
-                       (clear-clusterchain
+                       (clear-cc
                         fat32-in-memory
                         (d-e-first-cluster
                          (d-e-set-filename
@@ -39819,7 +39819,7 @@ Some (rather awful) testing forms are
                    (effective-fat
                     (mv-nth
                      0
-                     (clear-clusterchain
+                     (clear-cc
                       fat32-in-memory
                       (d-e-first-cluster
                        (d-e-set-filename
@@ -39887,20 +39887,20 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory root-d-e)))
          entry-limit))
        0)
       (not-intersectp-list
        (mv-nth 0
-               (d-e-clusterchain fat32-in-memory root-d-e))
+               (d-e-cc fat32-in-memory root-d-e))
        (mv-nth
         2
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory root-d-e)))
          entry-limit)))
       (not-intersectp-list
@@ -39911,7 +39911,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (make-d-e-list
           (mv-nth 0
-                  (d-e-clusterchain-contents
+                  (d-e-cc-contents
                    fat32-in-memory root-d-e)))
          entry-limit)))
       (lofat-file-p file)
@@ -39937,7 +39937,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (make-d-e-list
            (mv-nth 0
-                   (d-e-clusterchain-contents
+                   (d-e-cc-contents
                     fat32-in-memory root-d-e)))
           entry-limit)))
        entry-limit)
@@ -39953,7 +39953,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth 0
                     (lofat-place-file
                      fat32-in-memory root-d-e path file))
@@ -39971,7 +39971,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth 0
                     (lofat-place-file
                      fat32-in-memory root-d-e path file))
@@ -39987,7 +39987,7 @@ Some (rather awful) testing forms are
          (make-d-e-list
           (mv-nth
            0
-           (d-e-clusterchain-contents
+           (d-e-cc-contents
             (mv-nth 0
                     (lofat-place-file
                      fat32-in-memory root-d-e path file))
@@ -40002,7 +40002,7 @@ Some (rather awful) testing forms are
            fat32-in-memory
            (make-d-e-list
             (mv-nth 0
-                    (d-e-clusterchain-contents
+                    (d-e-cc-contents
                      fat32-in-memory root-d-e)))
            entry-limit))
          path
@@ -40025,10 +40025,10 @@ Some (rather awful) testing forms are
            (:rewrite
             lofat-fs-p-of-lofat-place-file-lemma-1)
            (:rewrite
-            clear-clusterchain-reversibility-lemma-1)
+            clear-cc-reversibility-lemma-1)
            ;; This lemma leads to specious simplifications.
            (:rewrite
-            d-e-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+            d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
             . 5)))
      ;; we can add more of these restrict bindings if needed... but right now
      ;; we want to save space.

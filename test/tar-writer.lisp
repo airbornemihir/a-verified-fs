@@ -118,14 +118,14 @@
          (tar-reg-file-string fat32-in-memory head-path)
          (tar-d-e-list-string fat32-in-memory
                                   path (cdr d-e-list))))
-       ((mv head-clusterchain-contents &)
-        (d-e-clusterchain-contents fat32-in-memory head)))
+       ((mv head-cc-contents &)
+        (d-e-cc-contents fat32-in-memory head)))
     (concatenate
      'string
      (tar-header-block head-path 0 *tar-dirtype*)
      (tar-d-e-list-string
       fat32-in-memory head-path
-      (make-d-e-list head-clusterchain-contents))
+      (make-d-e-list head-cc-contents))
      (tar-d-e-list-string fat32-in-memory
                               path (cdr d-e-list)))))
 
