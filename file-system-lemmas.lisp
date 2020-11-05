@@ -972,8 +972,10 @@
            nil)))
 
 (defthm integerp-of-car-of-last-when-integer-listp
-  (implies (and (integer-listp l) (consp l))
-           (integerp (car (last l)))))
+  (implies (integer-listp l)
+           (equal
+            (integerp (car (last l)))
+            (consp l))))
 
 (defthm non-negativity-of-car-of-last-when-nat-listp
   (implies (nat-listp l)
