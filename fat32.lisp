@@ -1198,8 +1198,10 @@
           (consp file-index-list)
           (<= (len fa-table) *ms-bad-cluster*)
           (not (zp cluster-size))
-          (fat32-is-eof fat-content)
-          (fat32-masked-entry-p fat-content))
+          (fat32-masked-entry-p fat-content)
+          (or
+           (fat32-is-eof fat-content)
+           (<= (len fa-table) fat-content)))
      (equal (fat32-build-index-list
              (set-indices-in-fa-table fa-table file-index-list
                                       (append (cdr file-index-list)

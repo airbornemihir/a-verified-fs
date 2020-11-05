@@ -2671,14 +2671,16 @@
           (bounded-nat-listp file-index-list (len fa-table))
           (<= (len fa-table) *ms-bad-cluster*)
           (not (zp cluster-size))
-          (fat32-is-eof (car (last value-list)))
           (fat32-masked-entry-p (car (last value-list)))
           (prefixp (cdr file-index-list)
                    value-list)
           (equal masked-current-cluster
                  (car file-index-list))
           (equal (len file-index-list)
-                 (len value-list)))
+                 (len value-list))
+          (or
+           (fat32-is-eof (car (last value-list)))
+           (<= (len fa-table) (car (last value-list)))))
      (equal (fat32-build-index-list
              (set-indices-in-fa-table fa-table file-index-list value-list)
              masked-current-cluster
