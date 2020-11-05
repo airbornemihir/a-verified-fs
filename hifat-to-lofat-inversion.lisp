@@ -2636,6 +2636,67 @@
                  (* x (nfix n))))
     :rule-classes :linear))
 
+(encapsulate
+  ()
+
+  (local (include-book "std/lists/prefixp" :dir :system))
+
+  (defthm
+    get-cc-contents-of-place-contents-coincident-lemma-2
+    (implies (and (equal (len y) (+ (len x) 1))
+                  (prefixp x y))
+             (equal (append x (last y)) y))
+    :hints (("Goal" :induct (prefixp x y)
+             :in-theory (enable prefixp)))
+    :rule-classes
+    (:rewrite
+     (:rewrite
+      :corollary
+      (implies (and (equal (len y) (+ (len x) 1))
+                    (prefixp x y))
+               (list-equiv (append x (list (car (last y)))) y))
+      :hints (("Goal" :in-theory (enable list-equiv true-list-fix))))))
+
+  ;; Much better version of
+  ;; fat32-build-index-list-of-set-indices-in-fa-table-coincident.
+  (defthm
+    get-cc-contents-of-place-contents-coincident-lemma-3
+    (implies
+     (and (natp file-length)
+          (no-duplicatesp-equal file-index-list)
+          (< (* cluster-size
+                (+ -1 (len file-index-list)))
+             file-length)
+          (lower-bounded-integer-listp file-index-list *ms-first-data-cluster*)
+          (bounded-nat-listp file-index-list (len fa-table))
+          (<= (len fa-table) *ms-bad-cluster*)
+          (not (zp cluster-size))
+          (fat32-is-eof (car (last value-list)))
+          (fat32-masked-entry-p (car (last value-list)))
+          (prefixp (cdr file-index-list)
+                   value-list)
+          (equal masked-current-cluster
+                 (car file-index-list))
+          (equal (len file-index-list)
+                 (len value-list)))
+     (equal (fat32-build-index-list
+             (set-indices-in-fa-table fa-table file-index-list value-list)
+             masked-current-cluster
+             file-length cluster-size)
+            (mv file-index-list 0)))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (list-equiv prefixp true-list-fix)
+           (fat32-build-index-list-of-set-indices-in-fa-table-coincident))
+      :use
+      ((:instance fat32-build-index-list-of-set-indices-in-fa-table-coincident
+                  (fat-content (car (last value-list)))))
+      :cases ((not (list-equiv (append (cdr file-index-list)
+                                       (list (car (last value-list))))
+                               value-list)))))))
+
 (defthm
   get-cc-contents-of-place-contents-coincident
   (implies
@@ -2736,7 +2797,8 @@
           -1
           (len (make-clusters contents
                               (cluster-size fat32$c)))))))
-      (fa-table (effective-fat fat32$c)))
+      (fa-table (effective-fat fat32$c))
+      (FAT-CONTENT *ms-end-of-cc*))
      (:instance
       (:rewrite get-cc-contents-correctness-3)
       (length length)
@@ -3251,7 +3313,8 @@
               (+ -1
                  (len (make-clusters contents
                                      (cluster-size fat32$c)))))))
-      (fa-table (effective-fat fat32$c)))))))
+      (fa-table (effective-fat fat32$c))
+      (fat-content *ms-end-of-cc*))))))
 
 (defthm
   d-e-cc-of-place-contents-coincident-1
