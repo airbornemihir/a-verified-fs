@@ -400,8 +400,10 @@
                   :guard-hints (("Goal'" :in-theory (enable fat32-masked-entry-p)))))
   (>= fat-content #xFFFFFF8))
 
+;; The case-split in the hypothesis is because we can't make a linear rule out
+;; of the contrapositive.
 (defthm fat32-is-eof-correctness-1
-  (implies (< fat-content *ms-bad-cluster*)
+  (implies (case-split (< fat-content *ms-bad-cluster*))
            (not (fat32-is-eof fat-content)))
   :hints (("Goal" :in-theory (enable fat32-is-eof)) ))
 
