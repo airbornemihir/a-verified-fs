@@ -2873,20 +2873,6 @@ Some (rather awful) testing forms are
                                      hifat-no-dups-p m1-file-contents-fix
                                      m1-file-contents-p))))
 
-(defthm hifat-equiv-of-hifat-file-alist-fix-1
-  (equal (hifat-equiv (hifat-file-alist-fix fs1)
-                      fs2)
-         (hifat-equiv fs1 fs2))
-  :hints (("goal" :in-theory (enable hifat-equiv)
-           :do-not-induct t)))
-
-(defthm hifat-equiv-of-hifat-file-alist-fix-2
-  (equal (hifat-equiv fs1
-                      (hifat-file-alist-fix fs2))
-         (hifat-equiv fs1 fs2))
-  :hints (("goal" :in-theory (enable hifat-equiv)
-           :do-not-induct t)))
-
 (defthm
   m1-file-hifat-file-alist-fix-congruence
   (implies
@@ -26771,21 +26757,6 @@ Some (rather awful) testing forms are
                  :up (:rewrite cons-equal-under-set-equiv-1)
                  :top :bash))
 
-(defthm flatten-equiv-of-remove-of-nil
-  (flatten-equiv (remove-equal nil x) x)
-  :hints (("goal" :in-theory (e/d (flatten-equiv)
-                                  ()))))
-
-(defthm flatten-equiv-of-cons-when-atom
-  (implies (atom x)
-           (flatten-equiv (cons x y) y))
-  :hints (("goal" :in-theory (e/d (flatten-equiv)
-                                  ()))))
-
-(defcong flatten-equiv flatten-equiv (cons x y) 2
-  :hints (("goal" :in-theory (e/d (flatten-equiv)
-                                  ()))))
-
 (defthm
   lofat-place-file-correctness-lemma-63
   (implies
@@ -31294,13 +31265,6 @@ Some (rather awful) testing forms are
                                              length cluster-size))))
       fa-table))))
   :hints (("goal" :in-theory (enable fat32-build-index-list))))
-
-;; Move later.
-(defthm last-of-append
-  (equal (last (append x y))
-         (cond ((consp y) (last y))
-               ((consp x) (cons (car (last x)) y))
-               (t y))))
 
 ;; This is a more general form of a theorem in the prefixp book, I think...
 (defthm lofat-place-file-correctness-lemma-117

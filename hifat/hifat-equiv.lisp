@@ -481,6 +481,20 @@
                       (hifat-file-alist-fix (m1-file->contents file1))))))
      (y (hifat-file-alist-fix (cdr fs)))))))
 
+(defthm hifat-equiv-of-hifat-file-alist-fix-1
+  (equal (hifat-equiv (hifat-file-alist-fix fs1)
+                      fs2)
+         (hifat-equiv fs1 fs2))
+  :hints (("goal" :in-theory (enable hifat-equiv)
+           :do-not-induct t)))
+
+(defthm hifat-equiv-of-hifat-file-alist-fix-2
+  (equal (hifat-equiv fs1
+                      (hifat-file-alist-fix fs2))
+         (hifat-equiv fs1 fs2))
+  :hints (("goal" :in-theory (enable hifat-equiv)
+           :do-not-induct t)))
+
 (defthm
   hifat-subsetp-of-put-assoc-1
   (implies

@@ -2031,3 +2031,9 @@
   (implies (true-list-listp l1)
            (true-list-listp (set-difference-equal l1 l2)))
   :hints (("goal" :in-theory (enable set-difference-equal true-list-listp))))
+
+(defthm last-of-append
+  (equal (last (append x y))
+         (cond ((consp y) (last y))
+               ((consp x) (cons (car (last x)) y))
+               (t y))))
