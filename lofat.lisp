@@ -14497,6 +14497,11 @@ Some (rather awful) testing forms are
   ;; hypotheses minimised. like most of these lemmas, this has the x in
   ;; (not-intersectp-list x ...) as a free variable - but d-e in
   ;; (m1-file d-e nil) in the rhs is also a free variable. <sigh>
+  ;;
+  ;; this is actually a problem that needs solving in other similar lemmas. the
+  ;; idea is that the value of d-e doesn't matter because hifat-equiv
+  ;; ignores this kind of thing. so a way out is to replace d-e with
+  ;; (d-e-fix nil), a concrete value.
   (defthm
     lofat-place-file-correctness-lemma-6
     (implies
@@ -34155,12 +34160,11 @@ Some (rather awful) testing forms are
   lofat-place-file-correctness-lemma-144
   (implies
    (and
-    (equal
-     (mv-nth 1
-             (lofat-place-file fat32$c
-                               (mv-nth 0 (find-d-e d-e-list name))
-                               path file))
-     0)
+    (equal (mv-nth 1
+                   (lofat-place-file fat32$c
+                                     (mv-nth 0 (find-d-e d-e-list name))
+                                     path file))
+           0)
     (d-e-directory-p (mv-nth 0 (find-d-e d-e-list name)))
     (equal
      (mv-nth
@@ -34174,49 +34178,26 @@ Some (rather awful) testing forms are
         (mv-nth
          0
          (d-e-cc-contents
-          (mv-nth
-           0
-           (lofat-place-file fat32$c
-                             (mv-nth 0 (find-d-e d-e-list name))
-                             path file))
+          (mv-nth 0
+                  (lofat-place-file fat32$c
+                                    (mv-nth 0 (find-d-e d-e-list name))
+                                    path file))
           (mv-nth 0 (find-d-e d-e-list name)))))
        entry-limit))
      0)
-    (not-intersectp-list
-     nil
-     (mv-nth
-      2
-      (lofat-to-hifat-helper
-       (mv-nth 0
-               (lofat-place-file fat32$c
-                                 (mv-nth 0 (find-d-e d-e-list name))
-                                 path file))
-       (make-d-e-list
-        (mv-nth
-         0
-         (d-e-cc-contents
-          (mv-nth
-           0
-           (lofat-place-file fat32$c
-                             (mv-nth 0 (find-d-e d-e-list name))
-                             path file))
-          (mv-nth 0 (find-d-e d-e-list name)))))
-       entry-limit)))
     (not
      (member-intersectp-equal
       (set-difference-equal
        (mv-nth 2
-               (lofat-to-hifat-helper fat32$c
-                                      d-e-list entry-limit))
+               (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
        (mv-nth
         2
         (lofat-to-hifat-helper
          fat32$c
          (make-d-e-list
           (mv-nth 0
-                  (d-e-cc-contents
-                   fat32$c
-                   (mv-nth 0 (find-d-e d-e-list name)))))
+                  (d-e-cc-contents fat32$c
+                                   (mv-nth 0 (find-d-e d-e-list name)))))
          entry-limit)))
       (mv-nth
        2
@@ -34229,11 +34210,10 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (d-e-cc-contents
-           (mv-nth
-            0
-            (lofat-place-file fat32$c
-                              (mv-nth 0 (find-d-e d-e-list name))
-                              path file))
+           (mv-nth 0
+                   (lofat-place-file fat32$c
+                                     (mv-nth 0 (find-d-e d-e-list name))
+                                     path file))
            (mv-nth 0 (find-d-e d-e-list name)))))
         entry-limit))))
     (hifat-equiv
@@ -34248,11 +34228,10 @@ Some (rather awful) testing forms are
         (mv-nth
          0
          (d-e-cc-contents
-          (mv-nth
-           0
-           (lofat-place-file fat32$c
-                             (mv-nth 0 (find-d-e d-e-list name))
-                             path file))
+          (mv-nth 0
+                  (lofat-place-file fat32$c
+                                    (mv-nth 0 (find-d-e d-e-list name))
+                                    path file))
           (mv-nth 0 (find-d-e d-e-list name)))))
        entry-limit))
      (mv-nth
@@ -34264,46 +34243,45 @@ Some (rather awful) testing forms are
          fat32$c
          (make-d-e-list
           (mv-nth 0
-                  (d-e-cc-contents
-                   fat32$c
-                   (mv-nth 0 (find-d-e d-e-list name)))))
+                  (d-e-cc-contents fat32$c
+                                   (mv-nth 0 (find-d-e d-e-list name)))))
          entry-limit))
-       path (m1-file d-e nil))))
+       path (m1-file (d-e-fix nil) nil))))
     (good-root-d-e-p root-d-e fat32$c)
-    (non-free-index-listp nil (effective-fat fat32$c))
     (fat32-filename-list-p path)
     (fat32-filename-p name)
     (equal (mv-nth 3
-                   (lofat-to-hifat-helper fat32$c
-                                          d-e-list entry-limit))
+                   (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
            0)
     (not-intersectp-list
-     (mv-nth 0
-             (d-e-cc fat32$c root-d-e))
+     (mv-nth 0 (d-e-cc fat32$c root-d-e))
      (mv-nth 2
-             (lofat-to-hifat-helper fat32$c
-                                    d-e-list entry-limit)))
-    (not-intersectp-list
-     nil
-     (mv-nth 2
-             (lofat-to-hifat-helper fat32$c
-                                    d-e-list entry-limit)))
+             (lofat-to-hifat-helper fat32$c d-e-list entry-limit)))
     (lofat-file-p file)
     (not (lofat-file->contents file))
     (<= 1
         (count-free-clusters (effective-fat fat32$c)))
     (consp path)
-    (<= 2
-        (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name))))
-    (< (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
-       (+ 2 (count-of-clusters fat32$c)))
     (integerp entry-limit)
     (< (hifat-entry-count
         (mv-nth 0
-                (lofat-to-hifat-helper fat32$c
-                                       d-e-list entry-limit)))
+                (lofat-to-hifat-helper fat32$c d-e-list entry-limit)))
        entry-limit)
-    (useful-d-e-list-p d-e-list))
+    (useful-d-e-list-p d-e-list)
+    (zp
+     (mv-nth
+      1
+      (hifat-place-file
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c
+                                   (mv-nth 0 (find-d-e d-e-list name)))))
+         entry-limit))
+       path (m1-file (d-e-fix nil) nil)))))
    (and
     (hifat-equiv
      (mv-nth
@@ -34327,14 +34305,12 @@ Some (rather awful) testing forms are
            fat32$c
            (make-d-e-list
             (mv-nth 0
-                    (d-e-cc-contents
-                     fat32$c
-                     (mv-nth 0 (find-d-e d-e-list name)))))
+                    (d-e-cc-contents fat32$c
+                                     (mv-nth 0 (find-d-e d-e-list name)))))
            entry-limit))
-         path (m1-file d-e nil))))
+         path (m1-file (d-e-fix nil) nil))))
       (mv-nth 0
-              (lofat-to-hifat-helper fat32$c
-                                     d-e-list entry-limit))))
+              (lofat-to-hifat-helper fat32$c d-e-list entry-limit))))
     (equal
      (mv-nth
       3
@@ -34345,9 +34321,12 @@ Some (rather awful) testing forms are
                                  path file))
        d-e-list entry-limit))
      0)))
-  :hints (("goal" :in-theory (disable lofat-place-file-correctness-lemma-143)
+  :hints (("goal" :in-theory (disable lofat-place-file-correctness-lemma-143
+                                      lofat-place-file)
+           :do-not-induct t
            :use (:instance lofat-place-file-correctness-lemma-143
-                           (x nil)))))
+                           (x nil)
+                           (d-e (d-e-fix nil))))))
 
 (skip-proofs
  (defthm
@@ -34734,6 +34713,11 @@ Some (rather awful) testing forms are
                     (x nil))
     :do-not-induct t)))
 
+;; Move later.
+(defthm not-m1-regular-file-p-of-m1-file-hifat-file-alist-fix
+  (not (m1-regular-file-p (m1-file-hifat-file-alist-fix d-e fs)))
+  :hints (("goal" :in-theory (e/d))))
+
 (encapsulate
   ()
 
@@ -34802,13 +34786,13 @@ Some (rather awful) testing forms are
                      (mv-nth 0
                              (d-e-cc-contents
                               fat32$c (mv-nth
-                                               0
-                                               (find-d-e
-                                                (make-d-e-list
-                                                 (mv-nth 0
-                                                         (d-e-cc-contents
-                                                          fat32$c root-d-e)))
-                                                (car path))))))
+                                       0
+                                       (find-d-e
+                                        (make-d-e-list
+                                         (mv-nth 0
+                                                 (d-e-cc-contents
+                                                  fat32$c root-d-e)))
+                                        (car path))))))
                     entry-limit)))))))
       (t (mv entry-limit fat32$c
              file path root-d-e x)))))
@@ -34949,18 +34933,18 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path))))
                 (d-e-file-size
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path)))))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path)))))))
              (mv-nth
               0
               (find-d-e
@@ -35132,8 +35116,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -35331,8 +35315,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -35709,18 +35693,18 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path))))
                 (d-e-file-size
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path)))))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path)))))))
              (mv-nth
               0
               (find-d-e
@@ -35892,8 +35876,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -36091,8 +36075,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -36507,18 +36491,18 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path))))
                 (d-e-file-size
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path)))))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path)))))))
              (mv-nth
               0
               (find-d-e
@@ -36690,8 +36674,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -36889,8 +36873,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -37281,18 +37265,18 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path))))
                 (d-e-file-size
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path)))))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path)))))))
              (mv-nth
               0
               (find-d-e
@@ -37464,8 +37448,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -37663,8 +37647,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -38054,18 +38038,18 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path))))
                 (d-e-file-size
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path)))))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path)))))))
              (mv-nth
               0
               (find-d-e
@@ -38237,8 +38221,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -38436,8 +38420,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -38828,18 +38812,18 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path))))
                 (d-e-file-size
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path)))))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path)))))))
              (mv-nth
               0
               (find-d-e
@@ -39011,8 +38995,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -39210,8 +39194,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
@@ -39605,18 +39589,18 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path))))
                 (d-e-file-size
                  (mv-nth
                   0
                   (find-d-e (make-d-e-list
-                                 (mv-nth 0
-                                         (d-e-cc-contents
-                                          fat32$c root-d-e)))
-                                (car path)))))))
+                             (mv-nth 0
+                                     (d-e-cc-contents
+                                      fat32$c root-d-e)))
+                            (car path)))))))
              (mv-nth
               0
               (find-d-e
@@ -39672,8 +39656,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path)))))
               (make-list-ac
                (len
@@ -39706,8 +39690,8 @@ Some (rather awful) testing forms are
         2
         (d-e-first-cluster
          (d-e-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                               (cadr path)))))
+                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                           (cadr path)))))
       (equal
        (mv-nth
         3
@@ -39772,8 +39756,8 @@ Some (rather awful) testing forms are
                          (cadr path)))
                        0)))
              (d-e-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                   (cadr path))
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                               (cadr path))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -39811,8 +39795,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path))))))
              (d-e-set-first-cluster-file-size
               (mv-nth
@@ -40134,8 +40118,8 @@ Some (rather awful) testing forms are
         2
         (d-e-first-cluster
          (d-e-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                               (cadr path)))))
+                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                           (cadr path)))))
       (not-intersectp-list
        x
        (mv-nth
@@ -40201,8 +40185,8 @@ Some (rather awful) testing forms are
                          (cadr path)))
                        0)))
              (d-e-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                   (cadr path))
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                               (cadr path))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -40240,8 +40224,8 @@ Some (rather awful) testing forms are
                  0
                  (find-d-e
                   (make-d-e-list (mv-nth 0
-                                             (d-e-cc-contents
-                                              fat32$c root-d-e)))
+                                         (d-e-cc-contents
+                                          fat32$c root-d-e)))
                   (car path))))))
              (d-e-set-first-cluster-file-size
               (mv-nth
@@ -40583,6 +40567,616 @@ Some (rather awful) testing forms are
     :rule-classes (:linear :rewrite))
 
   (local (include-book "std/lists/intersectp" :dir :system))
+
+  (thm
+   (IMPLIES
+    (AND
+     (<
+      0
+      (MIN
+       (+
+        (COUNT-FREE-CLUSTERS (EFFECTIVE-FAT FAT32$C))
+        (LEN
+         (MV-NTH
+          0
+          (D-E-CC
+           FAT32$C
+           (MV-NTH
+            0
+            (FIND-D-E
+             (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+             (CAR PATH)))))))
+       1))
+     (EQUAL
+      (MV-NTH
+       1
+       (UPDATE-DIR-CONTENTS
+        (MV-NTH
+         0
+         (PLACE-CONTENTS
+          (UPDATE-FATI
+           (NTH
+            0
+            (FIND-N-FREE-CLUSTERS
+             (SET-INDICES-IN-FA-TABLE
+              (EFFECTIVE-FAT FAT32$C)
+              (MV-NTH
+               0
+               (D-E-CC
+                FAT32$C
+                (MV-NTH
+                 0
+                 (FIND-D-E
+                  (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                  (CAR PATH)))))
+              (MAKE-LIST-AC
+               (LEN
+                (MV-NTH
+                 0
+                 (D-E-CC
+                  FAT32$C
+                  (MV-NTH
+                   0
+                   (FIND-D-E (MAKE-D-E-LIST
+                              (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                             (CAR PATH))))))
+               0 NIL))
+             1))
+           (FAT32-UPDATE-LOWER-28
+            (FATI
+             (NTH
+              0
+              (FIND-N-FREE-CLUSTERS
+               (SET-INDICES-IN-FA-TABLE
+                (EFFECTIVE-FAT FAT32$C)
+                (MV-NTH
+                 0
+                 (D-E-CC
+                  FAT32$C
+                  (MV-NTH
+                   0
+                   (FIND-D-E (MAKE-D-E-LIST
+                              (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                             (CAR PATH)))))
+                (MAKE-LIST-AC
+                 (LEN
+                  (MV-NTH
+                   0
+                   (D-E-CC
+                    FAT32$C
+                    (MV-NTH
+                     0
+                     (FIND-D-E
+                      (MAKE-D-E-LIST
+                       (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                      (CAR PATH))))))
+                 0 NIL))
+               1))
+             FAT32$C)
+            268435455)
+           (MV-NTH
+            0
+            (CLEAR-CC
+             FAT32$C
+             (D-E-FIRST-CLUSTER
+              (MV-NTH
+               0
+               (FIND-D-E
+                (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                (CAR PATH))))
+             2097152)))
+          (MV-NTH
+           0
+           (FIND-D-E
+            (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+            (CAR PATH)))
+          (MAKE-EMPTY-SUBDIR-CONTENTS
+           (NTH
+            0
+            (FIND-N-FREE-CLUSTERS
+             (SET-INDICES-IN-FA-TABLE
+              (EFFECTIVE-FAT FAT32$C)
+              (MV-NTH
+               0
+               (D-E-CC
+                FAT32$C
+                (MV-NTH
+                 0
+                 (FIND-D-E
+                  (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                  (CAR PATH)))))
+              (MAKE-LIST-AC
+               (LEN
+                (MV-NTH
+                 0
+                 (D-E-CC
+                  FAT32$C
+                  (MV-NTH
+                   0
+                   (FIND-D-E (MAKE-D-E-LIST
+                              (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                             (CAR PATH))))))
+               0 NIL))
+             1))
+           (D-E-FIRST-CLUSTER ROOT-D-E))
+          0
+          (NTH
+           0
+           (FIND-N-FREE-CLUSTERS
+            (SET-INDICES-IN-FA-TABLE
+             (EFFECTIVE-FAT FAT32$C)
+             (MV-NTH
+              0
+              (D-E-CC
+               FAT32$C
+               (MV-NTH
+                0
+                (FIND-D-E
+                 (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                 (CAR PATH)))))
+             (MAKE-LIST-AC
+              (LEN
+               (MV-NTH
+                0
+                (D-E-CC
+                 FAT32$C
+                 (MV-NTH
+                  0
+                  (FIND-D-E
+                   (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                   (CAR PATH))))))
+              0 NIL))
+            1))))
+        (D-E-FIRST-CLUSTER ROOT-D-E)
+        (NATS=>STRING
+         (INSERT-D-E
+          (STRING=>NATS (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+          (D-E-SET-FIRST-CLUSTER-FILE-SIZE
+           (MV-NTH
+            0
+            (FIND-D-E
+             (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+             (CAR PATH)))
+           (NTH
+            0
+            (FIND-N-FREE-CLUSTERS
+             (SET-INDICES-IN-FA-TABLE
+              (EFFECTIVE-FAT FAT32$C)
+              (MV-NTH
+               0
+               (D-E-CC
+                FAT32$C
+                (MV-NTH
+                 0
+                 (FIND-D-E
+                  (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                  (CAR PATH)))))
+              (MAKE-LIST-AC
+               (LEN
+                (MV-NTH
+                 0
+                 (D-E-CC
+                  FAT32$C
+                  (MV-NTH
+                   0
+                   (FIND-D-E (MAKE-D-E-LIST
+                              (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                             (CAR PATH))))))
+               0 NIL))
+             1))
+           0)))))
+      0)
+     (EQUAL
+      (MV-NTH
+       2
+       (PLACE-CONTENTS
+        (UPDATE-FATI
+         (NTH
+          0
+          (FIND-N-FREE-CLUSTERS
+           (SET-INDICES-IN-FA-TABLE
+            (EFFECTIVE-FAT FAT32$C)
+            (MV-NTH
+             0
+             (D-E-CC
+              FAT32$C
+              (MV-NTH
+               0
+               (FIND-D-E
+                (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                (CAR PATH)))))
+            (MAKE-LIST-AC
+             (LEN
+              (MV-NTH
+               0
+               (D-E-CC
+                FAT32$C
+                (MV-NTH
+                 0
+                 (FIND-D-E
+                  (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                  (CAR PATH))))))
+             0 NIL))
+           1))
+         (FAT32-UPDATE-LOWER-28
+          (FATI
+           (NTH
+            0
+            (FIND-N-FREE-CLUSTERS
+             (SET-INDICES-IN-FA-TABLE
+              (EFFECTIVE-FAT FAT32$C)
+              (MV-NTH
+               0
+               (D-E-CC
+                FAT32$C
+                (MV-NTH
+                 0
+                 (FIND-D-E
+                  (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                  (CAR PATH)))))
+              (MAKE-LIST-AC
+               (LEN
+                (MV-NTH
+                 0
+                 (D-E-CC
+                  FAT32$C
+                  (MV-NTH
+                   0
+                   (FIND-D-E (MAKE-D-E-LIST
+                              (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                             (CAR PATH))))))
+               0 NIL))
+             1))
+           FAT32$C)
+          268435455)
+         (MV-NTH
+          0
+          (CLEAR-CC
+           FAT32$C
+           (D-E-FIRST-CLUSTER
+            (MV-NTH
+             0
+             (FIND-D-E
+              (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+              (CAR PATH))))
+           2097152)))
+        (MV-NTH
+         0
+         (FIND-D-E (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                   (CAR PATH)))
+        (MAKE-EMPTY-SUBDIR-CONTENTS
+         (NTH
+          0
+          (FIND-N-FREE-CLUSTERS
+           (SET-INDICES-IN-FA-TABLE
+            (EFFECTIVE-FAT FAT32$C)
+            (MV-NTH
+             0
+             (D-E-CC
+              FAT32$C
+              (MV-NTH
+               0
+               (FIND-D-E
+                (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                (CAR PATH)))))
+            (MAKE-LIST-AC
+             (LEN
+              (MV-NTH
+               0
+               (D-E-CC
+                FAT32$C
+                (MV-NTH
+                 0
+                 (FIND-D-E
+                  (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                  (CAR PATH))))))
+             0 NIL))
+           1))
+         (D-E-FIRST-CLUSTER ROOT-D-E))
+        0
+        (NTH
+         0
+         (FIND-N-FREE-CLUSTERS
+          (SET-INDICES-IN-FA-TABLE
+           (EFFECTIVE-FAT FAT32$C)
+           (MV-NTH
+            0
+            (D-E-CC
+             FAT32$C
+             (MV-NTH
+              0
+              (FIND-D-E
+               (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+               (CAR PATH)))))
+           (MAKE-LIST-AC
+            (LEN
+             (MV-NTH
+              0
+              (D-E-CC
+               FAT32$C
+               (MV-NTH
+                0
+                (FIND-D-E
+                 (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                 (CAR PATH))))))
+            0 NIL))
+          1))))
+      0)
+     (CONSP PATH)
+     (D-E-DIRECTORY-P
+      (MV-NTH
+       0
+       (FIND-D-E (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                 (CAR PATH))))
+     (GOOD-ROOT-D-E-P ROOT-D-E FAT32$C)
+     (NON-FREE-INDEX-LISTP X (EFFECTIVE-FAT FAT32$C))
+     (FAT32-FILENAME-LIST-P PATH)
+     (EQUAL
+      (MV-NTH 3
+              (LOFAT-TO-HIFAT-HELPER
+               FAT32$C
+               (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+               ENTRY-LIMIT))
+      0)
+     (NOT-INTERSECTP-LIST
+      (MV-NTH 0 (D-E-CC FAT32$C ROOT-D-E))
+      (MV-NTH 2
+              (LOFAT-TO-HIFAT-HELPER
+               FAT32$C
+               (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+               ENTRY-LIMIT)))
+     (NOT-INTERSECTP-LIST
+      X
+      (MV-NTH 2
+              (LOFAT-TO-HIFAT-HELPER
+               FAT32$C
+               (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+               ENTRY-LIMIT)))
+     (LOFAT-FILE-P FILE)
+     (NOT (LOFAT-FILE->CONTENTS FILE))
+     (<= 1
+         (COUNT-FREE-CLUSTERS (EFFECTIVE-FAT FAT32$C)))
+     (NOT (CONSP (CDR PATH)))
+     (<=
+      2
+      (D-E-FIRST-CLUSTER
+       (MV-NTH
+        0
+        (FIND-D-E (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                  (CAR PATH)))))
+     (<
+      (D-E-FIRST-CLUSTER
+       (MV-NTH
+        0
+        (FIND-D-E (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                  (CAR PATH))))
+      (+ 2 (COUNT-OF-CLUSTERS FAT32$C)))
+     (NOT (LOFAT-REGULAR-FILE-P FILE))
+     (MEMBER-EQUAL
+      (NTH
+       0
+       (FIND-N-FREE-CLUSTERS
+        (SET-INDICES-IN-FA-TABLE
+         (EFFECTIVE-FAT FAT32$C)
+         (MV-NTH
+          0
+          (D-E-CC
+           FAT32$C
+           (MV-NTH
+            0
+            (FIND-D-E
+             (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+             (CAR PATH)))))
+         (MAKE-LIST-AC
+          (LEN
+           (MV-NTH
+            0
+            (D-E-CC
+             FAT32$C
+             (MV-NTH
+              0
+              (FIND-D-E
+               (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+               (CAR PATH))))))
+          0 NIL))
+        1))
+      (MV-NTH
+       0
+       (D-E-CC
+        FAT32$C
+        (MV-NTH
+         0
+         (FIND-D-E (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+                   (CAR PATH))))))
+     (<=
+      (+ 64
+         (* 32
+            (LEN (MAKE-D-E-LIST (MV-NTH 0
+                                        (D-E-CC-CONTENTS FAT32$C ROOT-D-E))))))
+      2097152)
+     (INTEGERP ENTRY-LIMIT)
+     (<
+      (HIFAT-ENTRY-COUNT
+       (MV-NTH
+        0
+        (LOFAT-TO-HIFAT-HELPER
+         FAT32$C
+         (MAKE-D-E-LIST (MV-NTH 0 (D-E-CC-CONTENTS FAT32$C ROOT-D-E)))
+         ENTRY-LIMIT)))
+      ENTRY-LIMIT))
+    (cond
+     ((m1-regular-file-p
+       (m1-file-hifat-file-alist-fix
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))
+        (mv-nth
+         0
+         (lofat-to-hifat-helper
+          fat32$c
+          (make-d-e-list
+           (mv-nth
+            0
+            (d-e-cc-contents
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path))))))
+          entry-limit))))
+      (list
+       (put-assoc-equal
+        (car path)
+        (m1-file-hifat-file-alist-fix
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))
+         (mv-nth
+          0
+          (hifat-place-file
+           (mv-nth
+            0
+            (lofat-to-hifat-helper
+             fat32$c
+             (make-d-e-list
+              (mv-nth
+               0
+               (d-e-cc-contents
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))))
+             entry-limit))
+           nil
+           (m1-file-hifat-file-alist-fix d-e nil))))
+        (mv-nth
+         0
+         (lofat-to-hifat-helper
+          fat32$c
+          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          entry-limit)))
+       (mv-nth
+        1
+        (hifat-place-file
+         (mv-nth
+          0
+          (lofat-to-hifat-helper
+           fat32$c
+           (make-d-e-list
+            (mv-nth
+             0
+             (d-e-cc-contents
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           entry-limit))
+         nil
+         (m1-file-hifat-file-alist-fix d-e nil)))))
+     ((m1-regular-file-p (m1-file-hifat-file-alist-fix d-e nil))
+      (list
+       (put-assoc-equal
+        (car path)
+        (m1-file-hifat-file-alist-fix
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))
+         (mv-nth
+          0
+          (hifat-place-file
+           (mv-nth
+            0
+            (lofat-to-hifat-helper
+             fat32$c
+             (make-d-e-list
+              (mv-nth
+               0
+               (d-e-cc-contents
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))))
+             entry-limit))
+           nil
+           (m1-file-hifat-file-alist-fix d-e nil))))
+        (mv-nth
+         0
+         (lofat-to-hifat-helper
+          fat32$c
+          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          entry-limit)))
+       (mv-nth
+        1
+        (hifat-place-file
+         (mv-nth
+          0
+          (lofat-to-hifat-helper
+           fat32$c
+           (make-d-e-list
+            (mv-nth
+             0
+             (d-e-cc-contents
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           entry-limit))
+         nil
+         (m1-file-hifat-file-alist-fix d-e nil)))))
+     (t
+      (cons
+       (put-assoc-equal
+        (car path)
+        (m1-file-hifat-file-alist-fix d-e nil)
+        (mv-nth
+         0
+         (lofat-to-hifat-helper
+          fat32$c
+          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          entry-limit)))
+       '(0)))))
+   :hints
+   (("goal"
+     :do-not-induct
+     t
+     :expand
+     (lofat-place-file fat32$c root-d-e path file)
+     :in-theory
+     (e/d (hifat-place-file
+           (:rewrite lofat-to-hifat-inversion-lemma-4)
+           hifat-find-file)
+          ((:definition find-d-e)
+           (:definition place-d-e)
+           (:rewrite
+            d-e-p-when-member-equal-of-d-e-list-p)
+           (:rewrite
+            lofat-fs-p-of-lofat-place-file-lemma-1)
+           (:rewrite
+            clear-cc-reversibility-lemma-1)
+           ;; This lemma leads to specious simplifications.
+           (:rewrite
+            d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
+            . 5)))
+     ;; we can add more of these restrict bindings if needed... but right now
+     ;; we want to save space.
+     :restrict
+     ((put-assoc-under-hifat-equiv-3
+       ((file2
+         (m1-file d-e "")))
+       ((file2 (m1-file d-e
+                        (lofat-file->contents$inline file)))))))))
 
   ;; Interesting. This now goes through with only two skipped proofs.
   (defthm
