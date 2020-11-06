@@ -110,7 +110,7 @@
 (defthm
   get-cc-alt
   (equal (get-cc fat32$c
-                           masked-current-cluster length)
+                 masked-current-cluster length)
          (fat32-build-index-list (effective-fat fat32$c)
                                  masked-current-cluster
                                  length (cluster-size fat32$c)))
@@ -653,6 +653,44 @@
                                 d-e)
           (d-e-cc fat32$c d-e)))
   :hints (("goal" :in-theory (enable d-e-cc))))
+
+(defthm
+  d-e-cc-under-iff
+  (implies (lofat-fs-p fat32$c)
+           (iff (mv-nth 0 (d-e-cc fat32$c d-e))
+                (or (d-e-directory-p d-e)
+                    (not (zp (d-e-file-size d-e))))))
+  :hints
+  (("goal" :in-theory (e/d (d-e-cc)
+                           (consp-of-fat32-build-index-list))
+    :use ((:instance consp-of-fat32-build-index-list
+                     (cluster-size (cluster-size fat32$c))
+                     (length 0)
+                     (masked-current-cluster (d-e-first-cluster d-e))
+                     (fa-table (effective-fat fat32$c)))
+          (:instance consp-of-fat32-build-index-list
+                     (cluster-size (cluster-size fat32$c))
+                     (length 2097152)
+                     (masked-current-cluster (d-e-first-cluster d-e))
+                     (fa-table (effective-fat fat32$c)))
+          (:instance consp-of-fat32-build-index-list
+                     (cluster-size (cluster-size fat32$c))
+                     (length (d-e-file-size d-e))
+                     (masked-current-cluster (d-e-first-cluster d-e))
+                     (fa-table (effective-fat fat32$c))))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary (implies (lofat-fs-p fat32$c)
+                        (equal (consp (mv-nth 0 (d-e-cc fat32$c d-e)))
+                               (or (d-e-directory-p d-e)
+                                   (not (zp (d-e-file-size d-e))))))
+    :hints (("goal" :in-theory (e/d nil (get-cc-alt)))))
+   (:rewrite :corollary (implies (and (lofat-fs-p fat32$c)
+                                      (zp (d-e-file-size d-e))
+                                      (not (d-e-directory-p d-e)))
+                                 (equal (mv-nth 0 (d-e-cc fat32$c d-e))
+                                        nil)))))
 
 (defund
   d-e-cc-contents

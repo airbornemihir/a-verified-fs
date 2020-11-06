@@ -518,7 +518,27 @@
      (fat32-build-index-list fa-table masked-current-cluster
                              length cluster-size)))
   :hints
-  (("goal" :in-theory (enable fat32-build-index-list))))
+  (("goal" :in-theory (enable fat32-build-index-list)))
+  :rule-classes (:rewrite :type-prescription))
+
+(defthm
+  integer-listp-of-fat32-build-index-list
+  (implies
+   (integerp masked-current-cluster)
+   (integer-listp
+    (mv-nth 0
+            (fat32-build-index-list fa-table masked-current-cluster
+                                    length cluster-size))))
+  :hints (("goal" :in-theory (enable fat32-build-index-list))))
+
+(defthm
+  consp-of-fat32-build-index-list
+  (equal
+   (consp (mv-nth 0
+                  (fat32-build-index-list fa-table masked-current-cluster
+                                          length cluster-size)))
+   (not (or (zp length) (zp cluster-size))))
+  :hints (("goal" :in-theory (enable fat32-build-index-list))))
 
 (defun count-free-clusters-helper (fa-table n)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
@@ -1237,6 +1257,13 @@
         (car file-index-list)
         file-length cluster-size)))
      ("subgoal *1/2" :use fat32-masked-entry-list-p-when-bounded-nat-listp))))
+
+(defthm
+  set-indices-in-fa-table-when-atom
+  (implies (atom index-list)
+           (equal (set-indices-in-fa-table fa-table index-list value-list)
+                  fa-table))
+  :hints (("goal" :in-theory (enable set-indices-in-fa-table))))
 
 (defthm
   member-of-fat32-build-index-list
