@@ -2469,8 +2469,7 @@
 ;; made to ensure that cluster doesn't get used.
 (defund
   place-contents
-  (fat32$c d-e
-                   contents file-length first-cluster)
+  (fat32$c d-e contents file-length first-cluster)
   (declare
    (xargs
     :stobjs fat32$c
@@ -4224,17 +4223,16 @@
   non-free-index-listp-of-effective-fat-of-place-contents
   (implies
    (and (lofat-fs-p fat32$c)
-        (case-split (non-free-index-listp x (effective-fat fat32$c)))
         (not (member-equal first-cluster x))
-        (integerp first-cluster)
-        (<= *ms-first-data-cluster* first-cluster)
-        (stringp contents))
+        (case-split (non-free-index-listp x (effective-fat fat32$c))))
    (non-free-index-listp
     x
     (effective-fat
      (mv-nth 0
              (place-contents fat32$c d-e
-                             contents file-length first-cluster))))))
+                             contents file-length first-cluster)))))
+  :hints (("goal" :in-theory (enable non-free-index-listp
+                                     place-contents nfix))))
 
 (defthm
   non-free-index-listp-correctness-4-lemma-1
@@ -4515,6 +4513,22 @@
                           (lofat-to-hifat-helper
                            fat32$c
                            d-e-list entry-limit)))))))
+
+(defthm
+  non-free-index-list-listp-of-effective-fat-of-place-contents
+  (implies
+   (and (lofat-fs-p fat32$c)
+        (not-intersectp-list (list first-cluster)
+                             l)
+        (non-free-index-list-listp l (effective-fat fat32$c)))
+   (non-free-index-list-listp
+    l
+    (effective-fat
+     (mv-nth 0
+             (place-contents fat32$c d-e
+                             contents file-length first-cluster)))))
+  :hints (("goal" :in-theory (enable non-free-index-list-listp
+                                     not-intersectp-list))))
 
 (defun
     free-index-list-listp (l fa-table)
