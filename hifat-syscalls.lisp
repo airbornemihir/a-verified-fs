@@ -731,14 +731,6 @@
            :in-theory (enable m1-file-alist-p
                               hifat-find-file hifat-subsetp))))
 
-(defthm hifat-find-file-correctness-lemma-1
-  (and (equal (hifat-equiv (hifat-file-alist-fix fs1)
-                           fs2)
-              (hifat-equiv fs1 fs2))
-       (equal (hifat-equiv fs1 (hifat-file-alist-fix fs2))
-              (hifat-equiv fs1 fs2)))
-  :hints (("goal" :in-theory (enable hifat-equiv))))
-
 (local
  (defthm
    hifat-find-file-correctness-lemma-2

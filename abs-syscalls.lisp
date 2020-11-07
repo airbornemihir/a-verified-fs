@@ -362,14 +362,6 @@
             (cdr frame))
      head-error-code)))
 
-(defthm hifat-place-file-correctness-lemma-3
-  (implies (and (fat32-filename-p name)
-                (not (m1-regular-file-p (cdr (assoc-equal name x))))
-                (m1-file-alist-p x)
-                (hifat-subsetp y x))
-           (not (m1-regular-file-p (cdr (assoc-equal name y)))))
-  :hints (("goal" :in-theory (enable hifat-subsetp))))
-
 (defthm
   hifat-place-file-correctness-lemma-4
   (implies
@@ -3857,114 +3849,6 @@
            :do-not-induct t
            :use (:instance abs-mkdir-correctness-lemma-85
                            (x-path path)))))
-
-(defthm
-  hifat-place-file-when-hifat-equiv-lemma-1
-  (implies
-   (and
-    (hifat-equiv
-     (mv-nth
-      0
-      (hifat-place-file
-       (m1-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
-                                            (hifat-file-alist-fix fs))))
-       (cdr path)
-       file1))
-     (mv-nth
-      0
-      (hifat-place-file
-       (m1-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
-                                            (hifat-file-alist-fix fs))))
-       (cdr path)
-       file2)))
-    (syntaxp (not (term-order file1 file2))))
-   (hifat-equiv
-    (put-assoc-equal
-     (fat32-filename-fix (car path))
-     (m1-file
-      (m1-file->d-e (cdr (assoc-equal (fat32-filename-fix (car path))
-                                          (hifat-file-alist-fix fs))))
-      (mv-nth
-       0
-       (hifat-place-file
-        (m1-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
-                                             (hifat-file-alist-fix fs))))
-        (cdr path)
-        file1)))
-     (hifat-file-alist-fix fs))
-    (put-assoc-equal
-     (fat32-filename-fix (car path))
-     (m1-file
-      (m1-file->d-e (cdr (assoc-equal (fat32-filename-fix (car path))
-                                          (hifat-file-alist-fix fs))))
-      (mv-nth
-       0
-       (hifat-place-file
-        (m1-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
-                                             (hifat-file-alist-fix fs))))
-        (cdr path)
-        file2)))
-     (hifat-file-alist-fix fs))))
-  :hints
-  (("goal"
-    :in-theory (disable (:rewrite put-assoc-under-hifat-equiv-1))
-    :use
-    (:instance
-     (:rewrite put-assoc-under-hifat-equiv-1)
-     (fs (hifat-file-alist-fix fs))
-     (file1
-      (m1-file
-       (m1-file->d-e (cdr (assoc-equal (fat32-filename-fix (car path))
-                                           (hifat-file-alist-fix fs))))
-       (mv-nth
-        0
-        (hifat-place-file
-         (m1-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
-                                              (hifat-file-alist-fix fs))))
-         (cdr path)
-         file1))))
-     (file2
-      (m1-file
-       (m1-file->d-e (cdr (assoc-equal (fat32-filename-fix (car path))
-                                           (hifat-file-alist-fix fs))))
-       (mv-nth
-        0
-        (hifat-place-file
-         (m1-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
-                                              (hifat-file-alist-fix fs))))
-         (cdr path)
-         file2))))
-     (name (fat32-filename-fix (car path)))))))
-
-(defthm
-  hifat-place-file-when-hifat-equiv-lemma-3
-  (implies (and (hifat-equiv (m1-file->contents file1)
-                             (m1-file->contents file2))
-                (syntaxp (not (term-order file1 file2)))
-                (m1-directory-file-p (m1-file-fix file1))
-                (m1-directory-file-p (m1-file-fix file2)))
-           (hifat-equiv (put-assoc-equal (fat32-filename-fix (car path))
-                                         (m1-file-fix file1)
-                                         (hifat-file-alist-fix fs))
-                        (put-assoc-equal (fat32-filename-fix (car path))
-                                         (m1-file-fix file2)
-                                         (hifat-file-alist-fix fs))))
-  :instructions (:promote (:dive 1)
-                          (:rewrite put-assoc-under-hifat-equiv-1
-                                    ((file2 (m1-file-fix file2))))
-                          :top
-                          :bash :bash
-                          :bash :bash))
-
-(defthm hifat-place-file-when-hifat-equiv-1
-  (implies (and (hifat-equiv (m1-file->contents file1)
-                             (m1-file->contents file2))
-                (syntaxp (not (term-order file1 file2)))
-                (m1-directory-file-p (m1-file-fix file1))
-                (m1-directory-file-p (m1-file-fix file2)))
-           (hifat-equiv (mv-nth 0 (hifat-place-file fs path file1))
-                        (mv-nth 0 (hifat-place-file fs path file2))))
-  :hints (("goal" :in-theory (enable hifat-place-file))))
 
 (defthm
   hifat-equiv-of-put-assoc-lemma-1
