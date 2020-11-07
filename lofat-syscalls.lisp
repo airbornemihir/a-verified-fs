@@ -372,6 +372,21 @@
   :hints (("Goal" :in-theory (enable lofat-unlink)) ))
 
 (defthm
+  lofat-unlink-refinement-lemma-8
+  (implies
+   (and (m1-file-p file)
+        (equal (hifat-file-alist-fix (m1-file->contents file))
+               (m1-file->contents file)))
+   (equal (equal (m1-file-hifat-file-alist-fix (m1-file->d-e file)
+                                               (m1-file->contents file))
+                 file)
+          t))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (m1-file-hifat-file-alist-fix)
+                    (m1-file-hifat-file-alist-fix-normalisation)))))
+
+(defthm
   lofat-unlink-refinement-lemma-1
   (and (implies (equal (mv-nth 1 (hifat-find-file fs path))
                        *enoent*)
