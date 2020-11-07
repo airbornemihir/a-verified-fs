@@ -372,7 +372,7 @@
   :hints (("Goal" :in-theory (enable lofat-unlink)) ))
 
 (defthm
-  lofat-unlink-refinement-lemma-8
+  lofat-unlink-refinement-lemma-1
   (implies
    (and (m1-file-p file)
         (equal (hifat-file-alist-fix (m1-file->contents file))
@@ -387,7 +387,7 @@
                     (m1-file-hifat-file-alist-fix-normalisation)))))
 
 (defthm
-  lofat-unlink-refinement-lemma-1
+  lofat-unlink-refinement-lemma-8
   (and (implies (equal (mv-nth 1 (hifat-find-file fs path))
                        *enoent*)
                 (equal (hifat-remove-file fs path)
@@ -699,7 +699,7 @@
                     ((:rewrite lofat-remove-file-correctness-1)
                      make-list-ac-removal
                      (:rewrite lofat-find-file-correctness-1)
-                     lofat-unlink-refinement-lemma-1
+                     lofat-unlink-refinement-lemma-8
                      (:rewrite
                       d-e-cc-contents-of-lofat-place-file-coincident-lemma-15)
                      (:linear
@@ -745,7 +745,7 @@
                           (pseudo-root-d-e fat32$c))))
                 (max-entry-count fat32$c)))))
      (:instance
-      lofat-unlink-refinement-lemma-1
+      lofat-unlink-refinement-lemma-8
       (fs
        (mv-nth 0
                (lofat-to-hifat-helper
