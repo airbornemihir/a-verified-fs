@@ -654,12 +654,27 @@
               (hifat-equiv fs1 fs2)))
   :hints (("goal" :in-theory (enable hifat-equiv))))
 
+(defthm
+  abs-pwrite-correctness-lemma-29
+  (implies
+   (and (fat32-filename-p name)
+        (m1-directory-file-p (cdr (assoc-equal name y)))
+        (hifat-subsetp y x))
+   (m1-directory-file-p (cdr (assoc-equal name x))))
+  :hints (("goal" :in-theory (enable hifat-subsetp))))
+
 (defthm hifat-place-file-when-hifat-equiv-1
   (implies (and (hifat-equiv (m1-file->contents file1)
                              (m1-file->contents file2))
                 (syntaxp (not (term-order file1 file2)))
                 (m1-directory-file-p (m1-file-fix file1))
                 (m1-directory-file-p (m1-file-fix file2)))
-           (hifat-equiv (mv-nth 0 (hifat-place-file fs path file1))
-                        (mv-nth 0 (hifat-place-file fs path file2))))
-  :hints (("goal" :in-theory (enable hifat-place-file))))
+           (and
+            (hifat-equiv (mv-nth 0 (hifat-place-file fs path file1))
+                         (mv-nth 0 (hifat-place-file fs path file2)))
+            (equal (mv-nth 1 (hifat-place-file fs path file1))
+                   (mv-nth 1 (hifat-place-file fs path file2)))))
+  :hints (("goal" :in-theory (enable hifat-place-file)
+           :induct
+           (mv (mv-nth 0 (hifat-place-file fs path file1))
+               (mv-nth 0 (hifat-place-file fs path file2))))))

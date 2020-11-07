@@ -4970,10 +4970,10 @@
     :hints
     (("goal"
       :do-not-induct t
-      :in-theory (disable (:rewrite hifat-place-file-when-hifat-equiv-1))
+      :in-theory (disable hifat-place-file-when-hifat-equiv-1)
       :use
       (:instance
-       (:rewrite hifat-place-file-when-hifat-equiv-1)
+       hifat-place-file-when-hifat-equiv-1
        (file1
         (m1-file
          (m1-file->d-e
@@ -10391,10 +10391,10 @@
                                        file-table)))))))))))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite hifat-place-file-when-hifat-equiv-1))
+    :in-theory (disable hifat-place-file-when-hifat-equiv-1)
     :use
     (:instance
-     (:rewrite hifat-place-file-when-hifat-equiv-1)
+     hifat-place-file-when-hifat-equiv-1
      (file1
       (m1-file
        (m1-file->d-e
@@ -11601,10 +11601,10 @@
                                        file-table)))))))))))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite hifat-place-file-when-hifat-equiv-1))
+    :in-theory (disable hifat-place-file-when-hifat-equiv-1)
     :use
     (:instance
-     (:rewrite hifat-place-file-when-hifat-equiv-1)
+     hifat-place-file-when-hifat-equiv-1
      (file1
       (m1-file
        (m1-file->d-e
@@ -12955,11 +12955,9 @@
                                        file-table)))))))))))))
   :hints
   (("goal"
-    :in-theory (disable
-                (:rewrite hifat-place-file-when-hifat-equiv-1))
+    :in-theory (disable hifat-place-file-when-hifat-equiv-1)
     :use
-    (:instance
-     (:rewrite hifat-place-file-when-hifat-equiv-1)
+    (:instance hifat-place-file-when-hifat-equiv-1
      (file1
       (m1-file
        (m1-file->d-e
