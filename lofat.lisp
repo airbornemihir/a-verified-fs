@@ -34718,6 +34718,34 @@ Some (rather awful) testing forms are
   (not (m1-regular-file-p (m1-file-hifat-file-alist-fix d-e fs)))
   :hints (("goal" :in-theory (e/d))))
 
+;; This works because as soon as both arguments are quoted constants, the
+;; executable-counterpart will kick in. The availability of the
+;; executable-counterpart will, however, have to be ensured
+;; by a theory invariant.
+(defthm
+  lofat-place-file-correctness-lemma-2
+  (implies
+   (syntaxp (quotep const))
+   (hifat-equiv
+    (mv-nth 0
+            (hifat-place-file fs path
+                              (m1-file-hifat-file-alist-fix d-e const)))
+    (mv-nth 0
+            (hifat-place-file fs path
+                              (m1-file-hifat-file-alist-fix nil const)))))
+   :hints
+   (("goal" :in-theory (disable hifat-place-file-when-hifat-equiv-1)
+            :use (:instance hifat-place-file-when-hifat-equiv-1
+                            (file1 (m1-file-hifat-file-alist-fix d-e const))
+                            (file2 (m1-file-hifat-file-alist-fix nil const))))))
+
+(theory-invariant
+ (implies
+  (active-runep
+   '(:rewrite lofat-place-file-correctness-lemma-2))
+  (active-runep
+   '(:executable-counterpart m1-file-hifat-file-alist-fix))))
+
 (encapsulate
   ()
 
