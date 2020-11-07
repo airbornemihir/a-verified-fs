@@ -41688,3 +41688,184 @@ Some (rather awful) testing forms are
           (m1-file d-e "")))
         ((file2 (m1-file d-e
                          (lofat-file->contents$inline file))))))))))
+
+(defthm
+  get-cc-of-update-dir-contents-coincident-lemma-1
+  (implies
+   (not (equal (mv-nth 1
+                       (clear-cc fat32$c first-cluster 2097152))
+               0))
+   (equal
+    (fat32-build-index-list
+     (effective-fat (mv-nth 0
+                            (clear-cc fat32$c first-cluster 2097152)))
+     first-cluster
+     2097152 (cluster-size fat32$c))
+    (fat32-build-index-list (effective-fat fat32$c)
+                            first-cluster
+                            2097152 (cluster-size fat32$c))))
+  :hints (("goal" :in-theory (enable clear-cc)
+           :do-not-induct t)))
+
+(thm
+ (implies
+  (and
+   (equal
+    (nth
+     first-cluster
+     (set-indices-in-fa-table
+      (effective-fat fat32$c)
+      (cons first-cluster
+            (mv-nth 0
+                    (fat32-build-index-list
+                     (effective-fat fat32$c)
+                     (fat32-entry-mask (fati first-cluster fat32$c))
+                     (+ 2097152 (- (cluster-size fat32$c)))
+                     (cluster-size fat32$c))))
+      (make-list-ac
+       (len (mv-nth 0
+                    (fat32-build-index-list
+                     (effective-fat fat32$c)
+                     (fat32-entry-mask (fati first-cluster fat32$c))
+                     (+ 2097152 (- (cluster-size fat32$c)))
+                     (cluster-size fat32$c))))
+       0 '(0))))
+    (fat32-update-lower-28 (fati first-cluster fat32$c)
+                           0))
+   (equal (mv-nth 1
+                  (clear-cc fat32$c first-cluster 2097152))
+          0)
+   (equal
+    (mv-nth
+     0
+     (place-contents
+      (update-fati first-cluster
+                   (fat32-update-lower-28 (fati first-cluster fat32$c)
+                                          268435455)
+                   (mv-nth 0
+                           (clear-cc fat32$c first-cluster 2097152)))
+      '(0 0 0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+      dir-contents 0 first-cluster))
+    fat32$c)
+   (< first-cluster
+      (+ 2 (count-of-clusters fat32$c)))
+   (lofat-fs-p fat32$c)
+   (fat32-masked-entry-p first-cluster)
+   (stringp dir-contents)
+   (< 0 (len (explode dir-contents)))
+   (<= (len (explode dir-contents))
+       2097152)
+   (<= 2 first-cluster)
+   (equal
+    (mv-nth
+     2
+     (place-contents
+      (update-fati first-cluster
+                   (fat32-update-lower-28 (fati first-cluster fat32$c)
+                                          268435455)
+                   (mv-nth 0
+                           (clear-cc fat32$c first-cluster 2097152)))
+      '(0 0 0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+      dir-contents 0 first-cluster))
+    0))
+  (equal
+   (fat32-build-index-list (effective-fat fat32$c)
+                           first-cluster
+                           2097152 (cluster-size fat32$c))
+   (cons
+    (cons
+     first-cluster
+     (find-n-free-clusters
+      (update-nth
+       first-cluster
+       (fat32-update-lower-28 (fati first-cluster fat32$c)
+                              268435455)
+       (effective-fat (mv-nth 0
+                              (clear-cc fat32$c first-cluster 2097152))))
+      (+ -1
+         (len (make-clusters dir-contents (cluster-size fat32$c))))))
+    '(0)))) :hints (("goal" :do-not-induct t :in-theory (enable
+    place-contents))))
+
+(defthm
+  get-cc-of-update-dir-contents-coincident
+  (implies
+   (and
+    (lofat-fs-p fat32$c)
+    (fat32-masked-entry-p first-cluster)
+    (stringp dir-contents)
+    (< 0 (len (explode dir-contents)))
+    (<= (len (explode dir-contents))
+        *ms-max-dir-size*)
+    (equal
+     (mv-nth 1
+             (get-cc fat32$c
+                     first-cluster *ms-max-dir-size*))
+     0)
+    (<= 2 FIRST-CLUSTER))
+   (equal
+    (get-cc
+     (mv-nth 0
+             (update-dir-contents fat32$c
+                                  first-cluster dir-contents))
+     first-cluster *ms-max-dir-size*)
+    (cond
+     ((and
+       (equal (mv-nth 1
+                      (clear-cc fat32$c first-cluster 2097152))
+              0)
+       (< first-cluster
+          (+ 2 (count-of-clusters fat32$c)))
+       (equal (mv-nth 1
+                      (update-dir-contents fat32$c
+                                           first-cluster dir-contents))
+              0))
+      (mv
+       (cons
+        first-cluster
+        (find-n-free-clusters
+         (update-nth
+          first-cluster
+          (fat32-update-lower-28 (fati first-cluster fat32$c)
+                                 268435455)
+          (effective-fat (mv-nth 0
+                                 (clear-cc fat32$c first-cluster 2097152))))
+         (+ -1
+            (len (make-clusters dir-contents (cluster-size fat32$c))))))
+       0))
+     ((equal (mv-nth 1
+                     (update-dir-contents fat32$c
+                                          first-cluster dir-contents))
+             0)
+      z)
+     (t
+      (get-cc fat32$c first-cluster *ms-max-dir-size*)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (update-dir-contents
+      get-cc-contents-of-update-dir-contents-coincident-lemma-3
+      (:linear hifat-to-lofat-inversion-lemma-16)
+      (:rewrite fati-of-clear-cc . 1))
+     ((:rewrite nth-of-set-indices-in-fa-table-when-member)))
+    :use
+    ((:instance
+      (:rewrite nth-of-set-indices-in-fa-table-when-member)
+      (val 0)
+      (index-list
+       (cons
+        first-cluster
+        (mv-nth 0
+                (fat32-build-index-list
+                 (effective-fat fat32$c)
+                 (fat32-entry-mask (fati first-cluster fat32$c))
+                 (+ 2097152
+                    (- (cluster-size fat32$c)))
+                 (cluster-size fat32$c)))))
+      (fa-table (effective-fat fat32$c))
+      (n first-cluster))
+     (:rewrite update-dir-contents-correctness-1)
+     get-cc-contents-of-update-dir-contents-coincident-lemma-4))))
