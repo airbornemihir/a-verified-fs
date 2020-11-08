@@ -6385,33 +6385,6 @@ Some (rather awful) testing forms are
 
   (local (include-book "std/lists/prefixp" :dir :system))
 
-  (defthmd
-    lemma
-    (implies
-     (and
-      (> (+ 2 (count-of-clusters fat32$c))
-         first-cluster)
-      (equal (mv-nth 1
-                     (update-dir-contents fat32$c first-cluster dir-contents))
-             0))
-     (and
-      (equal (mv-nth 1
-                     (clear-cc fat32$c first-cluster 2097152))
-             0)
-      (< first-cluster
-         (+ 2 (count-of-clusters fat32$c)))
-      (equal (mv-nth 1
-                     (update-dir-contents fat32$c first-cluster dir-contents))
-             0)))
-    :hints
-    (("goal" :in-theory
-      (e/d (update-dir-contents
-            place-contents
-            get-cc-contents-of-update-dir-contents-coincident-lemma-3
-            (:linear hifat-to-lofat-inversion-lemma-16)
-            (:rewrite fati-of-clear-cc . 1))
-           nil))))
-
   (defthm
     get-cc-of-update-dir-contents-coincident
     (implies
@@ -6462,8 +6435,53 @@ Some (rather awful) testing forms are
             get-cc-contents-of-update-dir-contents-coincident-lemma-3
             (:linear hifat-to-lofat-inversion-lemma-16)
             (:rewrite fati-of-clear-cc . 1))
-           nil)
-      :use lemma))))
+           nil)))))
+
+(defthm
+  d-e-cc-of-update-dir-contents-coincident
+  (implies
+   (and (equal (d-e-first-cluster d-e)
+               first-cluster)
+        (lofat-fs-p fat32$c)
+        (fat32-masked-entry-p (d-e-first-cluster d-e))
+        (stringp dir-contents)
+        (< 0 (len (explode dir-contents)))
+        (<= (len (explode dir-contents))
+            2097152)
+        (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c d-e)))
+        (d-e-directory-p d-e)
+        (equal (mv-nth 1 (d-e-cc-contents fat32$c d-e))
+               0))
+   (equal
+    (d-e-cc (mv-nth 0
+                    (update-dir-contents fat32$c first-cluster dir-contents))
+            d-e)
+    (if
+     (equal (mv-nth 1
+                    (update-dir-contents fat32$c (d-e-first-cluster d-e)
+                                         dir-contents))
+            0)
+     (mv
+      (cons
+       (d-e-first-cluster d-e)
+       (find-n-free-clusters
+        (update-nth
+         (d-e-first-cluster d-e)
+         (fat32-update-lower-28 (fati (d-e-first-cluster d-e) fat32$c)
+                                268435455)
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth 0 (d-e-cc fat32$c d-e))
+          (make-list-ac (len (mv-nth 0 (d-e-cc fat32$c d-e)))
+                        0 nil)))
+        (+ -1
+           (len (make-clusters dir-contents (cluster-size fat32$c))))))
+      0)
+     (d-e-cc fat32$c d-e))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (d-e-cc d-e-cc-correctness-1)
+                           (get-cc-alt))
+           :use d-e-cc-correctness-1)))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-8
