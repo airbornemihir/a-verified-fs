@@ -8648,11 +8648,100 @@ Some (rather awful) testing forms are
                    (filename "..         ")
                    (n n)
                    (dir-contents (implode (nthcdr 32 (explode dir-contents)))))))
-      :rule-classes :linear)))
+      :rule-classes :linear))
+
+  (make-event
+   `(defthm
+      lofat-place-file-correctness-lemma-138
+      (implies
+       (and (equal (mod (len (explode (implode dir-contents)))
+                        32)
+                   0)
+            (equal (mod n 32) 0))
+       (equal
+        (remove1-d-e (implode (append dir-contents (make-list-ac n ,(code-char 0) nil)))
+                     filename)
+        (implode (append (explode (remove1-d-e (implode dir-contents)
+                                               filename))
+                         (make-list-ac n ,(code-char 0) nil)))))
+      :hints
+      (("goal" :in-theory (disable lofat-remove-file-correctness-1-lemma-34)
+        :use (:instance lofat-remove-file-correctness-1-lemma-34
+                        (dir-contents (implode dir-contents)))))))
+
+  (make-event
+   `(defthm
+      lofat-place-file-correctness-lemma-139
+      (implies
+       (and (equal (mod (length (implode dir-contents)) 32)
+                   0)
+            (equal (mod n 32) 0)
+            (equal (len (explode (remove1-d-e (remove1-d-e (implode dir-contents)
+                                                           ".          ")
+                                              "..         ")))
+                   (+ -64
+                      (len (explode (implode dir-contents))))))
+       (<=
+        (len
+         (explode
+          (remove1-d-e
+           (remove1-d-e (implode (append dir-contents (make-list-ac n ,(code-char 0) nil)))
+                        ".          ")
+           "..         ")))
+        (+
+         -32
+         (len
+          (explode
+           (remove1-d-e (implode (append dir-contents (make-list-ac n ,(code-char 0) nil)))
+                        ".          "))))))
+      :hints
+      (("goal" :do-not-induct t
+        :in-theory (disable lofat-remove-file-correctness-1-lemma-35)
+        :use (:instance lofat-remove-file-correctness-1-lemma-35
+                        (dir-contents (implode dir-contents)))))
+      :rule-classes :linear))
+
+  (make-event
+   `(defthm
+      lofat-place-file-correctness-lemma-140
+      (implies
+       (and (>= (+ -32 (len (explode contents)))
+                (len (explode (remove1-d-e contents *current-dir-fat32-name*))))
+            (equal (mod (len (explode contents))
+                        *ms-d-e-length*)
+                   0)
+            (equal (mod n *ms-d-e-length*) 0))
+       (>=
+        (+ -32
+           (len (append (explode contents)
+                        (make-list-ac n ,(code-char 0) nil))))
+        (len
+         (explode
+          (remove1-d-e (implode (append (explode contents)
+                                        (make-list-ac n ,(code-char 0) nil)))
+                       *current-dir-fat32-name*)))))
+      :hints (("goal" :in-theory (enable remove1-d-e nfix)
+               :induct (remove1-d-e contents *current-dir-fat32-name*)))
+      :rule-classes :linear))
+
+  (make-event
+   `(defthm
+      lofat-place-file-correctness-lemma-141
+      (implies
+       (and (stringp contents)
+            (subdir-contents-p contents)
+            (equal (mod (len (explode contents))
+                        *ms-d-e-length*)
+                   0)
+            (equal (mod n *ms-d-e-length*) 0))
+       (subdir-contents-p (implode (append (explode contents)
+                                           (make-list-ac n ,(code-char 0) nil)))))
+      :hints (("goal" :in-theory (enable subdir-contents-p nfix remove1-d-e)
+               :induct (remove1-d-e contents *current-dir-fat32-name*))))))
 
 (make-event
  `(defthmd
-    lofat-remove-file-correctness-1-lemma-36
+    lofat-place-file-correctness-lemma-142
     (implies
      (and (unsigned-byte-listp 8 dir-contents)
           (subdir-contents-p (nats=>string dir-contents))
@@ -8904,7 +8993,7 @@ Some (rather awful) testing forms are
       (("goal"
         :use
         (:instance
-         (:rewrite lofat-remove-file-correctness-1-lemma-36)
+         (:rewrite lofat-place-file-correctness-lemma-142)
          (n
           (+
            (- (len (explode (mv-nth 0
@@ -32259,57 +32348,6 @@ Some (rather awful) testing forms are
      (:type-prescription true-listp-of-d-e-cc)
      (:rewrite lofat-place-file-correctness-lemma-9))))
   :rule-classes :linear)
-
-(make-event
- `(defthm
-    lofat-place-file-correctness-lemma-138
-    (implies
-     (and (equal (mod (len (explode (implode dir-contents)))
-                      32)
-                 0)
-          (equal (mod n 32) 0))
-     (equal
-      (remove1-d-e (implode (append dir-contents (make-list-ac n ,(code-char 0) nil)))
-                   filename)
-      (implode (append (explode (remove1-d-e (implode dir-contents)
-                                             filename))
-                       (make-list-ac n ,(code-char 0) nil)))))
-    :hints
-    (("goal" :in-theory (disable lofat-remove-file-correctness-1-lemma-34)
-      :use (:instance lofat-remove-file-correctness-1-lemma-34
-                      (dir-contents (implode dir-contents)))))))
-
-(make-event
- `(defthm
-    lofat-place-file-correctness-lemma-139
-    (implies
-     (and (equal (mod (length (implode dir-contents)) 32)
-                 0)
-          (equal (mod n 32) 0)
-          (equal (len (explode (remove1-d-e (remove1-d-e (implode dir-contents)
-                                                         ".          ")
-                                            "..         ")))
-                 (+ -64
-                    (len (explode (implode dir-contents))))))
-     (<=
-      (len
-       (explode
-        (remove1-d-e
-         (remove1-d-e (implode (append dir-contents (make-list-ac n ,(code-char 0) nil)))
-                      ".          ")
-         "..         ")))
-      (+
-       -32
-       (len
-        (explode
-         (remove1-d-e (implode (append dir-contents (make-list-ac n ,(code-char 0) nil)))
-                      ".          "))))))
-    :hints
-    (("goal" :do-not-induct t
-      :in-theory (disable lofat-remove-file-correctness-1-lemma-35)
-      :use (:instance lofat-remove-file-correctness-1-lemma-35
-                      (dir-contents (implode dir-contents)))))
-    :rule-classes :linear))
 
 (encapsulate
   ()
