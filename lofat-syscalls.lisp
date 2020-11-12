@@ -715,6 +715,8 @@
     :hints
     (("goal"
       :do-not-induct t
+      :in-theory (disable
+                  (:rewrite d-e-cc-of-update-dir-contents-coincident))
       :use
       ((:instance (:rewrite lofat-remove-file-correctness-1)
                   (entry-limit (max-entry-count fat32$c))
