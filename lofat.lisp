@@ -2609,14 +2609,20 @@ Some (rather awful) testing forms are
             ((:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
              (:rewrite nth-of-effective-fat)
              (:definition assoc-equal)
-             (:REWRITE SUBSETP-CAR-MEMBER)
-             (:REWRITE D-E-LIST-P-OF-CDR-WHEN-D-E-LIST-P)
-             (:REWRITE ASSOC-OF-CAR-WHEN-MEMBER)
-             (:REWRITE HIFAT-TO-LOFAT-INVERSION-LEMMA-2)
-             (:REWRITE USEFUL-D-E-LIST-P-OF-CDR)
-             (:REWRITE M1-FILE-P-OF-CDAR-WHEN-M1-FILE-ALIST-P)
-             (:REWRITE TAKE-OF-LEN-FREE)
-             (:REWRITE NATS=>CHARS-OF-TAKE)))))))
+             (:rewrite subsetp-car-member)
+             (:rewrite d-e-list-p-of-cdr-when-d-e-list-p)
+             (:rewrite assoc-of-car-when-member)
+             (:rewrite hifat-to-lofat-inversion-lemma-2)
+             (:rewrite useful-d-e-list-p-of-cdr)
+             (:rewrite m1-file-p-of-cdar-when-m1-file-alist-p)
+             (:rewrite take-of-len-free)
+             (:rewrite nats=>chars-of-take)
+             (:rewrite member-intersectp-of-set-difference$-lemma-2)
+             (:rewrite not-intersectp-list-when-subsetp-1)
+             (:rewrite d-e-p-when-member-equal-of-d-e-list-p)
+             (:definition binary-append)
+             (:rewrite subsetp-member . 1)
+             (:rewrite member-of-append)))))))
 
   (defthm
     hifat-entry-count-of-lofat-to-hifat-helper-of-delete-d-e
@@ -15652,9 +15658,7 @@ Some (rather awful) testing forms are
     :hints
     (("goal"
       :in-theory
-      (e/d (not-intersectp-list hifat-entry-count
-                                lofat-to-hifat-helper-correctness-4
-                                place-d-e)
+      (e/d (not-intersectp-list place-d-e)
            ((:definition subseq)
             (:definition subseq-list)
             (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
@@ -15732,7 +15736,10 @@ Some (rather awful) testing forms are
             (:rewrite abs-find-file-correctness-1-lemma-40)
             (:rewrite hifat-place-file-correctness-3)
             (:rewrite remove-assoc-when-absent-1)
-            (:definition find-d-e)))
+            (:definition find-d-e)
+            (:rewrite m1-directory-file-p-when-m1-file-p)
+            (:rewrite m1-file-fix-when-m1-file-p)
+            (:rewrite m1-directory-file-p-correctness-1)))
       :induct (induction-scheme d-e-list entry-limit fat32$c x)
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
@@ -39092,7 +39099,13 @@ Some (rather awful) testing forms are
         (:rewrite lofat-place-file-correctness-1-lemma-68)
         (:definition find-d-e)
         (:definition lofat-to-hifat-helper)
-        (:definition not-intersectp-list)))
+        (:definition not-intersectp-list)
+        (:rewrite m1-directory-file-p-when-m1-file-p)
+        (:rewrite m1-directory-file-p-correctness-1)
+        (:rewrite lofat-place-file-correctness-1-lemma-11)
+        (:rewrite lofat-place-file-correctness-1-lemma-16)
+        (:rewrite lofat-place-file-correctness-1-lemma-15)
+        (:rewrite lofat-place-file-correctness-1-lemma-17)))
       :induct (induction-scheme d-e-list entry-limit fat32$c x)
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
