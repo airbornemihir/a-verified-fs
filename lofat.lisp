@@ -14503,6 +14503,78 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
            :use lofat-to-hifat-helper-correctness-4)))
 
+(defthm
+  lofat-remove-file-alt-correctness-lemma-25
+  (implies
+   (and
+    (useful-d-e-list-p d-e-list2)
+    (lofat-fs-p fat32$c)
+    (equal (mv-nth 3
+                   (lofat-to-hifat-helper fat32$c d-e-list2 entry-limit1))
+           0)
+    (<= 2
+        (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list1 name))))
+    (< (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list1 name)))
+       (+ 2 (count-of-clusters fat32$c)))
+    (equal (mv-nth 3
+                   (lofat-to-hifat-helper fat32$c d-e-list1 entry-limit2))
+           0)
+    (not-intersectp-list
+     (mv-nth 0
+             (d-e-cc fat32$c
+                     (mv-nth 0 (find-d-e d-e-list1 name))))
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list
+        (mv-nth 0
+                (d-e-cc-contents fat32$c
+                                 (mv-nth 0 (find-d-e d-e-list1 name)))))
+       entry-limit2)))
+    (not-intersectp-list
+     (mv-nth 0
+             (d-e-cc fat32$c
+                     (mv-nth 0 (find-d-e d-e-list1 name))))
+     (mv-nth 2
+             (lofat-to-hifat-helper fat32$c d-e-list2 entry-limit1)))
+    (not
+     (member-intersectp-equal
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        fat32$c
+        (make-d-e-list
+         (mv-nth 0
+                 (d-e-cc-contents fat32$c
+                                  (mv-nth 0 (find-d-e d-e-list1 name)))))
+        entry-limit2))
+      (mv-nth 2
+              (lofat-to-hifat-helper fat32$c d-e-list2 entry-limit1))))
+    (d-e-directory-p (mv-nth 0 (find-d-e d-e-list1 name)))
+    (useful-d-e-list-p d-e-list1))
+   (equal
+    (lofat-to-hifat-helper
+     (mv-nth 0
+             (lofat-remove-file-alt fat32$c
+                                    (mv-nth 0 (find-d-e d-e-list1 name))
+                                    path))
+     d-e-list2 entry-limit1)
+    (lofat-to-hifat-helper fat32$c d-e-list2 entry-limit1)))
+  :hints
+  (("goal"
+    :in-theory
+    (disable lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint
+             (:rewrite lofat-find-file-correctness-1-lemma-6))
+    :use ((:instance lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint
+                     (root-d-e (mv-nth 0 (find-d-e d-e-list1 name)))
+                     (d-e-list d-e-list2))
+          (:instance (:rewrite lofat-find-file-correctness-1-lemma-6)
+                     (entry-limit entry-limit2)
+                     (name name)
+                     (d-e-list d-e-list1)
+                     (fat32$c fat32$c))))))
+
 (encapsulate
   ()
 
@@ -18361,7 +18433,13 @@ Some (rather awful) testing forms are
         (:definition alistp)
         (:rewrite m1-file-alist-p-of-remove-assoc-equal)
         (:definition len)
-        (:definition take)))
+        (:definition take)
+        (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
+                  . 1)
+        (:type-prescription fat32-entry-mask)
+        (:rewrite d-e-cc-under-iff . 2)
+        (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident-lemma-8)
+        (:linear d-e-file-size-correctness-1)))
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c
                                              d-e-list entry-limit))
