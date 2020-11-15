@@ -2617,7 +2617,6 @@ Some (rather awful) testing forms are
              (:rewrite m1-file-p-of-cdar-when-m1-file-alist-p)
              (:rewrite take-of-len-free)
              (:rewrite nats=>chars-of-take)
-             (:rewrite member-intersectp-of-set-difference$-lemma-2)
              (:rewrite not-intersectp-list-when-subsetp-1)
              (:rewrite d-e-p-when-member-equal-of-d-e-list-p)
              (:definition binary-append)
@@ -12149,8 +12148,6 @@ Some (rather awful) testing forms are
   (local
    (in-theory
     (disable
-     (:rewrite
-      member-intersectp-of-set-difference$-lemma-2)
      (:rewrite not-intersectp-list-when-subsetp-2)
      (:rewrite subsetp-when-atom-right)
      (:rewrite subsetp-car-member)
@@ -15598,8 +15595,7 @@ Some (rather awful) testing forms are
       :in-theory
       (e/d
        (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4)
-       (lofat-remove-file-alt
-        nth-of-effective-fat
+       (nth-of-effective-fat
         (:rewrite lofat-place-file-correctness-lemma-57)
         (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
         (:definition no-duplicatesp-equal)
@@ -15625,7 +15621,12 @@ Some (rather awful) testing forms are
         (:type-prescription fat32-entry-mask)
         (:rewrite d-e-cc-under-iff . 2)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident-lemma-8)
-        (:linear d-e-file-size-correctness-1)))
+        (:linear d-e-file-size-correctness-1)
+        subsetp-append1
+        (:rewrite
+         d-e-cc-of-lofat-remove-file-alt-disjoint)
+        (:rewrite
+         d-e-cc-contents-of-lofat-remove-file-alt-disjoint)))
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c
                                              d-e-list entry-limit))
@@ -36270,8 +36271,6 @@ Some (rather awful) testing forms are
      (:definition intersectp-equal)
      (:rewrite
       lofat-place-file-correctness-lemma-70)
-     (:rewrite
-      member-intersectp-of-set-difference$-lemma-2)
      (:definition len)
      (:rewrite subsetp-append1)
      (:rewrite

@@ -220,7 +220,7 @@
                     (:with member-intersectp-is-commutative
                            (member-intersectp-equal y x1))))))
 
-(defthm member-intersectp-of-set-difference$-lemma-2
+(defthmd member-intersectp-of-set-difference$-lemma-2
   (implies (and (member-equal x y)
                 (case-split (consp x)))
            (not (not-intersectp-list x y)))
@@ -231,6 +231,8 @@
            (equal (member-intersectp-equal (set-difference-equal x y)
                                            z)
                   (member-intersectp-equal x z)))
+  :hints
+  (("Goal" :in-theory (enable member-intersectp-of-set-difference$-lemma-2)))
   :rule-classes
   (:rewrite
    (:rewrite
