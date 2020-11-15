@@ -3090,41 +3090,31 @@ Some (rather awful) testing forms are
   lofat-remove-file-alt
   (fat32$c root-d-e path)
   (declare
-   (xargs
-    :guard (and (lofat-fs-p fat32$c)
-                (d-e-p root-d-e)
-                (>= (d-e-first-cluster root-d-e) *ms-first-data-cluster*)
-                (< (d-e-first-cluster root-d-e)
-                   (+ *ms-first-data-cluster*
-                      (count-of-clusters fat32$c)))
-                (fat32-filename-list-p path))
-    :measure (len path)
-    :stobjs fat32$c))
-  (b*
-      (((mv root-dir-contents &) (d-e-cc-contents fat32$c root-d-e))
-       ((unless
-            (consp path))
-        (lofat-remove-file-helper
-         fat32$c root-d-e path))
+   (xargs :guard (and (lofat-fs-p fat32$c)
+                      (d-e-p root-d-e)
+                      (>= (d-e-first-cluster root-d-e)
+                          *ms-first-data-cluster*)
+                      (< (d-e-first-cluster root-d-e)
+                         (+ *ms-first-data-cluster*
+                            (count-of-clusters fat32$c)))
+                      (fat32-filename-list-p path))
+          :measure (len path)
+          :stobjs fat32$c))
+  (b* (((mv root-dir-contents &)
+        (d-e-cc-contents fat32$c root-d-e))
+       ((unless (consp path))
+        (lofat-remove-file-helper fat32$c root-d-e path))
        ((mv d-e error-code)
-        (find-d-e
-         (make-d-e-list root-dir-contents)
-         (fat32-filename-fix (car path))))
-       ((when (and
-               (zp error-code)
-               (consp (cdr path))
-               (d-e-directory-p d-e)
-               (<=
-                2
-                (d-e-first-cluster d-e))
-               (<
-                (d-e-first-cluster d-e)
-                (+ 2 (count-of-clusters fat32$c)))))
-        (lofat-remove-file-alt
-         fat32$c d-e
-         (cdr path))))
-    (lofat-remove-file-helper
-     fat32$c root-d-e path)))
+        (find-d-e (make-d-e-list root-dir-contents)
+                  (fat32-filename-fix (car path))))
+       ((when (and (zp error-code)
+                   (consp (cdr path))
+                   (d-e-directory-p d-e)
+                   (<= 2 (d-e-first-cluster d-e))
+                   (< (d-e-first-cluster d-e)
+                      (+ 2 (count-of-clusters fat32$c)))))
+        (lofat-remove-file-alt fat32$c d-e (cdr path))))
+    (lofat-remove-file-helper fat32$c root-d-e path)))
 
 (defthm
   get-cc-contents-of-update-dir-contents-disjoint
@@ -10453,6 +10443,70 @@ Some (rather awful) testing forms are
                             lofat-remove-file-helper)))))
 
 (defthm
+  lofat-remove-file-correctness-lemma-26
+  (implies
+   (and
+    (good-root-d-e-p root-d-e fat32$c)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list
+        (mv-nth 0
+                (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit))
+     0)
+    (d-e-directory-p
+     (mv-nth
+      0
+      (find-d-e
+       (make-d-e-list
+        (mv-nth 0
+                (d-e-cc-contents fat32$c root-d-e)))
+       name))))
+   (good-root-d-e-p
+    (mv-nth
+     0
+     (find-d-e
+      (make-d-e-list
+       (mv-nth 0
+               (d-e-cc-contents fat32$c root-d-e)))
+      name))
+    fat32$c))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (enable hifat-remove-file
+                       (:rewrite lofat-to-hifat-inversion-lemma-4)
+                       lofat-to-hifat-inversion-lemma-15
+                       good-root-d-e-p))))
+
+(defthm lofat-remove-file-correctness-lemma-23
+  (implies
+   (and
+    (good-root-d-e-p root-d-e fat32$c))
+   (equal
+    (mv-nth
+     1
+     (update-dir-contents
+      fat32$c
+      (d-e-first-cluster root-d-e)
+      (nats=>string
+       (clear-d-e
+        (string=>nats
+         (mv-nth
+          0
+          (d-e-cc-contents fat32$c root-d-e)))
+        (car path)))))
+    0))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (enable hifat-remove-file
+                       (:rewrite lofat-to-hifat-inversion-lemma-4)
+                       lofat-to-hifat-inversion-lemma-15
+                       good-root-d-e-p))))
+
+(defthm
   lofat-remove-file-alt-correctness-lemma-7
   (implies
    (and
@@ -11877,27 +11931,6 @@ Some (rather awful) testing forms are
   :hints (("goal" :use lofat-to-hifat-helper-correctness-4)))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-24
-  (implies
-   (and
-    (equal (mv-nth 3
-                   (lofat-to-hifat-helper fat32$c d-e-list entry-limit1))
-           0)
-    (>= (nfix entry-limit2)
-        (mv-nth 1
-                (lofat-to-hifat-helper fat32$c d-e-list entry-limit1)))
-    (<= (hifat-entry-count
-         (mv-nth 0
-                 (lofat-to-hifat-helper fat32$c d-e-list entry-limit1)))
-        x))
-   (<= (hifat-entry-count
-        (mv-nth 0
-                (lofat-to-hifat-helper fat32$c d-e-list entry-limit2)))
-       x))
-  :hints (("goal" :do-not-induct t
-           :use lofat-to-hifat-helper-correctness-4)))
-
-(defthm
   lofat-remove-file-alt-correctness-lemma-25
   (implies
    (and
@@ -11968,6 +12001,147 @@ Some (rather awful) testing forms are
                      (name name)
                      (d-e-list d-e-list1)
                      (fat32$c fat32$c))))))
+
+(defthm
+  lofat-remove-file-alt-correctness-lemma-29
+  (implies
+   (and
+    (consp path)
+    (good-root-d-e-p root-d-e fat32$c)
+    (non-free-index-listp x (effective-fat fat32$c))
+    (fat32-filename-list-p path)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit))
+     0)
+    (not-intersectp-list
+     x
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit)))
+    (d-e-directory-p
+     (mv-nth
+      0
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))))
+   (not-intersectp-list
+    x
+    (mv-nth
+     2
+     (lofat-to-hifat-helper
+      (mv-nth
+       0
+       (lofat-remove-file-helper
+        fat32$c
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          (car path)))
+        (cdr path)))
+      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+      entry-limit))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm
+  lofat-remove-file-alt-correctness-lemma-30
+  (implies
+   (not (consp path))
+   (equal (mv-nth 0
+                  (lofat-remove-file-helper fat32$c root-d-e path))
+          fat32$c))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm
+  lofat-remove-file-alt-correctness-lemma-31
+  (implies
+   (<
+    0
+    (mv-nth
+     1
+     (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (fat32-filename-fix (car path)))))
+   (equal (mv-nth 0
+                  (lofat-remove-file-helper fat32$c root-d-e path))
+          fat32$c))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm
+  lofat-remove-file-alt-correctness-lemma-32
+  (implies
+   (and
+    (<
+     (d-e-first-cluster
+      (mv-nth
+       0
+       (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (fat32-filename-fix (car path)))))
+     2)
+    (lofat-fs-p fat32$c)
+    (d-e-p root-d-e)
+    (<= 2 (d-e-first-cluster root-d-e))
+    (< (d-e-first-cluster root-d-e)
+       (+ 2 (count-of-clusters fat32$c)))
+    (not (equal (mv-nth 1
+                        (lofat-remove-file-helper fat32$c root-d-e path))
+                0)))
+   (equal (mv-nth 0
+                  (lofat-remove-file-helper fat32$c root-d-e path))
+          fat32$c))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper
+                              update-dir-contents-correctness-1
+                              clear-cc-correctness-3))))
+
+(defthm
+  lofat-remove-file-alt-correctness-lemma-33
+  (implies
+   (and
+    (lofat-fs-p fat32$c)
+    (d-e-p root-d-e)
+    (<= 2 (d-e-first-cluster root-d-e))
+    (< (d-e-first-cluster root-d-e)
+       (+ 2 (count-of-clusters fat32$c)))
+    (not (equal (mv-nth 1
+                        (lofat-remove-file-helper fat32$c root-d-e path))
+                0)))
+   (equal (mv-nth 0
+                  (lofat-remove-file-helper fat32$c root-d-e path))
+          fat32$c))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper
+                              update-dir-contents-correctness-1
+                              clear-cc-correctness-3))))
+
+(defthm
+  lofat-remove-file-alt-correctness-2
+  (implies
+   (and (lofat-fs-p fat32$c)
+        (d-e-p root-d-e)
+        (>= (d-e-first-cluster root-d-e)
+            *ms-first-data-cluster*)
+        (< (d-e-first-cluster root-d-e)
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32$c)))
+        (not (equal (mv-nth 1
+                            (lofat-remove-file-alt fat32$c root-d-e path))
+                    0)))
+   (equal (mv-nth 0
+                  (lofat-remove-file-alt fat32$c root-d-e path))
+          fat32$c))
+  :hints (("goal" :in-theory (enable update-dir-contents-correctness-1
+                                     clear-cc-correctness-3
+                                     lofat-remove-file-alt))))
 
 (encapsulate
   ()
@@ -15423,27 +15597,16 @@ Some (rather awful) testing forms are
                                 entry-limit fat32$c x)
       :in-theory
       (e/d
-       (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4
-                              ;; lofat-remove-file-alt-correctness-1-lemma-61
-                              ;; lofat-remove-file-alt-correctness-1-lemma-37
-                              ;; lofat-remove-file-alt-correctness-1-lemma-38
-                              )
+       (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4)
        (lofat-remove-file-alt
         nth-of-effective-fat
+        (:rewrite lofat-place-file-correctness-lemma-57)
         (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
         (:definition no-duplicatesp-equal)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:rewrite assoc-of-car-when-member)
-        ;; (:rewrite d-e-cc-contents-of-lofat-remove-file-alt-disjoint)
-        ;; (:rewrite d-e-cc-of-lofat-remove-file-alt-disjoint)
         (:rewrite take-of-len-free)
-        ;; (:rewrite
-        ;;  d-e-cc-contents-of-lofat-remove-file-alt-disjoint-lemma-2)
         (:rewrite lofat-to-hifat-helper-of-delete-d-e-2
                   . 2)
-        ;; (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint-lemma-1
-        ;;           . 1)
         (:rewrite hifat-to-lofat-inversion-lemma-2)
         (:definition assoc-equal)
         (:rewrite not-intersectp-list-when-atom)
@@ -16890,6 +17053,1296 @@ Some (rather awful) testing forms are
            :use (:instance lofat-place-file-correctness-lemma-189
                            (x nil)))))
 
+(defthm lofat-remove-file-alt-correctness-lemma-24
+  (implies
+   (and
+    (consp (cdr path))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file-alt fat32$c
+                                      (mv-nth 0 (find-d-e d-e-list filename))
+                                      path))
+       (make-d-e-list
+        (mv-nth 0
+                (d-e-cc-contents fat32$c
+                                 (mv-nth 0 (find-d-e d-e-list filename)))))
+       entry-limit))
+     0)
+    (not-intersectp-list
+     (mv-nth 0
+             (d-e-cc fat32$c
+                     (mv-nth 0 (find-d-e d-e-list filename))))
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file-alt fat32$c
+                                      (mv-nth 0 (find-d-e d-e-list filename))
+                                      path))
+       (make-d-e-list
+        (mv-nth 0
+                (d-e-cc-contents fat32$c
+                                 (mv-nth 0 (find-d-e d-e-list filename)))))
+       entry-limit)))
+    (not
+     (member-intersectp-equal
+      (mv-nth 2
+              (lofat-to-hifat-helper fat32$c (delete-d-e d-e-list filename)
+                                     entry-limit))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file-alt fat32$c
+                                       (mv-nth 0 (find-d-e d-e-list filename))
+                                       path))
+        (make-d-e-list
+         (mv-nth 0
+                 (d-e-cc-contents fat32$c
+                                  (mv-nth 0 (find-d-e d-e-list filename)))))
+        entry-limit))))
+    (lofat-fs-p fat32$c)
+    (useful-d-e-list-p d-e-list)
+    (equal (mv-nth 3
+                   (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
+           0)
+    (fat32-filename-list-p path)
+    (d-e-directory-p (mv-nth 0 (find-d-e d-e-list filename)))
+    (< (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list filename)))
+       (+ 2 (count-of-clusters fat32$c)))
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file-alt fat32$c
+                                       (mv-nth 0 (find-d-e d-e-list filename))
+                                       path))
+        (make-d-e-list
+         (mv-nth 0
+                 (d-e-cc-contents fat32$c
+                                  (mv-nth 0 (find-d-e d-e-list filename)))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32$c
+        (make-d-e-list
+         (mv-nth 0
+                 (d-e-cc-contents fat32$c
+                                  (mv-nth 0 (find-d-e d-e-list filename)))))
+        entry-limit)))))
+   (and
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file-alt fat32$c
+                                      (mv-nth 0 (find-d-e d-e-list filename))
+                                      path))
+       d-e-list entry-limit))
+     0)
+    (equal
+     (mv-nth
+      0
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file-alt fat32$c
+                                      (mv-nth 0 (find-d-e d-e-list filename))
+                                      path))
+       d-e-list entry-limit))
+     (put-assoc-equal
+      filename
+      (m1-file
+       (mv-nth 0 (find-d-e d-e-list filename))
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         (mv-nth
+          0
+          (lofat-remove-file-alt fat32$c
+                                 (mv-nth 0 (find-d-e d-e-list filename))
+                                 path))
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c
+                                   (mv-nth 0 (find-d-e d-e-list filename)))))
+         entry-limit)))
+      (mv-nth 0
+              (lofat-to-hifat-helper fat32$c d-e-list entry-limit))))))
+  :hints
+  (("goal" :in-theory (disable lofat-remove-file-alt-correctness-lemma-12)
+    :use (:instance lofat-remove-file-alt-correctness-lemma-12
+                    (x nil)))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-26
+  (implies
+   (and
+    (fat32-filename-list-p path)
+    (<=
+     (+ 2 (count-of-clusters fat32$c))
+     (d-e-first-cluster
+      (mv-nth
+       0
+       (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+    (consp (cdr path)))
+   (equal
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      (mv-nth 0
+              (lofat-remove-file-helper fat32$c root-d-e path))
+      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+      entry-limit))
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      fat32$c
+      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+      entry-limit))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-27
+  (implies
+   (and
+    (fat32-filename-list-p path)
+    (<
+     (d-e-first-cluster
+      (mv-nth
+       0
+       (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path))))
+     2)
+    (consp (cdr path)))
+   (equal
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      (mv-nth 0
+              (lofat-remove-file-helper fat32$c root-d-e path))
+      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+      entry-limit))
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      fat32$c
+      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+      entry-limit))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-28
+  (implies
+   (and
+    (fat32-filename-list-p path)
+    (not
+     (d-e-directory-p
+      (mv-nth
+       0
+       (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+    (consp (cdr path)))
+   (equal
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      (mv-nth 0
+              (lofat-remove-file-helper fat32$c root-d-e path))
+      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+      entry-limit))
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      fat32$c
+      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+      entry-limit))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-34
+  (equal
+         (mv-nth 1
+                 (lofat-remove-file-helper fat32$c root-d-e nil))
+         *enoent*)
+  :hints (("goal" :do-not-induct t
+          :in-theory (enable lofat-remove-file-helper))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-35
+  (implies
+   (and
+    (not
+     (d-e-directory-p
+      (mv-nth
+       0
+       (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+    (good-root-d-e-p root-d-e fat32$c)
+    (fat32-filename-list-p path)
+    (consp path)
+    (not (consp (cdr path)))
+    (equal
+     (mv-nth
+      1
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))
+     0))
+   (equal
+    (mv-nth 1
+            (lofat-remove-file-helper fat32$c root-d-e path))
+    0))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-36
+  (implies
+   (and
+    (fat32-filename-list-p path)
+    (not
+     (equal
+      (mv-nth
+       1
+       (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))
+      0)))
+   (equal
+    (mv-nth 1
+            (lofat-remove-file-helper fat32$c root-d-e path))
+    *enoent*))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-37
+  (implies
+   (and
+    (good-root-d-e-p root-d-e fat32$c)
+    (fat32-filename-list-p path)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit))
+     0)
+    (not-intersectp-list
+     (mv-nth 0 (d-e-cc fat32$c root-d-e))
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit)))
+    (equal
+     (mv-nth
+      1
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))
+     0))
+   (equal
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      (mv-nth 0
+              (lofat-remove-file-helper fat32$c root-d-e path))
+      (delete-d-e
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       (car path))
+      entry-limit))
+    (remove-assoc-equal
+     (car path)
+     (mv-nth
+      0
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-38
+  (implies
+   (and
+    (fat32-filename-list-p path)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit))
+     0)
+    (<=
+     (+ 2 (count-of-clusters fat32$c))
+     (d-e-first-cluster
+      (mv-nth
+       0
+       (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+    (equal
+     (mv-nth
+      1
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))
+     0)
+    (consp (cdr path)))
+   (equal
+    (mv-nth 1
+            (lofat-remove-file-helper fat32$c root-d-e path))
+    *enotdir*))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-39
+  (implies
+   (and
+    (fat32-filename-list-p path)
+    (not
+     (d-e-directory-p
+      (mv-nth
+       0
+       (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+    (equal
+     (mv-nth
+      1
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))
+     0)
+    (consp (cdr path)))
+   (equal
+    (mv-nth 1
+            (lofat-remove-file-helper fat32$c root-d-e path))
+    *enotdir*))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-40
+  (implies
+   (and
+    (not (consp (cdr path)))
+    (consp path)
+    (equal
+     (mv-nth
+      1
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))
+     0)
+    (good-root-d-e-p root-d-e fat32$c)
+    (fat32-filename-list-p path))
+   (equal
+    (mv-nth 1
+            (lofat-remove-file-helper fat32$c root-d-e path))
+    0))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm lofat-remove-file-alt-correctness-lemma-41
+  (implies
+   (and
+    (consp path)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth
+        0
+        (lofat-remove-file-alt
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (car path)))
+         (cdr path)))
+       (make-d-e-list
+        (mv-nth
+         0
+         (d-e-cc-contents
+          (mv-nth
+           0
+           (lofat-remove-file-alt
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (cdr path)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path))))))
+       entry-limit))
+     0)
+    (equal
+     (mv-nth
+      0
+      (lofat-to-hifat-helper
+       (mv-nth
+        0
+        (lofat-remove-file-alt
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (car path)))
+         (cdr path)))
+       (make-d-e-list
+        (mv-nth
+         0
+         (d-e-cc-contents
+          (mv-nth
+           0
+           (lofat-remove-file-alt
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (cdr path)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path))))))
+       entry-limit))
+     (mv-nth
+      0
+      (hifat-remove-file
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth
+           0
+           (d-e-cc-contents
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path))))))
+         entry-limit))
+       (cdr path))))
+    (not-intersectp-list
+     (mv-nth
+      0
+      (d-e-cc
+       fat32$c
+       (mv-nth
+        0
+        (find-d-e
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         (car path)))))
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       (mv-nth
+        0
+        (lofat-remove-file-alt
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (car path)))
+         (cdr path)))
+       (make-d-e-list
+        (mv-nth
+         0
+         (d-e-cc-contents
+          (mv-nth
+           0
+           (lofat-remove-file-alt
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (cdr path)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path))))))
+       entry-limit)))
+    (not
+     (member-intersectp-equal
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        fat32$c
+        (delete-d-e
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         (car path))
+        entry-limit))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (lofat-remove-file-alt
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path)))
+          (cdr path)))
+        (make-d-e-list
+         (mv-nth
+          0
+          (d-e-cc-contents
+           (mv-nth
+            0
+            (lofat-remove-file-alt
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path)))
+             (cdr path)))
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))
+        entry-limit))))
+    (not-intersectp-list
+     x
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       (mv-nth
+        0
+        (lofat-remove-file-alt
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (car path)))
+         (cdr path)))
+       (make-d-e-list
+        (mv-nth
+         0
+         (d-e-cc-contents
+          (mv-nth
+           0
+           (lofat-remove-file-alt
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (cdr path)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path))))))
+       entry-limit)))
+    (equal
+     (mv-nth
+      1
+      (hifat-remove-file
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth
+           0
+           (d-e-cc-contents
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path))))))
+         entry-limit))
+       (cdr path)))
+     (mv-nth
+      1
+      (lofat-remove-file-alt
+       fat32$c
+       (mv-nth
+        0
+        (find-d-e
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         (car path)))
+       (cdr path))))
+    (good-root-d-e-p root-d-e fat32$c)
+    (non-free-index-listp x (effective-fat fat32$c))
+    (fat32-filename-list-p path)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit))
+     0)
+    (not-intersectp-list
+     x
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit)))
+    (d-e-directory-p
+     (mv-nth
+      0
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))))
+   (not-intersectp-list
+    x
+    (mv-nth
+     2
+     (lofat-to-hifat-helper
+      (mv-nth
+       0
+       (lofat-remove-file-alt
+        fat32$c
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          (car path)))
+        (cdr path)))
+      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+      entry-limit))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d (lofat-remove-file-alt)
+         ((:rewrite lofat-remove-file-alt-correctness-lemma-12)
+          (:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)
+          (:linear hifat-entry-count-of-hifat-remove-file)))
+    :use
+    ((:instance
+      (:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)
+      (path (cdr path))
+      (d-e
+       (mv-nth
+        0
+        (find-d-e
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         (car path))))
+      (fat32$c fat32$c))
+     (:instance
+      (:rewrite lofat-remove-file-alt-correctness-lemma-12)
+      (entry-limit entry-limit)
+      (path (cdr path))
+      (filename (car path))
+      (d-e-list (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e))))
+      (fat32$c fat32$c)
+      (x x))
+     (:instance
+      (:linear hifat-entry-count-of-hifat-remove-file)
+      (path (cdr path))
+      (fs
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth
+           0
+           (d-e-cc-contents
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path))))))
+         entry-limit))))))))
+
+(defthm
+  lofat-remove-file-alt-correctness-lemma-42
+  (implies
+   (and
+    (equal
+     (d-e-cc-contents
+      (mv-nth
+       0
+       (lofat-remove-file-helper
+        fat32$c
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          (car path)))
+        (cdr path)))
+      (mv-nth
+       0
+       (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path))))
+     (cons
+      (implode
+       (append
+        (nats=>chars
+         (clear-d-e
+          (string=>nats
+           (mv-nth
+            0
+            (d-e-cc-contents
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path))))))
+          (cadr path)))
+        (make-list-ac
+         (+
+          (-
+           (len
+            (explode
+             (mv-nth
+              0
+              (d-e-cc-contents
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path))))))))
+          (*
+           (cluster-size fat32$c)
+           (len
+            (make-clusters
+             (nats=>string
+              (clear-d-e
+               (string=>nats
+                (mv-nth
+                 0
+                 (d-e-cc-contents
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+               (cadr path)))
+             (cluster-size fat32$c)))))
+         #\  nil)))
+      '(0)))
+    (consp path)
+    (equal
+     (mv-nth
+      0
+      (lofat-to-hifat-helper
+       (mv-nth
+        0
+        (lofat-remove-file-helper
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (car path)))
+         (cdr path)))
+       (make-d-e-list
+        (mv-nth
+         0
+         (d-e-cc-contents
+          (mv-nth
+           0
+           (lofat-remove-file-helper
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (cdr path)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path))))))
+       entry-limit))
+     (mv-nth
+      0
+      (hifat-remove-file
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth
+           0
+           (d-e-cc-contents
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path))))))
+         entry-limit))
+       (cdr path))))
+    (good-root-d-e-p root-d-e fat32$c)
+    (fat32-filename-list-p path)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit))
+     0)
+    (d-e-directory-p
+     (mv-nth
+      0
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))))
+   (equal
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      (mv-nth
+       0
+       (lofat-remove-file-helper
+        fat32$c
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          (car path)))
+        (cdr path)))
+      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+      entry-limit))
+    (put-assoc-equal
+     (car path)
+     (m1-file-hifat-file-alist-fix
+      (mv-nth
+       0
+       (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))
+      (mv-nth
+       0
+       (hifat-remove-file
+        (mv-nth
+         0
+         (lofat-to-hifat-helper
+          fat32$c
+          (make-d-e-list
+           (mv-nth
+            0
+            (d-e-cc-contents
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path))))))
+          entry-limit))
+        (cdr path))))
+     (mv-nth
+      0
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm
+  lofat-remove-file-alt-correctness-lemma-43
+  (implies
+   (and
+    (consp path)
+    (good-root-d-e-p root-d-e fat32$c)
+    (fat32-filename-list-p path)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit))
+     0)
+    (d-e-directory-p
+     (mv-nth
+      0
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))))
+   (equal
+    (mv-nth
+     3
+     (lofat-to-hifat-helper
+      (mv-nth
+       0
+       (lofat-remove-file-helper
+        fat32$c
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          (car path)))
+        (cdr path)))
+      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+      entry-limit))
+    0))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-remove-file-helper))))
+
+(defthm
+  lofat-remove-file-alt-correctness-lemma-44
+  (implies
+   (and
+    (consp path)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth
+        0
+        (lofat-remove-file-alt
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (car path)))
+         (cdr path)))
+       (make-d-e-list
+        (mv-nth
+         0
+         (d-e-cc-contents
+          (mv-nth
+           0
+           (lofat-remove-file-alt
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (cdr path)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path))))))
+       entry-limit))
+     0)
+    (equal
+     (mv-nth
+      0
+      (lofat-to-hifat-helper
+       (mv-nth
+        0
+        (lofat-remove-file-alt
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (car path)))
+         (cdr path)))
+       (make-d-e-list
+        (mv-nth
+         0
+         (d-e-cc-contents
+          (mv-nth
+           0
+           (lofat-remove-file-alt
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (cdr path)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path))))))
+       entry-limit))
+     (mv-nth
+      0
+      (hifat-remove-file
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth
+           0
+           (d-e-cc-contents
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path))))))
+         entry-limit))
+       (cdr path))))
+    (not-intersectp-list
+     (mv-nth
+      0
+      (d-e-cc
+       fat32$c
+       (mv-nth
+        0
+        (find-d-e
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         (car path)))))
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       (mv-nth
+        0
+        (lofat-remove-file-alt
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (car path)))
+         (cdr path)))
+       (make-d-e-list
+        (mv-nth
+         0
+         (d-e-cc-contents
+          (mv-nth
+           0
+           (lofat-remove-file-alt
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (cdr path)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path))))))
+       entry-limit)))
+    (not
+     (member-intersectp-equal
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        fat32$c
+        (delete-d-e
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         (car path))
+        entry-limit))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (lofat-remove-file-alt
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path)))
+          (cdr path)))
+        (make-d-e-list
+         (mv-nth
+          0
+          (d-e-cc-contents
+           (mv-nth
+            0
+            (lofat-remove-file-alt
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path)))
+             (cdr path)))
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))
+        entry-limit))))
+    (equal
+     (mv-nth
+      1
+      (hifat-remove-file
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth
+           0
+           (d-e-cc-contents
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path))))))
+         entry-limit))
+       (cdr path)))
+     (mv-nth
+      1
+      (lofat-remove-file-alt
+       fat32$c
+       (mv-nth
+        0
+        (find-d-e
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         (car path)))
+       (cdr path))))
+    (good-root-d-e-p root-d-e fat32$c)
+    (fat32-filename-list-p path)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit))
+     0)
+    (d-e-directory-p
+     (mv-nth
+      0
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))))
+   (and
+    (equal
+     (mv-nth
+      0
+      (lofat-to-hifat-helper
+       (mv-nth
+        0
+        (lofat-remove-file-alt
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (car path)))
+         (cdr path)))
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit))
+     (put-assoc-equal
+      (car path)
+      (m1-file-hifat-file-alist-fix
+       (mv-nth
+        0
+        (find-d-e
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         (car path)))
+       (mv-nth
+        0
+        (hifat-remove-file
+         (mv-nth
+          0
+          (lofat-to-hifat-helper
+           fat32$c
+           (make-d-e-list
+            (mv-nth
+             0
+             (d-e-cc-contents
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           entry-limit))
+         (cdr path))))
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32$c
+        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+        entry-limit))))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth
+        0
+        (lofat-remove-file-alt
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (car path)))
+         (cdr path)))
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       entry-limit))
+     0)))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d (lofat-remove-file-alt)
+         (lofat-remove-file-alt-correctness-lemma-24
+          (:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)
+          (:linear hifat-entry-count-of-hifat-remove-file)))
+    :use
+    ((:instance
+      (:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)
+      (path (cdr path))
+      (d-e
+       (mv-nth
+        0
+        (find-d-e
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         (car path))))
+      (fat32$c fat32$c))
+     (:instance
+      lofat-remove-file-alt-correctness-lemma-24
+      (entry-limit entry-limit)
+      (path (cdr path))
+      (filename (car path))
+      (d-e-list (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e))))
+      (fat32$c fat32$c))
+     (:instance
+      (:linear hifat-entry-count-of-hifat-remove-file)
+      (path (cdr path))
+      (fs
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth
+           0
+           (d-e-cc-contents
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path))))))
+         entry-limit))))))))
+
 (encapsulate
   ()
 
@@ -16960,7 +18413,7 @@ Some (rather awful) testing forms are
   (defthm
     lofat-remove-file-alt-correctness-lemma-1
     (b*
-        (((mv fs &)
+        (((mv fs error-code)
           (hifat-remove-file
            (mv-nth 0
                    (lofat-to-hifat-helper
@@ -17042,7 +18495,11 @@ Some (rather awful) testing forms are
                              0
                              (lofat-remove-file-alt fat32$c root-d-e path))
                             root-d-e)))
-                  entry-limit))))))
+                  entry-limit)))
+        (equal error-code
+               (mv-nth
+                1
+                (lofat-remove-file-alt fat32$c root-d-e path))))))
     :hints
     (("goal"
       :induct
@@ -17056,8 +18513,7 @@ Some (rather awful) testing forms are
                    lofat-to-hifat-inversion-lemma-15
                    lofat-remove-file-alt)
                   ((:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-9)
-                   (:rewrite intersectp-is-commutative)
-                   (:forward-chaining lofat-place-file-correctness-lemma-1)))))
+                   (:rewrite intersectp-is-commutative)))))
     :rule-classes
     ((:rewrite
       :corollary
@@ -17104,6 +18560,82 @@ Some (rather awful) testing forms are
                             (lofat-remove-file-alt fat32$c root-d-e path))
                            root-d-e)))
                  entry-limit))))))))
+
+(defthm
+  lofat-remove-file-alt-correctness-1
+  (b*
+      (((mv fs error-code)
+        (hifat-remove-file
+         (mv-nth 0
+                 (lofat-to-hifat-helper
+                  fat32$c
+                  (make-d-e-list
+                   (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  entry-limit))
+         path)))
+    (implies
+     (and
+      (good-root-d-e-p root-d-e fat32$c)
+      (fat32-filename-list-p path)
+      (equal (mv-nth 3
+                     (lofat-to-hifat-helper
+                      fat32$c
+                      (make-d-e-list
+                       (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                      entry-limit))
+             0)
+      (not-intersectp-list
+       (mv-nth 0 (d-e-cc fat32$c root-d-e))
+       (mv-nth 2
+               (lofat-to-hifat-helper
+                fat32$c
+                (make-d-e-list
+                 (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                entry-limit))))
+     (and
+      (equal
+       (mv-nth 3
+               (lofat-to-hifat-helper
+                (mv-nth
+                 0
+                 (lofat-remove-file-alt fat32$c root-d-e path))
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents
+                          (mv-nth
+                           0
+                           (lofat-remove-file-alt fat32$c root-d-e path))
+                          root-d-e)))
+                entry-limit))
+       0)
+      (equal
+       (mv-nth 0
+               (lofat-to-hifat-helper
+                (mv-nth
+                 0
+                 (lofat-remove-file-alt fat32$c root-d-e path))
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents
+                          (mv-nth
+                           0
+                           (lofat-remove-file-alt fat32$c root-d-e path))
+                          root-d-e)))
+                entry-limit))
+       fs)
+      (equal error-code
+             (mv-nth
+              1
+              (lofat-remove-file-alt fat32$c root-d-e path))))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable
+                lofat-remove-file-alt-correctness-lemma-1)
+    :use
+    (:instance
+     lofat-remove-file-alt-correctness-lemma-1
+     (x nil)))))
 
 (encapsulate
   ()
