@@ -14723,7 +14723,9 @@ Some (rather awful) testing forms are
         (:rewrite
          d-e-cc-of-lofat-remove-file-alt-disjoint)
         (:rewrite
-         d-e-cc-contents-of-lofat-remove-file-alt-disjoint)))
+         d-e-cc-contents-of-lofat-remove-file-alt-disjoint)
+        (:rewrite not-intersectp-list-when-subsetp-1)
+        (:rewrite not-intersectp-list-of-set-difference$-lemma-3)))
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c
                                              d-e-list entry-limit))
@@ -31122,7 +31124,6 @@ Some (rather awful) testing forms are
       (:rewrite d-e-cc-under-iff . 3)
       (:rewrite subsetp-when-atom-right)
       (:rewrite subsetp-when-atom-left)
-      (:rewrite lofat-place-file-correctness-lemma-69)
       (:rewrite append-atom-under-list-equiv)
       (:rewrite lofat-place-file-correctness-lemma-5)
       (:rewrite m1-file-of-m1-file-contents-fix-contents-normalize-const)
@@ -35249,7 +35250,6 @@ Some (rather awful) testing forms are
         (:rewrite d-e-cc-under-iff . 3)
         (:rewrite subsetp-when-atom-right)
         (:rewrite subsetp-when-atom-left)
-        (:rewrite lofat-place-file-correctness-lemma-69)
         (:rewrite append-atom-under-list-equiv)
         (:rewrite lofat-place-file-correctness-lemma-5)
         (:rewrite m1-file-of-m1-file-contents-fix-contents-normalize-const)
@@ -35314,7 +35314,8 @@ Some (rather awful) testing forms are
         (:rewrite lofat-place-file-correctness-1-lemma-11)
         (:rewrite lofat-place-file-correctness-1-lemma-16)
         (:rewrite lofat-place-file-correctness-1-lemma-15)
-        (:rewrite lofat-place-file-correctness-1-lemma-17)))
+        (:rewrite lofat-place-file-correctness-1-lemma-17)
+        (:rewrite lofat-remove-file-alt-correctness-lemma-14)))
       :induct (induction-scheme d-e-list entry-limit fat32$c x)
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
@@ -35765,7 +35766,6 @@ Some (rather awful) testing forms are
         (:rewrite d-e-cc-under-iff . 3)
         (:rewrite subsetp-when-atom-right)
         (:rewrite subsetp-when-atom-left)
-        (:rewrite lofat-place-file-correctness-lemma-69)
         (:rewrite append-atom-under-list-equiv)
         (:rewrite hifat-subsetp-preserves-assoc)
         (:rewrite consp-of-assoc-when-hifat-equiv-lemma-1)
