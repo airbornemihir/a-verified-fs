@@ -356,7 +356,7 @@
        ((unless (lofat-regular-file-p file))
         (mv fat32$c -1 *eisdir*))
        ((mv fat32$c error-code)
-        (lofat-remove-file-alt fat32$c (pseudo-root-d-e fat32$c)
+        (lofat-remove-file fat32$c (pseudo-root-d-e fat32$c)
                                path))
        ((unless (equal error-code 0))
         (mv fat32$c -1 error-code)))
@@ -523,17 +523,17 @@
               (max-entry-count fat32$c)))
      0))
    (equal (d-e-cc (mv-nth 0
-                          (lofat-remove-file-alt fat32$c d-e path))
+                          (lofat-remove-file fat32$c d-e path))
                   d-e)
           (d-e-cc fat32$c d-e)))
   :hints
   (("goal"
     :do-not-induct t
-    :expand (lofat-remove-file-alt fat32$c d-e path)
-    :in-theory (disable (:rewrite d-e-cc-of-lofat-remove-file-alt-disjoint))
+    :expand (lofat-remove-file fat32$c d-e path)
+    :in-theory (disable (:rewrite d-e-cc-of-lofat-remove-file-disjoint))
     :use
     (:instance
-     (:rewrite d-e-cc-of-lofat-remove-file-alt-disjoint)
+     (:rewrite d-e-cc-of-lofat-remove-file-disjoint)
      (entry-limit (max-entry-count fat32$c))
      (path (cdr path))
      (root-d-e
@@ -582,7 +582,7 @@
      2
      (lofat-to-hifat-helper
       (mv-nth 0
-              (lofat-remove-file-alt fat32$c (pseudo-root-d-e fat32$c)
+              (lofat-remove-file fat32$c (pseudo-root-d-e fat32$c)
                                      path))
       (make-d-e-list
        (mv-nth 0
@@ -591,8 +591,8 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable lofat-remove-file-alt-correctness-lemma-1)
-    :use (:instance lofat-remove-file-alt-correctness-lemma-1
+    :in-theory (disable lofat-remove-file-correctness-lemma-1)
+    :use (:instance lofat-remove-file-correctness-lemma-1
                     (root-d-e (pseudo-root-d-e fat32$c))
                     (x (mv-nth 0
                                (d-e-cc fat32$c (pseudo-root-d-e fat32$c))))
@@ -640,7 +640,7 @@
        0
        (d-e-cc-contents
         (mv-nth 0
-                (lofat-remove-file-alt fat32$c (pseudo-root-d-e fat32$c)
+                (lofat-remove-file fat32$c (pseudo-root-d-e fat32$c)
                                        path))
         (pseudo-root-d-e fat32$c)))))
     65534))
@@ -648,11 +648,11 @@
   (("goal"
     :do-not-induct t
     :in-theory
-    (e/d (lofat-remove-file-alt)
-         ((:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)
+    (e/d (lofat-remove-file)
+         ((:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
           make-list-ac-removal))
     :use
-    (:instance (:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)
+    (:instance (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
                (path path)
                (d-e (pseudo-root-d-e fat32$c))
                (fat32$c fat32$c)
@@ -772,17 +772,17 @@
       (mv-nth
        0
        (d-e-cc (mv-nth 0
-                       (lofat-remove-file-alt fat32$c (pseudo-root-d-e fat32$c)
+                       (lofat-remove-file fat32$c (pseudo-root-d-e fat32$c)
                                               path))
                (pseudo-root-d-e fat32$c)))))
     :hints
     (("goal"
       :do-not-induct t
-      :expand (lofat-remove-file-alt fat32$c (pseudo-root-d-e fat32$c)
+      :expand (lofat-remove-file fat32$c (pseudo-root-d-e fat32$c)
                                      path)
       :in-theory
       (e/d
-       (lofat-remove-file-alt lofat-remove-file-helper)
+       (lofat-remove-file lofat-remove-file-helper)
        (make-list-ac-removal
         (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident-lemma-6)))
       :use
@@ -1423,7 +1423,7 @@
      (lofat-unlink
       lofat-to-hifat root-d-e-list
       update-dir-contents-correctness-1)
-     ((:rewrite lofat-remove-file-alt-correctness-1)
+     ((:rewrite lofat-remove-file-correctness-1)
       make-list-ac-removal
       (:rewrite lofat-find-file-correctness-1)
       (:rewrite
@@ -1475,12 +1475,12 @@
     (("goal"
       :do-not-induct t
       :in-theory
-      (e/d (lofat-remove-file-alt)
+      (e/d (lofat-remove-file)
            ((:rewrite d-e-cc-of-update-dir-contents-coincident)
             make-list-ac-removal
-            (:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)))
+            (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)))
       :use
-      ((:instance (:rewrite lofat-remove-file-alt-correctness-1)
+      ((:instance (:rewrite lofat-remove-file-correctness-1)
                   (entry-limit (max-entry-count fat32$c))
                   (path path)
                   (root-d-e (pseudo-root-d-e fat32$c))
@@ -1529,7 +1529,7 @@
                     (d-e-cc-contents
                      fat32$c (pseudo-root-d-e fat32$c))))
            (max-entry-count fat32$c))))) (:instance
-        (:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident) (path path)
+        (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident) (path path)
         (d-e (pseudo-root-d-e fat32$c))
         (fat32$c fat32$c) (entry-limit (max-entry-count fat32$c))))))))
 

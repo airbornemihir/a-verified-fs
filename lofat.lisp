@@ -3216,11 +3216,11 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  max-entry-count-of-lofat-remove-file-alt
+  max-entry-count-of-lofat-remove-file
   (equal (max-entry-count (mv-nth 0
-                                  (lofat-remove-file-alt fat32$c d-e path)))
+                                  (lofat-remove-file fat32$c d-e path)))
          (max-entry-count fat32$c))
-  :hints (("goal" :in-theory (enable lofat-remove-file-alt))))
+  :hints (("goal" :in-theory (enable lofat-remove-file))))
 
 (defthm
   pseudo-root-d-e-of-lofat-remove-file-helper
@@ -3233,14 +3233,14 @@ Some (rather awful) testing forms are
   :hints (("Goal" :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  pseudo-root-d-e-of-lofat-remove-file-alt
+  pseudo-root-d-e-of-lofat-remove-file
   (equal
    (pseudo-root-d-e
     (mv-nth
      0
-     (lofat-remove-file-alt fat32$c root-d-e path)))
+     (lofat-remove-file fat32$c root-d-e path)))
    (pseudo-root-d-e fat32$c))
-  :hints (("Goal" :in-theory (enable lofat-remove-file-alt))))
+  :hints (("Goal" :in-theory (enable lofat-remove-file))))
 
 (defthm
   get-cc-contents-of-update-dir-contents-disjoint
@@ -10557,7 +10557,7 @@ Some (rather awful) testing forms are
                        good-root-d-e-p))))
 
 (defthm
-  d-e-cc-of-lofat-remove-file-alt-disjoint-lemma-1
+  d-e-cc-of-lofat-remove-file-disjoint-lemma-1
   (implies
    (not (consp path))
    (equal (d-e-cc (mv-nth 0
@@ -10568,7 +10568,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  d-e-cc-of-lofat-remove-file-alt-disjoint-lemma-2
+  d-e-cc-of-lofat-remove-file-disjoint-lemma-2
   (implies
    (<
     0
@@ -10584,7 +10584,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  d-e-cc-of-lofat-remove-file-alt-disjoint-lemma-3
+  d-e-cc-of-lofat-remove-file-disjoint-lemma-3
   (implies
    (and
     (<
@@ -10611,7 +10611,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  d-e-cc-of-lofat-remove-file-alt-disjoint-lemma-4
+  d-e-cc-of-lofat-remove-file-disjoint-lemma-4
   (implies
    (and
     (lofat-fs-p fat32$c)
@@ -10657,7 +10657,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  d-e-cc-of-lofat-remove-file-alt-disjoint
+  d-e-cc-of-lofat-remove-file-disjoint
   (implies
    (and
     (lofat-fs-p fat32$c)
@@ -10698,14 +10698,14 @@ Some (rather awful) testing forms are
     (equal (mv-nth 1 (d-e-cc-contents fat32$c d-e))
            0))
    (equal (d-e-cc (mv-nth 0
-                          (lofat-remove-file-alt fat32$c root-d-e path))
+                          (lofat-remove-file fat32$c root-d-e path))
                   d-e)
           (d-e-cc fat32$c d-e)))
-  :hints (("goal" :induct (lofat-remove-file-alt fat32$c root-d-e path)
-           :in-theory (enable lofat-remove-file-alt))))
+  :hints (("goal" :induct (lofat-remove-file fat32$c root-d-e path)
+           :in-theory (enable lofat-remove-file))))
 
 (defthm
-  count-of-clusters-of-lofat-remove-file-alt-lemma-1
+  count-of-clusters-of-lofat-remove-file-lemma-1
   (equal (count-of-clusters
           (mv-nth 0
                   (lofat-remove-file-helper fat32$c rootclus path)))
@@ -10714,15 +10714,15 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  count-of-clusters-of-lofat-remove-file-alt
+  count-of-clusters-of-lofat-remove-file
   (equal
    (count-of-clusters (mv-nth 0
-                              (lofat-remove-file-alt fat32$c rootclus path)))
+                              (lofat-remove-file fat32$c rootclus path)))
    (count-of-clusters fat32$c))
-  :hints (("goal" :in-theory (enable lofat-remove-file-alt))))
+  :hints (("goal" :in-theory (enable lofat-remove-file))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-13
+  lofat-remove-file-correctness-lemma-31
   (implies
    (and
     (equal (mv-nth 3
@@ -10743,7 +10743,7 @@ Some (rather awful) testing forms are
            :use lofat-to-hifat-helper-correctness-4)))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-14
+  lofat-remove-file-correctness-lemma-14
   (implies
    (and
     (< x
@@ -10764,7 +10764,7 @@ Some (rather awful) testing forms are
            :use lofat-to-hifat-helper-correctness-4)))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-15
+  lofat-remove-file-correctness-lemma-15
   (implies
    (and
     (equal
@@ -10795,7 +10795,7 @@ Some (rather awful) testing forms are
            :use lofat-to-hifat-helper-correctness-4)))
 
 (defthm
-  d-e-cc-contents-of-lofat-remove-file-alt-disjoint-lemma-1
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-5
   (implies
    (not (consp path))
    (equal (d-e-cc-contents
@@ -10807,7 +10807,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  d-e-cc-contents-of-lofat-remove-file-alt-disjoint-lemma-4
+  d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-8
   (implies
    (and
     (lofat-fs-p fat32$c)
@@ -10854,7 +10854,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  d-e-cc-contents-of-lofat-remove-file-alt-disjoint
+  d-e-cc-contents-of-lofat-remove-file-disjoint
   (implies
    (and
     (lofat-fs-p fat32$c)
@@ -10896,14 +10896,14 @@ Some (rather awful) testing forms are
            0))
    (equal
     (d-e-cc-contents (mv-nth 0
-                             (lofat-remove-file-alt fat32$c root-d-e path))
+                             (lofat-remove-file fat32$c root-d-e path))
                      d-e)
     (d-e-cc-contents fat32$c d-e)))
-  :hints (("goal" :in-theory (enable lofat-remove-file-alt)
-           :induct (lofat-remove-file-alt fat32$c root-d-e path))))
+  :hints (("goal" :in-theory (enable lofat-remove-file)
+           :induct (lofat-remove-file fat32$c root-d-e path))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-16
+  lofat-remove-file-correctness-lemma-16
   (implies
    (and
     (equal (mv-nth 3
@@ -10951,21 +10951,21 @@ Some (rather awful) testing forms are
    (equal
     (d-e-cc-contents
      (mv-nth 0
-             (lofat-remove-file-alt fat32$c
+             (lofat-remove-file fat32$c
                                     (mv-nth 0 (find-d-e d-e-list name))
                                     path))
      d-e)
     (d-e-cc-contents fat32$c d-e)))
   :hints
   (("goal"
-    :in-theory (disable d-e-cc-contents-of-lofat-remove-file-alt-disjoint
+    :in-theory (disable d-e-cc-contents-of-lofat-remove-file-disjoint
                         lofat-find-file-correctness-1-lemma-6)
-    :use ((:instance d-e-cc-contents-of-lofat-remove-file-alt-disjoint
+    :use ((:instance d-e-cc-contents-of-lofat-remove-file-disjoint
                      (root-d-e (mv-nth 0 (find-d-e d-e-list name))))
           lofat-find-file-correctness-1-lemma-6))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-17
+  lofat-remove-file-correctness-lemma-17
   (implies
    (and
     (equal (mv-nth 3
@@ -11012,21 +11012,21 @@ Some (rather awful) testing forms are
     (useful-d-e-list-p d-e-list))
    (equal
     (d-e-cc (mv-nth 0
-                    (lofat-remove-file-alt fat32$c
+                    (lofat-remove-file fat32$c
                                            (mv-nth 0 (find-d-e d-e-list name))
                                            path))
             d-e)
     (d-e-cc fat32$c d-e)))
   :hints
   (("goal" :do-not-induct t
-    :in-theory (disable d-e-cc-of-lofat-remove-file-alt-disjoint
+    :in-theory (disable d-e-cc-of-lofat-remove-file-disjoint
                         lofat-find-file-correctness-1-lemma-6)
-    :use ((:instance d-e-cc-of-lofat-remove-file-alt-disjoint
+    :use ((:instance d-e-cc-of-lofat-remove-file-disjoint
                      (root-d-e (mv-nth 0 (find-d-e d-e-list name))))
           lofat-find-file-correctness-1-lemma-6))))
 
 (defthm
-  d-e-cc-contents-of-lofat-remove-file-alt-coincident-lemma-1
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-10
   (> (mv-nth 1
              (lofat-remove-file-helper fat32$c d-e nil))
      0)
@@ -11035,7 +11035,7 @@ Some (rather awful) testing forms are
   :rule-classes :linear)
 
 (defthm
-  d-e-cc-contents-of-lofat-remove-file-alt-coincident-lemma-2
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-11
   (implies
    (and
     (lofat-fs-p fat32$c)
@@ -11055,7 +11055,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  d-e-cc-contents-of-lofat-remove-file-alt-coincident-lemma-3
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-12
   (implies
    (and
     (lofat-fs-p fat32$c)
@@ -11109,7 +11109,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  d-e-cc-contents-of-lofat-remove-file-alt-coincident-lemma-4
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-13
   (implies
    (and
     (fat32-filename-list-p path)
@@ -11130,7 +11130,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  d-e-cc-contents-of-lofat-remove-file-alt-coincident-lemma-5
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-5
   (implies
    (and
     (fat32-filename-list-p path)
@@ -11150,7 +11150,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  d-e-cc-contents-of-lofat-remove-file-alt-coincident-lemma-6
+  d-e-cc-contents-of-lofat-remove-file-coincident-lemma-14
   (implies
    (and
     (fat32-filename-list-p path)
@@ -11172,7 +11172,7 @@ Some (rather awful) testing forms are
 
 ;; Reformulated in a way that avoids case splits.
 (defthm
-  d-e-cc-contents-of-lofat-remove-file-alt-coincident
+  d-e-cc-contents-of-lofat-remove-file-coincident
   (implies
    (and
     (lofat-fs-p fat32$c)
@@ -11198,23 +11198,23 @@ Some (rather awful) testing forms are
    (and
     (implies
      (or (not (equal (mv-nth 1
-                             (lofat-remove-file-alt fat32$c d-e path))
+                             (lofat-remove-file fat32$c d-e path))
                      0))
          (consp (cdr path)))
      (equal
       (d-e-cc-contents (mv-nth 0
-                               (lofat-remove-file-alt fat32$c d-e path))
+                               (lofat-remove-file fat32$c d-e path))
                        d-e)
       (d-e-cc-contents fat32$c d-e)))
     (implies
      (and (equal (mv-nth 1
-                         (lofat-remove-file-alt fat32$c d-e path))
+                         (lofat-remove-file fat32$c d-e path))
                  0)
           (not
            (consp (cdr path))))
      (equal
       (d-e-cc-contents (mv-nth 0
-                               (lofat-remove-file-alt fat32$c d-e path))
+                               (lofat-remove-file fat32$c d-e path))
                        d-e)
       (mv
        (implode
@@ -11238,10 +11238,10 @@ Some (rather awful) testing forms are
           nil)))
        0)))))
   :hints (("goal" :do-not-induct t
-           :expand (lofat-remove-file-alt fat32$c d-e path))))
+           :expand (lofat-remove-file fat32$c d-e path))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-18
+  lofat-remove-file-correctness-lemma-18
   (implies
    (and
     (<
@@ -11261,7 +11261,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-19
+  lofat-remove-file-correctness-lemma-19
   (implies
    (and
     (consp (cdr path))
@@ -11280,7 +11280,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-20
+  lofat-remove-file-correctness-lemma-20
   (implies
    (and
     (consp (cdr path))
@@ -11300,7 +11300,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-21
+  lofat-remove-file-correctness-lemma-21
   (implies
    (and
     (d-e-p d-e)
@@ -11324,16 +11324,16 @@ Some (rather awful) testing forms are
               entry-limit)))
     (fat32-filename-list-p path))
    (equal (d-e-cc (mv-nth 0
-                          (lofat-remove-file-alt fat32$c d-e path))
+                          (lofat-remove-file fat32$c d-e path))
                   d-e)
           (d-e-cc fat32$c d-e)))
   :hints
   (("goal"
-    :expand (lofat-remove-file-alt fat32$c d-e path)
-    :in-theory (disable (:rewrite d-e-cc-of-lofat-remove-file-alt-disjoint))
+    :expand (lofat-remove-file fat32$c d-e path)
+    :in-theory (disable (:rewrite d-e-cc-of-lofat-remove-file-disjoint))
     :use
     (:instance
-     (:rewrite d-e-cc-of-lofat-remove-file-alt-disjoint)
+     (:rewrite d-e-cc-of-lofat-remove-file-disjoint)
      (d-e d-e)
      (path (cdr path))
      (root-d-e
@@ -11344,7 +11344,7 @@ Some (rather awful) testing forms are
      (fat32$c fat32$c)))))
 
 (defthm
-  lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint-lemma-1
+  lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-6
   (implies
    (not (consp path))
    (equal (lofat-to-hifat-helper
@@ -11356,7 +11356,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint-lemma-2
+  lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-7
   (implies
    (and
     (useful-d-e-list-p d-e-list)
@@ -11408,7 +11408,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint-lemma-3
+  lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-8
   (implies
    (<
     0
@@ -11425,7 +11425,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint-lemma-4
+  lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-9
   (implies
    (and
     (<
@@ -11456,7 +11456,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint-lemma-5
+  lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-5
   (implies
    (and
     (<=
@@ -11621,7 +11621,7 @@ Some (rather awful) testing forms are
 ;; (mv-nth 3 (lofat-to-hifat-helper ...)) because it relies on
 ;; get-cc-contents-of-lofat-remove-file-coincident-lemma-5.
 (defthm
-  lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint
+  lofat-to-hifat-helper-of-lofat-remove-file-disjoint
   (implies
    (and
     (useful-d-e-list-p d-e-list)
@@ -11668,14 +11668,14 @@ Some (rather awful) testing forms are
               (lofat-to-hifat-helper fat32$c d-e-list entry-limit1)))))
    (equal (lofat-to-hifat-helper
            (mv-nth 0
-                   (lofat-remove-file-alt fat32$c root-d-e path))
+                   (lofat-remove-file fat32$c root-d-e path))
            d-e-list entry-limit1)
           (lofat-to-hifat-helper fat32$c d-e-list entry-limit1)))
-  :hints (("goal" :induct (lofat-remove-file-alt fat32$c root-d-e path)
-           :in-theory (enable lofat-remove-file-alt))))
+  :hints (("goal" :induct (lofat-remove-file fat32$c root-d-e path)
+           :in-theory (enable lofat-remove-file))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-22
+  lofat-remove-file-correctness-lemma-22
   (implies
    (and
     (< (hifat-entry-count
@@ -11697,7 +11697,7 @@ Some (rather awful) testing forms are
   :rule-classes :linear)
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-23
+  lofat-remove-file-correctness-lemma-10
   (implies
    (and (equal (mv-nth 3
                        (lofat-to-hifat-helper fat32$c d-e-list entry-limit1))
@@ -11719,7 +11719,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :use lofat-to-hifat-helper-correctness-4)))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-25
+  lofat-remove-file-correctness-lemma-25
   (implies
    (and
     (useful-d-e-list-p d-e-list2)
@@ -11771,7 +11771,7 @@ Some (rather awful) testing forms are
    (equal
     (lofat-to-hifat-helper
      (mv-nth 0
-             (lofat-remove-file-alt fat32$c
+             (lofat-remove-file fat32$c
                                     (mv-nth 0 (find-d-e d-e-list1 name))
                                     path))
      d-e-list2 entry-limit1)
@@ -11779,9 +11779,9 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory
-    (disable lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint
+    (disable lofat-to-hifat-helper-of-lofat-remove-file-disjoint
              (:rewrite lofat-find-file-correctness-1-lemma-6))
-    :use ((:instance lofat-to-hifat-helper-of-lofat-remove-file-alt-disjoint
+    :use ((:instance lofat-to-hifat-helper-of-lofat-remove-file-disjoint
                      (root-d-e (mv-nth 0 (find-d-e d-e-list1 name)))
                      (d-e-list d-e-list2))
           (:instance (:rewrite lofat-find-file-correctness-1-lemma-6)
@@ -11791,7 +11791,7 @@ Some (rather awful) testing forms are
                      (fat32$c fat32$c))))))
 
 (defthm
-  lofat-fs-p-of-lofat-remove-file-alt-lemma-1
+  lofat-fs-p-of-lofat-remove-file-lemma-1
   (implies
    (and (not (consp path))
         (lofat-fs-p fat32$c))
@@ -11801,7 +11801,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-fs-p-of-lofat-remove-file-alt-lemma-2
+  lofat-fs-p-of-lofat-remove-file-lemma-2
   (implies
    (and
     (<
@@ -11817,7 +11817,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-fs-p-of-lofat-remove-file-alt-lemma-2
+  lofat-fs-p-of-lofat-remove-file-lemma-2
   (implies
    (and
     (<
@@ -11833,7 +11833,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-fs-p-of-lofat-remove-file-alt-lemma-3
+  lofat-fs-p-of-lofat-remove-file-lemma-3
   (implies
    (and
     (<
@@ -11854,7 +11854,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-fs-p-of-lofat-remove-file-alt-lemma-4
+  lofat-fs-p-of-lofat-remove-file-lemma-4
   (implies
    (and (lofat-fs-p fat32$c)
         (d-e-p root-d-e)
@@ -11867,7 +11867,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-fs-p-of-lofat-remove-file-alt
+  lofat-fs-p-of-lofat-remove-file
   (implies
    (and (lofat-fs-p fat32$c)
         (d-e-p root-d-e)
@@ -11877,11 +11877,11 @@ Some (rather awful) testing forms are
            (+ *ms-first-data-cluster*
               (count-of-clusters fat32$c))))
    (lofat-fs-p (mv-nth 0
-                       (lofat-remove-file-alt fat32$c root-d-e path))))
-  :hints (("goal" :in-theory (enable lofat-remove-file-alt))))
+                       (lofat-remove-file fat32$c root-d-e path))))
+  :hints (("goal" :in-theory (enable lofat-remove-file))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-30
+  lofat-remove-file-correctness-lemma-30
   (implies
    (not (consp path))
    (equal (mv-nth 0
@@ -11891,7 +11891,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-33
+  lofat-remove-file-correctness-lemma-33
   (implies
    (and
     (lofat-fs-p fat32$c)
@@ -11911,7 +11911,7 @@ Some (rather awful) testing forms are
                               clear-cc-correctness-3))))
 
 (defthm
-  lofat-remove-file-alt-correctness-2
+  lofat-remove-file-correctness-2
   (implies
    (and (lofat-fs-p fat32$c)
         (d-e-p root-d-e)
@@ -11921,14 +11921,14 @@ Some (rather awful) testing forms are
            (+ *ms-first-data-cluster*
               (count-of-clusters fat32$c)))
         (not (equal (mv-nth 1
-                            (lofat-remove-file-alt fat32$c root-d-e path))
+                            (lofat-remove-file fat32$c root-d-e path))
                     0)))
    (equal (mv-nth 0
-                  (lofat-remove-file-alt fat32$c root-d-e path))
+                  (lofat-remove-file fat32$c root-d-e path))
           fat32$c))
   :hints (("goal" :in-theory (enable update-dir-contents-correctness-1
                                      clear-cc-correctness-3
-                                     lofat-remove-file-alt))))
+                                     lofat-remove-file))))
 
 (encapsulate
   ()
@@ -14599,7 +14599,7 @@ Some (rather awful) testing forms are
           entry-limit)))))))
 
   (defthmd
-    lofat-remove-file-alt-correctness-lemma-12
+    lofat-remove-file-correctness-lemma-32
     (implies
      (and
       (consp (cdr path))
@@ -14609,7 +14609,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth
           0
-          (lofat-remove-file-alt fat32$c
+          (lofat-remove-file fat32$c
                              (mv-nth 0 (find-d-e d-e-list filename))
                              path))
          (make-d-e-list
@@ -14631,7 +14631,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth
           0
-          (lofat-remove-file-alt fat32$c
+          (lofat-remove-file fat32$c
                              (mv-nth 0 (find-d-e d-e-list filename))
                              path))
          (make-d-e-list
@@ -14652,7 +14652,7 @@ Some (rather awful) testing forms are
          (lofat-to-hifat-helper
           (mv-nth
            0
-           (lofat-remove-file-alt fat32$c
+           (lofat-remove-file fat32$c
                               (mv-nth 0 (find-d-e d-e-list filename))
                               path))
           (make-d-e-list
@@ -14669,7 +14669,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth
           0
-          (lofat-remove-file-alt fat32$c
+          (lofat-remove-file fat32$c
                              (mv-nth 0 (find-d-e d-e-list filename))
                              path))
          (make-d-e-list
@@ -14701,7 +14701,7 @@ Some (rather awful) testing forms are
          (lofat-to-hifat-helper
           (mv-nth
            0
-           (lofat-remove-file-alt fat32$c
+           (lofat-remove-file fat32$c
                               (mv-nth 0 (find-d-e d-e-list filename))
                               path))
           (make-d-e-list
@@ -14730,7 +14730,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth
           0
-          (lofat-remove-file-alt fat32$c
+          (lofat-remove-file fat32$c
                              (mv-nth 0 (find-d-e d-e-list filename))
                              path))
          d-e-list entry-limit))
@@ -14741,7 +14741,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth
           0
-          (lofat-remove-file-alt fat32$c
+          (lofat-remove-file fat32$c
                              (mv-nth 0 (find-d-e d-e-list filename))
                              path))
          d-e-list entry-limit))
@@ -14754,7 +14754,7 @@ Some (rather awful) testing forms are
           (lofat-to-hifat-helper
            (mv-nth
             0
-            (lofat-remove-file-alt fat32$c
+            (lofat-remove-file fat32$c
                                (mv-nth 0 (find-d-e d-e-list filename))
                                path))
            (make-d-e-list
@@ -14774,7 +14774,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth
           0
-          (lofat-remove-file-alt fat32$c
+          (lofat-remove-file fat32$c
                              (mv-nth 0 (find-d-e d-e-list filename))
                              path))
          d-e-list entry-limit)))))
@@ -14814,9 +14814,9 @@ Some (rather awful) testing forms are
         (:linear d-e-file-size-correctness-1)
         subsetp-append1
         (:rewrite
-         d-e-cc-of-lofat-remove-file-alt-disjoint)
+         d-e-cc-of-lofat-remove-file-disjoint)
         (:rewrite
-         d-e-cc-contents-of-lofat-remove-file-alt-disjoint)
+         d-e-cc-contents-of-lofat-remove-file-disjoint)
         (:rewrite not-intersectp-list-when-subsetp-1)
         (:rewrite not-intersectp-list-of-set-difference$-lemma-3)))
       :expand ((:free (fat32$c entry-limit)
@@ -14837,7 +14837,7 @@ Some (rather awful) testing forms are
           (lofat-to-hifat-helper
            (mv-nth
             0
-            (lofat-remove-file-alt fat32$c
+            (lofat-remove-file fat32$c
                                (mv-nth 0 (find-d-e d-e-list filename))
                                path))
            (make-d-e-list
@@ -14859,7 +14859,7 @@ Some (rather awful) testing forms are
           (lofat-to-hifat-helper
            (mv-nth
             0
-            (lofat-remove-file-alt fat32$c
+            (lofat-remove-file fat32$c
                                (mv-nth 0 (find-d-e d-e-list filename))
                                path))
            (make-d-e-list
@@ -14880,7 +14880,7 @@ Some (rather awful) testing forms are
            (lofat-to-hifat-helper
             (mv-nth
              0
-             (lofat-remove-file-alt fat32$c
+             (lofat-remove-file fat32$c
                                 (mv-nth 0 (find-d-e d-e-list filename))
                                 path))
             (make-d-e-list
@@ -14897,7 +14897,7 @@ Some (rather awful) testing forms are
           (lofat-to-hifat-helper
            (mv-nth
             0
-            (lofat-remove-file-alt fat32$c
+            (lofat-remove-file fat32$c
                                (mv-nth 0 (find-d-e d-e-list filename))
                                path))
            (make-d-e-list
@@ -14929,7 +14929,7 @@ Some (rather awful) testing forms are
            (lofat-to-hifat-helper
             (mv-nth
              0
-             (lofat-remove-file-alt fat32$c
+             (lofat-remove-file fat32$c
                                 (mv-nth 0 (find-d-e d-e-list filename))
                                 path))
             (make-d-e-list
@@ -14958,7 +14958,7 @@ Some (rather awful) testing forms are
          (lofat-to-hifat-helper
           (mv-nth
            0
-           (lofat-remove-file-alt fat32$c
+           (lofat-remove-file fat32$c
                               (mv-nth 0 (find-d-e d-e-list filename))
                               path))
           d-e-list entry-limit))))))))
@@ -15076,7 +15076,7 @@ Some (rather awful) testing forms are
           (x nil)))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-29
+  lofat-remove-file-correctness-lemma-29
   (implies
    (and
     (consp path)
@@ -16074,7 +16074,7 @@ Some (rather awful) testing forms are
            :use (:instance lofat-place-file-correctness-lemma-189
                            (x nil)))))
 
-(defthmd lofat-remove-file-alt-correctness-lemma-24
+(defthmd lofat-remove-file-correctness-lemma-24
   (implies
    (and
     (consp (cdr path))
@@ -16083,7 +16083,7 @@ Some (rather awful) testing forms are
       3
       (lofat-to-hifat-helper
        (mv-nth 0
-               (lofat-remove-file-alt fat32$c
+               (lofat-remove-file fat32$c
                                       (mv-nth 0 (find-d-e d-e-list filename))
                                       path))
        (make-d-e-list
@@ -16100,7 +16100,7 @@ Some (rather awful) testing forms are
       2
       (lofat-to-hifat-helper
        (mv-nth 0
-               (lofat-remove-file-alt fat32$c
+               (lofat-remove-file fat32$c
                                       (mv-nth 0 (find-d-e d-e-list filename))
                                       path))
        (make-d-e-list
@@ -16117,7 +16117,7 @@ Some (rather awful) testing forms are
        2
        (lofat-to-hifat-helper
         (mv-nth 0
-                (lofat-remove-file-alt fat32$c
+                (lofat-remove-file fat32$c
                                        (mv-nth 0 (find-d-e d-e-list filename))
                                        path))
         (make-d-e-list
@@ -16140,7 +16140,7 @@ Some (rather awful) testing forms are
        0
        (lofat-to-hifat-helper
         (mv-nth 0
-                (lofat-remove-file-alt fat32$c
+                (lofat-remove-file fat32$c
                                        (mv-nth 0 (find-d-e d-e-list filename))
                                        path))
         (make-d-e-list
@@ -16164,7 +16164,7 @@ Some (rather awful) testing forms are
       3
       (lofat-to-hifat-helper
        (mv-nth 0
-               (lofat-remove-file-alt fat32$c
+               (lofat-remove-file fat32$c
                                       (mv-nth 0 (find-d-e d-e-list filename))
                                       path))
        d-e-list entry-limit))
@@ -16174,7 +16174,7 @@ Some (rather awful) testing forms are
       0
       (lofat-to-hifat-helper
        (mv-nth 0
-               (lofat-remove-file-alt fat32$c
+               (lofat-remove-file fat32$c
                                       (mv-nth 0 (find-d-e d-e-list filename))
                                       path))
        d-e-list entry-limit))
@@ -16187,7 +16187,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth
           0
-          (lofat-remove-file-alt fat32$c
+          (lofat-remove-file fat32$c
                                  (mv-nth 0 (find-d-e d-e-list filename))
                                  path))
          (make-d-e-list
@@ -16199,10 +16199,10 @@ Some (rather awful) testing forms are
               (lofat-to-hifat-helper fat32$c d-e-list entry-limit))))))
   :hints
   (("goal"
-    :use (:instance lofat-remove-file-alt-correctness-lemma-12
+    :use (:instance lofat-remove-file-correctness-lemma-32
                     (x nil)))))
 
-(defthm lofat-remove-file-alt-correctness-lemma-26
+(defthm lofat-remove-file-correctness-lemma-35
   (implies
    (and
     (fat32-filename-list-p path)
@@ -16231,7 +16231,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-remove-file-helper))))
 
-(defthm lofat-remove-file-alt-correctness-lemma-27
+(defthm lofat-remove-file-correctness-lemma-27
   (implies
    (and
     (fat32-filename-list-p path)
@@ -16260,7 +16260,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-remove-file-helper))))
 
-(defthm lofat-remove-file-alt-correctness-lemma-28
+(defthm lofat-remove-file-correctness-lemma-28
   (implies
    (and
     (fat32-filename-list-p path)
@@ -16288,7 +16288,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-remove-file-helper))))
 
-(defthm lofat-remove-file-alt-correctness-lemma-34
+(defthm lofat-remove-file-correctness-lemma-34
   (equal
          (mv-nth 1
                  (lofat-remove-file-helper fat32$c root-d-e nil))
@@ -16296,7 +16296,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
           :in-theory (enable lofat-remove-file-helper))))
 
-(defthm lofat-remove-file-alt-correctness-lemma-36
+(defthm lofat-remove-file-correctness-lemma-36
   (implies
    (and
     (fat32-filename-list-p path)
@@ -16314,7 +16314,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-remove-file-helper))))
 
-(defthm lofat-remove-file-alt-correctness-lemma-37
+(defthm lofat-remove-file-correctness-lemma-37
   (implies
    (and
     (good-root-d-e-p root-d-e fat32$c)
@@ -16362,7 +16362,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-remove-file-helper))))
 
-(defthm lofat-remove-file-alt-correctness-lemma-38
+(defthm lofat-remove-file-correctness-lemma-38
   (implies
    (and
     (fat32-filename-list-p path)
@@ -16395,7 +16395,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-remove-file-helper))))
 
-(defthm lofat-remove-file-alt-correctness-lemma-39
+(defthm lofat-remove-file-correctness-lemma-39
   (implies
    (and
     (fat32-filename-list-p path)
@@ -16419,7 +16419,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-remove-file-helper))))
 
-(defthm lofat-remove-file-alt-correctness-lemma-40
+(defthm lofat-remove-file-correctness-lemma-40
   (implies
    (and
     (not (consp (cdr path)))
@@ -16439,7 +16439,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-remove-file-helper))))
 
-(defthm lofat-remove-file-alt-correctness-lemma-41
+(defthm lofat-remove-file-correctness-lemma-41
   (implies
    (and
     (consp path)
@@ -16449,7 +16449,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (lofat-remove-file-alt
+        (lofat-remove-file
          fat32$c
          (mv-nth
           0
@@ -16463,7 +16463,7 @@ Some (rather awful) testing forms are
          (d-e-cc-contents
           (mv-nth
            0
-           (lofat-remove-file-alt
+           (lofat-remove-file
             fat32$c
             (mv-nth
              0
@@ -16484,7 +16484,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (lofat-remove-file-alt
+        (lofat-remove-file
          fat32$c
          (mv-nth
           0
@@ -16498,7 +16498,7 @@ Some (rather awful) testing forms are
          (d-e-cc-contents
           (mv-nth
            0
-           (lofat-remove-file-alt
+           (lofat-remove-file
             fat32$c
             (mv-nth
              0
@@ -16546,7 +16546,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (lofat-remove-file-alt
+        (lofat-remove-file
          fat32$c
          (mv-nth
           0
@@ -16560,7 +16560,7 @@ Some (rather awful) testing forms are
          (d-e-cc-contents
           (mv-nth
            0
-           (lofat-remove-file-alt
+           (lofat-remove-file
             fat32$c
             (mv-nth
              0
@@ -16589,7 +16589,7 @@ Some (rather awful) testing forms are
        (lofat-to-hifat-helper
         (mv-nth
          0
-         (lofat-remove-file-alt
+         (lofat-remove-file
           fat32$c
           (mv-nth
            0
@@ -16603,7 +16603,7 @@ Some (rather awful) testing forms are
           (d-e-cc-contents
            (mv-nth
             0
-            (lofat-remove-file-alt
+            (lofat-remove-file
              fat32$c
              (mv-nth
               0
@@ -16624,7 +16624,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (lofat-remove-file-alt
+        (lofat-remove-file
          fat32$c
          (mv-nth
           0
@@ -16638,7 +16638,7 @@ Some (rather awful) testing forms are
          (d-e-cc-contents
           (mv-nth
            0
-           (lofat-remove-file-alt
+           (lofat-remove-file
             fat32$c
             (mv-nth
              0
@@ -16674,7 +16674,7 @@ Some (rather awful) testing forms are
        (cdr path)))
      (mv-nth
       1
-      (lofat-remove-file-alt
+      (lofat-remove-file
        fat32$c
        (mv-nth
         0
@@ -16713,7 +16713,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper
       (mv-nth
        0
-       (lofat-remove-file-alt
+       (lofat-remove-file
         fat32$c
         (mv-nth
          0
@@ -16727,12 +16727,12 @@ Some (rather awful) testing forms are
   (("goal"
     :do-not-induct t
     :in-theory
-    (e/d (lofat-remove-file-alt)
-         ((:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)
+    (e/d (lofat-remove-file)
+         ((:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
           (:linear hifat-entry-count-of-hifat-remove-file)))
     :use
     ((:instance
-      (:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)
+      (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
       (path (cdr path))
       (d-e
        (mv-nth
@@ -16742,7 +16742,7 @@ Some (rather awful) testing forms are
          (car path))))
       (fat32$c fat32$c))
      (:instance
-      (:rewrite lofat-remove-file-alt-correctness-lemma-12)
+      (:rewrite lofat-remove-file-correctness-lemma-32)
       (entry-limit entry-limit)
       (path (cdr path))
       (filename (car path))
@@ -16770,7 +16770,7 @@ Some (rather awful) testing forms are
          entry-limit))))))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-42
+  lofat-remove-file-correctness-lemma-42
   (implies
    (and
     (equal
@@ -16961,7 +16961,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-43
+  lofat-remove-file-correctness-lemma-43
   (implies
    (and
     (consp path)
@@ -17001,7 +17001,7 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
-  lofat-remove-file-alt-correctness-lemma-44
+  lofat-remove-file-correctness-lemma-44
   (implies
    (and
     (consp path)
@@ -17011,7 +17011,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (lofat-remove-file-alt
+        (lofat-remove-file
          fat32$c
          (mv-nth
           0
@@ -17025,7 +17025,7 @@ Some (rather awful) testing forms are
          (d-e-cc-contents
           (mv-nth
            0
-           (lofat-remove-file-alt
+           (lofat-remove-file
             fat32$c
             (mv-nth
              0
@@ -17046,7 +17046,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (lofat-remove-file-alt
+        (lofat-remove-file
          fat32$c
          (mv-nth
           0
@@ -17060,7 +17060,7 @@ Some (rather awful) testing forms are
          (d-e-cc-contents
           (mv-nth
            0
-           (lofat-remove-file-alt
+           (lofat-remove-file
             fat32$c
             (mv-nth
              0
@@ -17108,7 +17108,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (lofat-remove-file-alt
+        (lofat-remove-file
          fat32$c
          (mv-nth
           0
@@ -17122,7 +17122,7 @@ Some (rather awful) testing forms are
          (d-e-cc-contents
           (mv-nth
            0
-           (lofat-remove-file-alt
+           (lofat-remove-file
             fat32$c
             (mv-nth
              0
@@ -17151,7 +17151,7 @@ Some (rather awful) testing forms are
        (lofat-to-hifat-helper
         (mv-nth
          0
-         (lofat-remove-file-alt
+         (lofat-remove-file
           fat32$c
           (mv-nth
            0
@@ -17165,7 +17165,7 @@ Some (rather awful) testing forms are
           (d-e-cc-contents
            (mv-nth
             0
-            (lofat-remove-file-alt
+            (lofat-remove-file
              fat32$c
              (mv-nth
               0
@@ -17201,7 +17201,7 @@ Some (rather awful) testing forms are
        (cdr path)))
      (mv-nth
       1
-      (lofat-remove-file-alt
+      (lofat-remove-file
        fat32$c
        (mv-nth
         0
@@ -17231,7 +17231,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (lofat-remove-file-alt
+        (lofat-remove-file
          fat32$c
          (mv-nth
           0
@@ -17280,7 +17280,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth
         0
-        (lofat-remove-file-alt
+        (lofat-remove-file
          fat32$c
          (mv-nth
           0
@@ -17295,12 +17295,12 @@ Some (rather awful) testing forms are
   (("goal"
     :do-not-induct t
     :in-theory
-    (e/d (lofat-remove-file-alt)
-         ((:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)
+    (e/d (lofat-remove-file)
+         ((:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
           (:linear hifat-entry-count-of-hifat-remove-file)))
     :use
     ((:instance
-      (:rewrite d-e-cc-contents-of-lofat-remove-file-alt-coincident)
+      (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
       (path (cdr path))
       (d-e
        (mv-nth
@@ -17310,7 +17310,7 @@ Some (rather awful) testing forms are
          (car path))))
       (fat32$c fat32$c))
      (:instance
-      lofat-remove-file-alt-correctness-lemma-24
+      lofat-remove-file-correctness-lemma-24
       (entry-limit entry-limit)
       (path (cdr path))
       (filename (car path))
@@ -17404,7 +17404,7 @@ Some (rather awful) testing forms are
 
   ;; hypotheses trimmed.
   (defthm
-    lofat-remove-file-alt-correctness-lemma-1
+    lofat-remove-file-correctness-lemma-1
     (b*
         (((mv fs error-code)
           (hifat-remove-file
@@ -17449,13 +17449,13 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   (mv-nth
                    0
-                   (lofat-remove-file-alt fat32$c root-d-e path))
+                   (lofat-remove-file fat32$c root-d-e path))
                   (make-d-e-list
                    (mv-nth 0
                            (d-e-cc-contents
                             (mv-nth
                              0
-                             (lofat-remove-file-alt fat32$c root-d-e path))
+                             (lofat-remove-file fat32$c root-d-e path))
                             root-d-e)))
                   entry-limit))
          0)
@@ -17464,13 +17464,13 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   (mv-nth
                    0
-                   (lofat-remove-file-alt fat32$c root-d-e path))
+                   (lofat-remove-file fat32$c root-d-e path))
                   (make-d-e-list
                    (mv-nth 0
                            (d-e-cc-contents
                             (mv-nth
                              0
-                             (lofat-remove-file-alt fat32$c root-d-e path))
+                             (lofat-remove-file fat32$c root-d-e path))
                             root-d-e)))
                   entry-limit))
          fs)
@@ -17480,31 +17480,31 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   (mv-nth
                    0
-                   (lofat-remove-file-alt fat32$c root-d-e path))
+                   (lofat-remove-file fat32$c root-d-e path))
                   (make-d-e-list
                    (mv-nth 0
                            (d-e-cc-contents
                             (mv-nth
                              0
-                             (lofat-remove-file-alt fat32$c root-d-e path))
+                             (lofat-remove-file fat32$c root-d-e path))
                             root-d-e)))
                   entry-limit)))
         (equal error-code
                (mv-nth
                 1
-                (lofat-remove-file-alt fat32$c root-d-e path))))))
+                (lofat-remove-file fat32$c root-d-e path))))))
     :hints
     (("goal"
       :induct
       (induction-scheme
        entry-limit fat32$c path root-d-e x)
       :expand
-      (lofat-remove-file-alt fat32$c root-d-e path)
+      (lofat-remove-file fat32$c root-d-e path)
       :in-theory (e/d
                   (hifat-remove-file
                    (:rewrite lofat-to-hifat-inversion-lemma-4)
                    lofat-to-hifat-inversion-lemma-15
-                   lofat-remove-file-alt)
+                   lofat-remove-file)
                   ((:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-9)
                    (:rewrite intersectp-is-commutative)))))
     :rule-classes
@@ -17544,18 +17544,18 @@ Some (rather awful) testing forms are
                 (lofat-to-hifat-helper
                  (mv-nth
                   0
-                  (lofat-remove-file-alt fat32$c root-d-e path))
+                  (lofat-remove-file fat32$c root-d-e path))
                  (make-d-e-list
                   (mv-nth 0
                           (d-e-cc-contents
                            (mv-nth
                             0
-                            (lofat-remove-file-alt fat32$c root-d-e path))
+                            (lofat-remove-file fat32$c root-d-e path))
                            root-d-e)))
                  entry-limit))))))))
 
 (defthm
-  lofat-remove-file-alt-correctness-1
+  lofat-remove-file-correctness-1
   (b*
       (((mv fs error-code)
         (hifat-remove-file
@@ -17591,13 +17591,13 @@ Some (rather awful) testing forms are
                (lofat-to-hifat-helper
                 (mv-nth
                  0
-                 (lofat-remove-file-alt fat32$c root-d-e path))
+                 (lofat-remove-file fat32$c root-d-e path))
                 (make-d-e-list
                  (mv-nth 0
                          (d-e-cc-contents
                           (mv-nth
                            0
-                           (lofat-remove-file-alt fat32$c root-d-e path))
+                           (lofat-remove-file fat32$c root-d-e path))
                           root-d-e)))
                 entry-limit))
        0)
@@ -17606,28 +17606,28 @@ Some (rather awful) testing forms are
                (lofat-to-hifat-helper
                 (mv-nth
                  0
-                 (lofat-remove-file-alt fat32$c root-d-e path))
+                 (lofat-remove-file fat32$c root-d-e path))
                 (make-d-e-list
                  (mv-nth 0
                          (d-e-cc-contents
                           (mv-nth
                            0
-                           (lofat-remove-file-alt fat32$c root-d-e path))
+                           (lofat-remove-file fat32$c root-d-e path))
                           root-d-e)))
                 entry-limit))
        fs)
       (equal error-code
              (mv-nth
               1
-              (lofat-remove-file-alt fat32$c root-d-e path))))))
+              (lofat-remove-file fat32$c root-d-e path))))))
   :hints
   (("goal"
     :do-not-induct t
     :in-theory (disable
-                lofat-remove-file-alt-correctness-lemma-1)
+                lofat-remove-file-correctness-lemma-1)
     :use
     (:instance
-     lofat-remove-file-alt-correctness-lemma-1
+     lofat-remove-file-correctness-lemma-1
      (x nil)))))
 
 (encapsulate
@@ -35408,7 +35408,7 @@ Some (rather awful) testing forms are
         (:rewrite lofat-place-file-correctness-1-lemma-16)
         (:rewrite lofat-place-file-correctness-1-lemma-15)
         (:rewrite lofat-place-file-correctness-1-lemma-17)
-        (:rewrite lofat-remove-file-alt-correctness-lemma-14)))
+        (:rewrite lofat-remove-file-correctness-lemma-14)))
       :induct (induction-scheme d-e-list entry-limit fat32$c x)
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
