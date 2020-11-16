@@ -4,7 +4,7 @@
 
 (include-book "not-intersectp-list")
 
-(defun disjoint-list-listp (x)
+(defund disjoint-list-listp (x)
   (if (atom x)
       (equal x nil)
     (and (not-intersectp-list (car x) (cdr x))
@@ -18,7 +18,8 @@
 (defthm flatten-disjoint-lists
   (implies (true-listp l)
            (equal (no-duplicatesp-equal (flatten l))
-                  (and (disjoint-list-listp l) (no-duplicates-listp l)))))
+                  (and (disjoint-list-listp l) (no-duplicates-listp l))))
+  :hints (("Goal" :in-theory (enable disjoint-list-listp))))
 
 (defthm not-intersectp-list-of-append-2
   (equal (not-intersectp-list (binary-append x y) l)
@@ -59,7 +60,8 @@
   (equal (disjoint-list-listp (binary-append x y))
          (and (disjoint-list-listp (true-list-fix x))
               (disjoint-list-listp y)
-              (not (member-intersectp-equal x y)))))
+              (not (member-intersectp-equal x y))))
+  :hints (("Goal" :in-theory (enable disjoint-list-listp))))
 
 (defthm member-intersectp-with-subset
   (implies (and (member-intersectp-equal z x)
