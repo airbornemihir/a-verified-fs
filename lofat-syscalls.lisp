@@ -598,26 +598,6 @@
                                (d-e-cc fat32$c (pseudo-root-d-e fat32$c))))
                     (entry-limit (max-entry-count fat32$c))))))
 
-;; Move later.
-(defthm
-  pseudo-root-d-e-of-lofat-remove-file-helper
-  (equal
-   (pseudo-root-d-e
-    (mv-nth
-     0
-     (lofat-remove-file-helper fat32$c root-d-e path)))
-   (pseudo-root-d-e fat32$c))
-  :hints (("Goal" :in-theory (enable lofat-remove-file-helper))))
-(defthm
-  pseudo-root-d-e-of-lofat-remove-file-alt
-  (equal
-   (pseudo-root-d-e
-    (mv-nth
-     0
-     (lofat-remove-file-alt fat32$c root-d-e path)))
-   (pseudo-root-d-e fat32$c))
-  :hints (("Goal" :in-theory (enable lofat-remove-file-alt))))
-
 (defthm
   lofat-unlink-refinement-lemma-9
   (implies
@@ -1053,20 +1033,6 @@
     :hints (("goal" :do-not-induct t
              :in-theory (e/d (lofat-remove-file-helper)
                              (make-list-ac-removal))))))
-
-;; Move later.
-(defthm
-  max-entry-count-of-lofat-remove-file-helper
-  (equal (max-entry-count (mv-nth 0
-                                  (lofat-remove-file-helper fat32$c d-e path)))
-         (max-entry-count fat32$c))
-  :hints (("goal" :in-theory (enable lofat-remove-file-helper))))
-(defthm
-  max-entry-count-of-lofat-remove-file-alt
-  (equal (max-entry-count (mv-nth 0
-                                  (lofat-remove-file-alt fat32$c d-e path)))
-         (max-entry-count fat32$c))
-  :hints (("goal" :in-theory (enable lofat-remove-file-alt))))
 
 (defthm
   lofat-unlink-refinement-lemma-11
