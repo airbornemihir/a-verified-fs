@@ -3086,7 +3086,7 @@ Some (rather awful) testing forms are
     (mv fat32$c 0)))
 
 (defund
-  lofat-remove-file-alt
+  lofat-remove-file
   (fat32$c root-d-e path)
   (declare
    (xargs :guard (and (lofat-fs-p fat32$c)
@@ -3109,11 +3109,104 @@ Some (rather awful) testing forms are
        ((when (and (zp error-code)
                    (consp (cdr path))
                    (d-e-directory-p d-e)
-                   (<= 2 (d-e-first-cluster d-e))
+                   (<= *ms-first-data-cluster* (d-e-first-cluster d-e))
                    (< (d-e-first-cluster d-e)
-                      (+ 2 (count-of-clusters fat32$c)))))
-        (lofat-remove-file-alt fat32$c d-e (cdr path))))
+                      (+ *ms-first-data-cluster* (count-of-clusters fat32$c)))))
+        (lofat-remove-file fat32$c d-e (cdr path))))
     (lofat-remove-file-helper fat32$c root-d-e path)))
+
+(encapsulate
+  ()
+
+  ;; This was the original definition of lofat-remove-file. We're renaming it
+  ;; to lofat-remove-file-alt so that we can name the refactored version
+  ;; lofat-remove-file and have that name in all our lemmas.
+  ;;
+  ;; We're going to have to add a weird stipulation here about the length of a
+  ;; directory file's contents being more than 0 (which is true, because dot and
+  ;; dotdot entries have to be everywhere other than the root.)
+  (local
+   (defun
+       lofat-remove-file-alt
+       (fat32$c root-d-e path)
+     (declare
+      (xargs
+       :guard (and (lofat-fs-p fat32$c)
+                   (d-e-p root-d-e)
+                   (>= (d-e-first-cluster root-d-e) *ms-first-data-cluster*)
+                   (< (d-e-first-cluster root-d-e)
+                      (+ *ms-first-data-cluster*
+                         (count-of-clusters fat32$c)))
+                   (fat32-filename-list-p path))
+       :measure (len path)
+       :stobjs fat32$c))
+     (b*
+         (((unless (consp path))
+           (mv fat32$c *enoent*))
+          ;; Design choice - calls which ask for the entire root directory to be
+          ;; affected will fail.
+          (name (mbe :logic (fat32-filename-fix (car path))
+                     :exec (car path)))
+          ((mv dir-contents &)
+           (d-e-cc-contents fat32$c root-d-e))
+          (d-e-list
+           (make-d-e-list dir-contents))
+          ((mv d-e error-code)
+           (find-d-e d-e-list name))
+          ;; If it's not there, it can't be removed
+          ((unless (equal error-code 0))
+           (mv fat32$c *enoent*))
+          ;; ENOTDIR - can't delete anything that supposedly exists inside a
+          ;; regular file.
+          ((when (and (consp (cdr path)) (not (d-e-directory-p d-e))))
+           (mv fat32$c *enotdir*))
+          (first-cluster (d-e-first-cluster d-e))
+          ((when
+               (and
+                (or (< first-cluster *ms-first-data-cluster*)
+                    (<= (+ *ms-first-data-cluster*
+                           (count-of-clusters fat32$c))
+                        first-cluster))
+                (consp (cdr path))))
+           (mv fat32$c *eio*))
+          ((when (consp (cdr path)))
+           ;; Recursion
+           (lofat-remove-file-alt
+            fat32$c
+            d-e
+            (cdr path)))
+          ;; After these conditionals, the only remaining possibility is that
+          ;; (cdr path) is an atom, which means we need to delete a file or
+          ;; a(n empty) directory.
+          ((mv fat32$c error-code)
+           (update-dir-contents fat32$c
+                                (d-e-first-cluster root-d-e)
+                                (nats=>string (clear-d-e (string=>nats
+                                                          dir-contents)
+                                                         name))))
+          ((unless (equal error-code 0))
+           (mv fat32$c error-code))
+          (length (if (d-e-directory-p d-e)
+                      *ms-max-dir-size*
+                    (d-e-file-size d-e)))
+          ((mv fat32$c &)
+           (if
+               (or (< first-cluster *ms-first-data-cluster*)
+                   (<= (+ *ms-first-data-cluster*
+                          (count-of-clusters fat32$c))
+                       first-cluster))
+               (mv fat32$c 0)
+             (clear-cc
+              fat32$c
+              first-cluster
+              length))))
+       (mv fat32$c 0))))
+
+  (thm
+   (equal (lofat-remove-file-alt fat32$c root-d-e path)
+          (lofat-remove-file fat32$c root-d-e path))
+   :hints (("goal" :in-theory (enable lofat-remove-file-alt lofat-remove-file
+                                      lofat-remove-file-helper)))))
 
 (defthm
   max-entry-count-of-lofat-remove-file-helper
