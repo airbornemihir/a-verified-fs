@@ -90,39 +90,6 @@
                   (:rewrite
                    abs-find-file-correctness-1-lemma-40)))))
 
-(defthm
-  lofat-place-file-correctness-lemma-68
-  (implies
-   (and (consp x)
-        (not-intersectp-list
-         x
-         (mv-nth 2
-                 (lofat-to-hifat-helper fat32$c d-e-list entry-limit))))
-   (not (member-equal
-         x
-         (mv-nth 2
-                 (lofat-to-hifat-helper fat32$c d-e-list entry-limit)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d
-     (lofat-to-hifat-helper not-intersectp-list find-d-e)
-     ((:rewrite lofat-place-file-correctness-1-lemma-14)
-      (:rewrite nfix-when-zp)
-      (:rewrite nth-of-nats=>chars)
-      (:definition natp)
-      (:rewrite nth-of-effective-fat)
-      (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                . 1)
-      (:rewrite lofat-place-file-correctness-1-lemma-13)
-      (:linear nth-when-d-e-p)
-      (:rewrite explode-of-d-e-filename)
-      (:rewrite
-       hifat-entry-count-of-lofat-to-hifat-helper-of-delete-d-e-lemma-3)
-      (:rewrite d-e-p-when-member-equal-of-d-e-list-p)
-      (:rewrite take-of-len-free)
-      (:rewrite natp-of-car-when-nat-listp))))))
-
 (encapsulate
   ()
 
