@@ -457,7 +457,6 @@
         (:rewrite m1-file-of-m1-file-contents-fix-contents-normalize-const)
         (:rewrite m1-file-of-d-e-fix-d-e-normalize-const)
         (:rewrite rationalp-implies-acl2-numberp)
-        (:rewrite lofat-place-file-correctness-lemma-9)
         (:rewrite consp-of-remove-assoc-1)
         (:rewrite member-intersectp-of-set-difference$-1
                   . 1)
@@ -975,7 +974,6 @@
         (:rewrite m1-file-of-m1-file-contents-fix-contents-normalize-const)
         (:rewrite m1-file-of-d-e-fix-d-e-normalize-const)
         (:rewrite rationalp-implies-acl2-numberp)
-        (:rewrite lofat-place-file-correctness-lemma-9)
         (:rewrite consp-of-remove-assoc-1)
         (:rewrite member-intersectp-of-set-difference$-1
                   . 1)
