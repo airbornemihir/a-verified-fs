@@ -33433,7 +33433,6 @@ Some (rather awful) testing forms are
     (and (zp error-code)
          (not-intersectp-list x cc-list))))
 
-
 (defthm
   lofat-place-file-correctness-lemma-68
   (implies
