@@ -22552,50 +22552,6 @@ Some (rather awful) testing forms are
    :x :top
    :bash :bash))
 
-(defund-nx flatten-equiv-hack-1
-  (i fat32$c d-e-list name file)
-  (mv-nth
-   0
-   (d-e-cc
-    (mv-nth
-     0
-     (place-contents
-      (update-fati
-       i
-       (fat32-update-lower-28 (fati i fat32$c)
-                              268435455)
-       (mv-nth
-        0
-        (clear-cc
-         fat32$c
-         (d-e-first-cluster
-          (mv-nth 0
-                  (find-d-e d-e-list name)))
-         (d-e-file-size (mv-nth 0
-                                    (find-d-e d-e-list name))))))
-      (mv-nth 0
-              (find-d-e d-e-list name))
-      (lofat-file->contents file)
-      (len (explode (lofat-file->contents file)))
-      i))
-    (d-e-set-first-cluster-file-size
-     (mv-nth 0
-             (find-d-e d-e-list name))
-     i
-     (len (explode (lofat-file->contents file)))))))
-
-(defund-nx flatten-equiv-hack-2
-  (fat32$c d-e-list name entry-limit)
-  (remove-equal
-   (mv-nth 0
-           (d-e-cc
-            fat32$c
-            (mv-nth 0
-                    (find-d-e d-e-list name))))
-   (mv-nth 2
-           (lofat-to-hifat-helper fat32$c
-                                  d-e-list entry-limit))))
-
 (defthm
   lofat-place-file-correctness-lemma-64
   (implies
@@ -22611,13 +22567,6 @@ Some (rather awful) testing forms are
    (:rewrite commutativity-2-of-cons-under-flatten-equiv-lemma-1)
    :up (:rewrite cons-equal-under-set-equiv-1)
    :top (:bash ("goal" :in-theory (e/d nil ())))))
-
-(defthm
-  true-list-listp-of-flatten-equiv-hack-2
-  (true-list-listp (flatten-equiv-hack-2 fat32$c
-                                         d-e-list name entry-limit))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable flatten-equiv-hack-2))))
 
 (defthm lofat-place-file-correctness-lemma-65
   (flatten-equiv (append x (cons y z))
