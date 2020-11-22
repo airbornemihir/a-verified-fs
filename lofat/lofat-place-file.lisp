@@ -356,7 +356,6 @@
      (:linear hifat-entry-count-of-lofat-to-hifat-helper-of-delete-d-e)
      (:rewrite lofat-place-file-correctness-lemma-96)
      (:definition find-d-e)
-     (:rewrite lofat-place-file-correctness-lemma-57)
      (:rewrite not-intersectp-list-of-set-difference$-lemma-2
                . 2)
      (:rewrite nfix-when-zp)
@@ -939,7 +938,6 @@
      (:rewrite d-e-cc-contents-of-lofat-place-file-disjoint)
      (:induction lofat-place-file)
      (:definition lofat-place-file)
-     (:rewrite lofat-place-file-correctness-lemma-57)
      (:rewrite lofat-place-file-correctness-lemma-5)
      (:rewrite subdir-contents-p-when-zero-length)
      (:rewrite lofat-to-hifat-helper-of-update-dir-contents)
@@ -973,11 +971,7 @@
      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
      (:rewrite m1-directory-file-p-correctness-1)
      (:rewrite m1-regular-file-p-correctness-1)
-     (:rewrite m1-file-of-m1-file-contents-fix-contents-normalize-const)
-     (:rewrite m1-file-of-d-e-fix-d-e-normalize-const)
-     (:rewrite m1-file->contents$inline-of-m1-file-fix-x-normalize-const)
      (:rewrite m1-file-p-of-m1-file-fix)
-     (:type-prescription m1-file-fix$inline)
      (:linear len-of-explode-when-m1-file-contents-p-1)
      (:rewrite fat32-filename-p-correctness-1)
      (:type-prescription fat32-filename-fix)
@@ -1027,7 +1021,9 @@
      (:definition no-duplicatesp-equal)
      (:type-prescription binary-append)
      (:definition assoc-equal)
-     (:definition char))))
+     (:definition char)
+     (:rewrite
+      lofat-remove-file-correctness-1-lemma-62))))
 
   ;; this is chosen to be the same as an earlier induction scheme. let's see
   ;; how it goes..
