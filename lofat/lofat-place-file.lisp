@@ -88,7 +88,11 @@
                    consp-of-assoc-when-hifat-equiv-lemma-1)
                   (:rewrite free-index-list-listp-of-update-nth-lemma-1)
                   (:rewrite
-                   abs-find-file-correctness-1-lemma-40)))))
+                   abs-find-file-correctness-1-lemma-40)
+                  (:linear
+                   lofat-place-file-correctness-1-lemma-25)
+                  (:rewrite
+                   not-intersectp-list-of-set-difference$-lemma-3)))))
 
 (defthm
   lofat-place-file-correctness-lemma-55
@@ -921,7 +925,6 @@
      (:definition binary-append)
      (:rewrite member-when-atom)
      (:rewrite put-assoc-equal-without-change . 2)
-     (:rewrite lofat-place-file-correctness-lemma-42)
      (:rewrite lofat-place-file-correctness-lemma-40)
      (:rewrite lofat-place-file-correctness-lemma-3)
      (:rewrite lofat-place-file-correctness-1-lemma-68)
@@ -1430,8 +1433,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -1578,8 +1580,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -1635,8 +1636,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -1737,8 +1737,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           lofat-place-file-spec-1)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           lofat-place-file-spec-1))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -2014,8 +2013,7 @@
    (("goal"
      :in-theory (e/d (not-intersectp-list hifat-entry-count
                                           lofat-to-hifat-helper-correctness-4
-                                          stobj-disjoins-list find-d-e)
-                     ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                          stobj-disjoins-list find-d-e))
      :do-not-induct t
      :expand ((:free (fat32$c entry-limit)
                      (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -2267,8 +2265,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -2578,8 +2575,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -2858,8 +2854,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -3306,8 +3301,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -3648,8 +3642,7 @@
       (e/d (not-intersectp-list hifat-entry-count
                                 lofat-to-hifat-helper-correctness-4
                                 stobj-disjoins-list
-                                member-intersectp-of-set-difference$-1)
-           ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                member-intersectp-of-set-difference$-1))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -3859,8 +3852,7 @@
       (e/d (not-intersectp-list hifat-entry-count
                                 lofat-to-hifat-helper-correctness-4
                                 lofat-place-file-spec-1 find-d-e)
-           ((:rewrite lofat-remove-file-correctness-lemma-14)
-            (:rewrite lofat-to-hifat-helper-of-lofat-place-file-disjoint)
+           ((:rewrite lofat-to-hifat-helper-of-lofat-place-file-disjoint)
             (:definition member-intersectp-equal)
             (:definition hifat-entry-count)
             (:rewrite lofat-place-file-correctness-lemma-83)
@@ -4016,8 +4008,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list find-d-e)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list find-d-e))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -4057,8 +4048,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list find-d-e)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list find-d-e))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -4153,8 +4143,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           lofat-place-file-spec-1 find-d-e)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           lofat-place-file-spec-1 find-d-e))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -4410,8 +4399,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list find-d-e)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list find-d-e))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -4624,8 +4612,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list find-d-e)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list find-d-e))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -4807,8 +4794,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           stobj-disjoins-list find-d-e)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           stobj-disjoins-list find-d-e))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -5048,8 +5034,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           lofat-place-file-spec-1 find-d-e)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           lofat-place-file-spec-1 find-d-e))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -5088,8 +5073,7 @@
    (("goal"
      :in-theory (e/d (not-intersectp-list hifat-entry-count
                                           lofat-to-hifat-helper-correctness-4
-                                          stobj-disjoins-list find-d-e)
-                     ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                          stobj-disjoins-list find-d-e))
      :do-not-induct t
      :expand ((:free (fat32$c entry-limit)
                      (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -5183,8 +5167,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
-                                           lofat-place-file-spec-1 find-d-e)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           lofat-place-file-spec-1 find-d-e))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -5196,7 +5179,7 @@
                (find-d-e d-e-list name)))))
 
   ;; hypotheses are minimised.
-  (defthm
+  (defthmd
     lofat-place-file-correctness-lemma-143
     (implies
      (and
@@ -5259,8 +5242,7 @@
     :hints
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
-                                           lofat-to-hifat-helper-correctness-4)
-                      ((:rewrite lofat-remove-file-correctness-lemma-14)))
+                                           lofat-to-hifat-helper-correctness-4))
       :induct (induction-scheme d-e-list entry-limit fat32$c x)
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
@@ -5561,8 +5543,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            stobj-disjoins-list)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -5704,8 +5685,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            stobj-disjoins-list)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -5763,8 +5743,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            lofat-place-file-spec-2)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -5907,8 +5886,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            stobj-disjoins-list)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -6051,8 +6029,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            stobj-disjoins-list)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -6129,8 +6106,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            lofat-place-file-spec-2)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -6186,8 +6162,7 @@
      :in-theory (e/d (not-intersectp-list hifat-entry-count
                                           lofat-to-hifat-helper-correctness-4
                                           lofat-place-file-spec-2)
-                     ((:type-prescription make-d-e-list)
-                      lofat-place-file-correctness-lemma-143))
+                     ((:type-prescription make-d-e-list)))
      :do-not-induct t
      :expand ((:free (fat32$c entry-limit)
                      (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -6245,8 +6220,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            stobj-disjoins-list find-d-e)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -6618,8 +6592,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            stobj-disjoins-list find-d-e)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -6939,7 +6912,6 @@
        (not-intersectp-list lofat-to-hifat-helper-correctness-4
                             stobj-disjoins-list find-d-e)
        ((:type-prescription make-d-e-list)
-        lofat-place-file-correctness-lemma-143
         (:definition member-intersectp-equal)
         (:rewrite lofat-place-file-correctness-lemma-83)
         (:rewrite lofat-place-file-correctness-lemma-121
@@ -7146,8 +7118,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            lofat-place-file-spec-2)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -7430,8 +7401,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            stobj-disjoins-list)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -7640,8 +7610,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            stobj-disjoins-list)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -7840,8 +7809,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            lofat-place-file-spec-2)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -7905,8 +7873,7 @@
     (("goal"
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4)
-                      ((:type-prescription make-d-e-list)
-                       lofat-place-file-correctness-lemma-143))
+                      ((:type-prescription make-d-e-list)))
       :induct (induction-scheme d-e-list entry-limit fat32$c x)
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
@@ -8240,7 +8207,7 @@
   :hints
   (("goal"
     :in-theory (e/d (stobj-disjoins-list lofat-place-file-spec-1)
-                    (lofat-place-file-correctness-lemma-143 lofat-place-file))
+                    (lofat-place-file))
     :do-not-induct t
     :use (:instance lofat-place-file-correctness-lemma-143
                     (x nil)
@@ -8718,8 +8685,7 @@
   (("goal"
     :do-not-induct t
     :in-theory
-    (disable (:rewrite lofat-place-file-correctness-lemma-143)
-             (:definition lofat-place-file)
+    (disable (:definition lofat-place-file)
              (:rewrite length-when-stringp)
              (:rewrite len-of-nats=>chars)
              (:rewrite len-of-insert-d-e)
