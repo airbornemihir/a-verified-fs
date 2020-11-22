@@ -92,7 +92,9 @@
                   (:linear
                    lofat-place-file-correctness-1-lemma-25)
                   (:rewrite
-                   not-intersectp-list-of-set-difference$-lemma-3)))))
+                   not-intersectp-list-of-set-difference$-lemma-3)
+                  (:rewrite
+                   not-intersectp-list-of-set-difference$-lemma-1)))))
 
 (defthm
   lofat-place-file-correctness-lemma-55
@@ -927,7 +929,6 @@
      (:rewrite put-assoc-equal-without-change . 2)
      (:rewrite lofat-place-file-correctness-lemma-40)
      (:rewrite lofat-place-file-correctness-lemma-3)
-     (:rewrite lofat-place-file-correctness-1-lemma-68)
      (:rewrite lofat-place-file-correctness-1-lemma-17)
      (:rewrite lofat-place-file-correctness-1-lemma-16)
      (:rewrite lofat-place-file-correctness-1-lemma-15)
@@ -940,7 +941,6 @@
      (:definition lofat-place-file)
      (:rewrite lofat-place-file-correctness-lemma-57)
      (:rewrite lofat-place-file-correctness-lemma-5)
-     (:linear lofat-remove-file-correctness-1-lemma-27)
      (:rewrite subdir-contents-p-when-zero-length)
      (:rewrite lofat-to-hifat-helper-of-update-dir-contents)
      (:rewrite delete-d-e-correctness-1)
@@ -5743,7 +5743,7 @@
       :in-theory (e/d (not-intersectp-list hifat-entry-count
                                            lofat-to-hifat-helper-correctness-4
                                            lofat-place-file-spec-2)
-                      ((:type-prescription make-d-e-list))
+                      ((:type-prescription make-d-e-list)))
       :do-not-induct t
       :expand ((:free (fat32$c entry-limit)
                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
@@ -14684,7 +14684,6 @@
             (:definition place-d-e)
             (:rewrite d-e-p-when-member-equal-of-d-e-list-p)
             (:rewrite lofat-fs-p-of-lofat-place-file-lemma-1)
-            (:rewrite clear-cc-reversibility-lemma-1)
             (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
                       . 5)))
       :do-not-induct t))
