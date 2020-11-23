@@ -11387,28 +11387,6 @@ Some (rather awful) testing forms are
            :in-theory (enable lofat-remove-file))))
 
 (defthm
-  lofat-remove-file-correctness-lemma-22
-  (implies
-   (and
-    (< (hifat-entry-count
-        (mv-nth 0
-                (lofat-to-hifat-helper fat32$c d-e-list entry-limit1)))
-       x)
-    (>= (nfix entry-limit2)
-        (mv-nth 1
-                (lofat-to-hifat-helper fat32$c d-e-list entry-limit1)))
-    (equal (mv-nth 3
-                   (lofat-to-hifat-helper fat32$c d-e-list entry-limit1))
-           0))
-   (<
-    (- x)
-    (- (hifat-entry-count
-        (mv-nth 0
-                (lofat-to-hifat-helper fat32$c d-e-list entry-limit2))))))
-  :hints (("goal" :use lofat-to-hifat-helper-correctness-4))
-  :rule-classes :linear)
-
-(defthm
   lofat-remove-file-correctness-lemma-10
   (implies
    (and (equal (mv-nth 3
@@ -22502,28 +22480,6 @@ Some (rather awful) testing forms are
    :bash :bash))
 
 (defthm
-  lofat-place-file-correctness-lemma-64
-  (implies
-   (and (true-listp x) (true-listp w))
-   (equal (flatten-equiv (list* w x z)
-                         (list* x y))
-          (flatten-equiv (remove-equal x (list* w (true-list-list-fix z)))
-                         (remove-equal x (true-list-list-fix y)))))
-  :instructions
-  ((:bash ("goal" :in-theory (e/d (flatten-equiv cons-equal-under-set-equiv-1)
-                                  ())))
-   (:dive 1 2)
-   (:rewrite commutativity-2-of-cons-under-flatten-equiv-lemma-1)
-   :up (:rewrite cons-equal-under-set-equiv-1)
-   :top (:bash ("goal" :in-theory (e/d nil ())))))
-
-(defthm lofat-place-file-correctness-lemma-65
-  (flatten-equiv (append x (cons y z))
-                 (cons y (append x z)))
-  :hints (("goal" :in-theory (e/d (flatten-equiv)
-                                  ()))))
-
-(defthm
   lofat-place-file-correctness-lemma-114
   (implies
    (and
@@ -25816,38 +25772,6 @@ Some (rather awful) testing forms are
              (+ -1 entry-limit)))
            path)))))))))
   :hints (("goal" :do-not-induct t)))
-
-(defthm
-  lofat-place-file-correctness-lemma-108
-  (implies
-   (and
-    (equal (mv-nth 1
-                   (lofat-place-file fat32$c d-e path file))
-           0)
-    (fat32-filename-list-p path)
-    (equal
-     (mv-nth 3
-             (lofat-to-hifat-helper
-              fat32$c
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c d-e)))
-              entry-limit))
-     0)
-    (lofat-directory-file-p file)
-    (equal
-     (mv-nth
-      1
-      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c d-e)))
-                (car path)))
-     0))
-   (>=
-    (d-e-first-cluster
-     (mv-nth
-      0
-      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c d-e)))
-                (car path))))
-    2))
-  :hints (("goal" :do-not-induct t))
-  :rule-classes :linear)
 
 (defthm
   lofat-place-file-correctness-lemma-112
@@ -31870,10 +31794,6 @@ Some (rather awful) testing forms are
               fat32$c)
         268435455)
        fat32$c))))))
-
-(defthm lofat-place-file-correctness-lemma-15
-  (zp (+ (- x) (min x y)))
-  :rule-classes :type-prescription)
 
 (defthm lofat-place-file-correctness-lemma-19
   (implies (fat32-filename-p name)

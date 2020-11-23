@@ -680,11 +680,8 @@
   :hints (("goal" :in-theory (disable put-assoc-under-hifat-equiv-3)
            :use put-assoc-under-hifat-equiv-3)))
 
-(defthm lofat-place-file-correctness-lemma-34
-  (set-equiv (list* x x y) (cons x y)))
-
 (defthm
-  lofat-place-file-correctness-lemma-100
+  lofat-place-file-correctness-lemma-15
   (implies
    (and
     (>= (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
@@ -1063,6 +1060,38 @@
                         (mv-nth 0 (find-d-e d-e-list name))
                         path file))
      d-e-list entry-limit x))))
+
+(defthm
+  lofat-place-file-correctness-lemma-108
+  (implies
+   (and
+    (equal (mv-nth 1
+                   (lofat-place-file fat32$c d-e path file))
+           0)
+    (fat32-filename-list-p path)
+    (equal
+     (mv-nth 3
+             (lofat-to-hifat-helper
+              fat32$c
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c d-e)))
+              entry-limit))
+     0)
+    (lofat-directory-file-p file)
+    (equal
+     (mv-nth
+      1
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c d-e)))
+                (car path)))
+     0))
+   (>=
+    (d-e-first-cluster
+     (mv-nth
+      0
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c d-e)))
+                (car path))))
+    2))
+  :hints (("goal" :do-not-induct t))
+  :rule-classes :linear)
 
 (encapsulate
   ()
@@ -2893,7 +2922,6 @@
         (:rewrite lofat-place-file-correctness-lemma-121
                   . 1)
         (:rewrite hifat-to-lofat-inversion-lemma-17)
-        (:rewrite lofat-place-file-correctness-lemma-100)
         (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
         (:definition free-index-listp)
         (:rewrite

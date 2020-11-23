@@ -83,7 +83,16 @@
     (:rewrite lofat-place-file-correctness-1-lemma-14)
     (:rewrite
      d-e-cc-contents-of-lofat-place-file-coincident-lemma-13)
-    (:rewrite nth-of-nats=>chars)))))
+    (:rewrite nth-of-nats=>chars)
+    (:rewrite subsetp-of-cons)
+    (:rewrite
+     lofat-place-file-correctness-lemma-52)
+    (:definition binary-append)
+    (:rewrite
+     lofat-place-file-correctness-lemma-91)
+    (:rewrite nth-of-effective-fat)
+    (:rewrite
+     not-intersectp-list-of-set-difference$-lemma-1)))))
 
 (defthm
   lofat-remove-file-correctness-lemma-17
