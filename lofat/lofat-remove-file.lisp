@@ -531,8 +531,6 @@
        (stobj-disjoins-list lofat-to-hifat-helper-correctness-4)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22)))))
     :rule-classes :linear)
 
@@ -571,8 +569,6 @@
        (stobj-disjoins-list lofat-to-hifat-helper-correctness-4)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22))))))
 
   (defthm
@@ -609,8 +605,6 @@
        (stobj-disjoins-list lofat-to-hifat-helper-correctness-4)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22))))))
 
   (defthm
@@ -725,8 +719,6 @@
        (stobj-disjoins-list lofat-to-hifat-helper-correctness-4)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22))))))
 
   (defthm
@@ -790,8 +782,6 @@
        (lofat-remove-file-spec-1)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22))))))
 
   (defthm
@@ -829,8 +819,6 @@
        (stobj-disjoins-list lofat-to-hifat-helper-correctness-4)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22))))))
 
   (defthm
@@ -895,8 +883,6 @@
        (lofat-remove-file-spec-1)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22))))))
 
   (defthm
@@ -974,8 +960,6 @@
       :in-theory
       (e/d (stobj-disjoins-list lofat-to-hifat-helper-correctness-4)
            ((:rewrite lofat-remove-file-correctness-lemma-25)
-            (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                      . 1)
             (:linear lofat-remove-file-correctness-lemma-22)
             (:linear nth-when-d-e-p)))))
     :rule-classes :linear)
@@ -1055,8 +1039,6 @@
       :in-theory
       (e/d (stobj-disjoins-list lofat-to-hifat-helper-correctness-4)
            ((:rewrite lofat-remove-file-correctness-lemma-25)
-            (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                      . 1)
             (:linear lofat-remove-file-correctness-lemma-22)
             (:linear nth-when-d-e-p))))))
 
@@ -1113,8 +1095,6 @@
       (e/d (stobj-disjoins-list lofat-to-hifat-helper-correctness-4
                                 not-intersectp-list)
            ((:rewrite lofat-remove-file-correctness-lemma-25)
-            (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                      . 1)
             (:linear lofat-remove-file-correctness-lemma-22)
             (:linear nth-when-d-e-p))))))
 
@@ -1250,9 +1230,6 @@
        (stobj-disjoins-list lofat-to-hifat-helper-correctness-4)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite
-         lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-         . 1)
-        (:rewrite
          d-e-cc-contents-of-lofat-place-file-coincident-lemma-13)
         (:linear lofat-remove-file-correctness-lemma-22)
         (:linear nth-when-d-e-p))))))
@@ -1330,8 +1307,6 @@
        (lofat-remove-file-spec-1)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22))))))
 
   (defthm
@@ -1491,8 +1466,6 @@
        (stobj-disjoins-list lofat-to-hifat-helper-correctness-4
                             not-intersectp-list)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22)
         (:linear nth-when-d-e-p)
         (:definition member-intersectp-equal)
@@ -1691,8 +1664,6 @@
        (stobj-disjoins-list lofat-to-hifat-helper-correctness-4
                             not-intersectp-list)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22)
         (:linear nth-when-d-e-p)
         (:definition member-intersectp-equal)
@@ -1891,8 +1862,6 @@
        (stobj-disjoins-list lofat-to-hifat-helper-correctness-4
                             not-intersectp-list)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22)
         (:linear nth-when-d-e-p)
         (:definition member-intersectp-equal)
@@ -2059,8 +2028,6 @@
        (lofat-remove-file-spec-1)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22))))))
 
   (defthm
@@ -2218,8 +2185,6 @@
        (stobj-disjoins-list lofat-to-hifat-helper-correctness-4
                             not-intersectp-list)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22)
         (:linear nth-when-d-e-p)
         (:definition member-intersectp-equal)
@@ -3008,8 +2973,6 @@
        (lofat-remove-file-spec-1)
        ((:rewrite lofat-remove-file-correctness-lemma-25)
         (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:linear lofat-remove-file-correctness-lemma-22))))))
 
   (defthmd
@@ -3057,8 +3020,6 @@
        (:rewrite lofat-remove-file-correctness-lemma-25)
        (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-2)
        (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
-                 . 1)
-       (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
                  . 1)
        (:rewrite member-intersectp-is-commutative)
        (:linear nth-when-d-e-p)

@@ -4204,8 +4204,6 @@
         (:rewrite not-intersectp-list-of-append-1)
         (:rewrite lofat-place-file-correctness-1-lemma-13)
         (:rewrite d-e-cc-contents-of-lofat-place-file-coincident-lemma-13)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:definition not-intersectp-list)
         (:rewrite lofat-place-file-correctness-lemma-56)
         (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
@@ -4218,8 +4216,6 @@
         (:definition natp)
         (:rewrite lofat-place-file-correctness-1-lemma-13)
         (:rewrite d-e-cc-contents-of-lofat-place-file-coincident-lemma-13)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
         (:definition not-intersectp-list)
         (:rewrite lofat-place-file-correctness-lemma-56)
         (:rewrite nfix-when-zp)
