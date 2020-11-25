@@ -18166,33 +18166,8 @@ Some (rather awful) testing forms are
               (cluster-size fat32$c)))))
       nil)))))
 
-(defthmd
-  lofat-place-file-correctness-lemma-76
-  (implies
-   (and
-    (hifat-equiv (mv-nth 0
-                         (lofat-to-hifat-helper fat32$c
-                                                d-e-list entry-limit1))
-                 fs)
-    (equal (mv-nth 3
-                   (lofat-to-hifat-helper fat32$c
-                                          d-e-list entry-limit1))
-           0)
-    (>= (nfix entry-limit2)
-        (mv-nth 1
-                (lofat-to-hifat-helper fat32$c
-                                       d-e-list entry-limit1))))
-   (equal (hifat-entry-count
-           (mv-nth 0
-                   (lofat-to-hifat-helper fat32$c
-                                          d-e-list entry-limit2)))
-          (hifat-entry-count fs)))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable lofat-to-hifat-helper-correctness-4)
-           :use lofat-to-hifat-helper-correctness-4)))
-
 (defthm
-  lofat-place-file-correctness-lemma-78
+  lofat-place-file-correctness-lemma-73
   (implies
    (and
     (not
@@ -19465,7 +19440,7 @@ Some (rather awful) testing forms are
       x)))))
 
 (defthm
-  lofat-place-file-correctness-lemma-197
+  lofat-place-file-correctness-lemma-75
   (implies
    (and
     (equal

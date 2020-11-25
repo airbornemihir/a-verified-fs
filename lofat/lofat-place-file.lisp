@@ -3288,7 +3288,7 @@
    :top :bash))
 
 (defthm
-  lofat-place-file-correctness-lemma-196
+  lofat-place-file-correctness-lemma-76
   (implies
    (and
     (equal
@@ -3428,7 +3428,7 @@
    :bash :bash))
 
 (defthm
-  lofat-place-file-correctness-lemma-163
+  lofat-place-file-correctness-lemma-78
   (implies
    (and
     (equal
