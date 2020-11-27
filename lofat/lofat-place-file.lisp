@@ -1657,7 +1657,7 @@
                      lofat-to-hifat-helper-of-update-dir-contents)
                     (:definition member-intersectp-equal)
                     (:rewrite
-                     lofat-place-file-correctness-1-lemma-15)))))
+                     lofat-place-file-correctness-lemma-82)))))
 
   (defthm
     lofat-place-file-correctness-lemma-66
@@ -2322,7 +2322,7 @@
           (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
           (:rewrite lofat-place-file-correctness-1-lemma-11)
           (:definition free-index-listp)
-          (:rewrite lofat-place-file-correctness-1-lemma-15)
+          (:rewrite lofat-place-file-correctness-lemma-82)
           (:rewrite nth-of-effective-fat)))
     :restrict
     ((not-intersectp-list-when-subsetp-1
@@ -4442,7 +4442,7 @@
          (:definition make-list-ac)
          (:definition place-d-e)
          (:rewrite member-of-nth-when-not-intersectp)
-         (:rewrite lofat-place-file-correctness-1-lemma-15)
+         (:rewrite lofat-place-file-correctness-lemma-82)
          (:rewrite non-free-index-list-listp-of-effective-fat-of-place-contents)
          (:rewrite lofat-remove-file-correctness-1-lemma-26)
          (:rewrite d-e-cc-of-update-dir-contents)
@@ -4581,7 +4581,7 @@
          (:definition make-list-ac)
          (:definition place-d-e)
          (:rewrite member-of-nth-when-not-intersectp)
-         (:rewrite lofat-place-file-correctness-1-lemma-15)
+         (:rewrite lofat-place-file-correctness-lemma-82)
          (:rewrite non-free-index-list-listp-of-effective-fat-of-place-contents)
          (:rewrite lofat-remove-file-correctness-1-lemma-26)
          (:rewrite d-e-cc-of-update-dir-contents)
@@ -5596,7 +5596,7 @@
        (:rewrite lofat-to-hifat-helper-of-clear-cc)
        (:rewrite get-cc-contents-of-lofat-remove-file-coincident-lemma-5
                  . 1)
-       (:rewrite lofat-place-file-correctness-1-lemma-15)
+       (:rewrite lofat-place-file-correctness-lemma-82)
        (:rewrite d-e-cc-under-iff . 3)
        (:rewrite d-e-first-cluster-of-d-e-set-first-cluster-file-size)
        (:rewrite fat32-masked-entry-fix-when-fat32-masked-entry-p)
@@ -6666,7 +6666,7 @@
      (:rewrite lofat-place-file-correctness-lemma-40)
      (:rewrite lofat-place-file-correctness-lemma-3)
      (:rewrite lofat-place-file-correctness-1-lemma-16)
-     (:rewrite lofat-place-file-correctness-1-lemma-15)
+     (:rewrite lofat-place-file-correctness-lemma-82)
      (:rewrite lofat-place-file-correctness-1-lemma-14)
      (:rewrite lofat-place-file-correctness-1-lemma-13)
      (:rewrite lofat-place-file-correctness-1-lemma-11)
