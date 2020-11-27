@@ -154,7 +154,18 @@
        hifat-entry-count-of-lofat-to-hifat-helper-of-delete-d-e-lemma-3)
       (:rewrite put-assoc-equal-without-change . 2)
       (:rewrite nats=>chars-of-take)
-      (:rewrite hifat-subsetp-reflexive-lemma-3)))
+      (:rewrite hifat-subsetp-reflexive-lemma-3)
+      (:rewrite lofat-place-file-correctness-lemma-83)
+      (:rewrite subsetp-append1)
+      (:rewrite d-e-p-when-member-equal-of-d-e-list-p)
+      (:rewrite lofat-place-file-correctness-lemma-52)
+      (:rewrite not-intersectp-list-when-subsetp-1)
+      (:rewrite subsetp-trans2)
+      (:rewrite subsetp-trans)
+      (:rewrite subsetp-when-atom-left)
+      (:rewrite subsetp-when-atom-right)
+      (:rewrite m1-directory-file-p-when-m1-file-p)
+      (:rewrite hifat-to-lofat-inversion-lemma-2)))
     :induct (lofat-to-hifat-helper fat32$c
                                    d-e-list entry-limit)
     :do-not-induct t
@@ -1128,7 +1139,13 @@
       (:rewrite length-when-stringp)
       (:rewrite len-of-nats=>chars)
       (:rewrite len-of-insert-d-e)
-      (:rewrite d-e-fix-when-d-e-p)))
+      (:rewrite d-e-fix-when-d-e-p)
+      (:rewrite lofat-place-file-correctness-1-lemma-14)
+      (:rewrite subsetp-append1)
+      (:rewrite lofat-place-file-correctness-lemma-83)
+      (:rewrite lofat-place-file-correctness-1-lemma-13)
+      (:rewrite lofat-place-file-correctness-lemma-52)
+      (:rewrite not-intersectp-list-when-subsetp-1)))
     :induct (lofat-to-hifat-helper fat32$c
                                    d-e-list entry-limit2)
     :do-not-induct t)))
@@ -6240,7 +6257,7 @@
     :in-theory
     (e/d
      (lofat-to-hifat-helper find-d-e
-                            place-d-e hifat-entry-count
+                            place-d-e
                             lofat-to-hifat-helper-correctness-4)
      ((:rewrite lofat-place-file-correctness-1-lemma-14)
       (:rewrite nth-of-nats=>chars)
@@ -6270,7 +6287,18 @@
       (:rewrite fat32-filename-p-correctness-1)
       (:rewrite m1-directory-file-p-correctness-1)
       (:rewrite m1-regular-file-p-correctness-1)
-      (:rewrite hifat-no-dups-p-of-cdr))))))
+      (:rewrite hifat-no-dups-p-of-cdr)
+      (:rewrite lofat-to-hifat-helper-correctness-4)
+      (:rewrite nth-of-effective-fat)
+      (:rewrite lofat-place-file-correctness-lemma-83)
+      (:rewrite lofat-place-file-correctness-1-lemma-11)
+      (:rewrite natp-of-car-when-nat-listp)
+      (:type-prescription assoc-when-zp-len)
+      (:rewrite not-intersectp-list-when-subsetp-1)
+      (:rewrite lofat-remove-file-correctness-lemma-31)
+      (:rewrite m1-file-fix-when-m1-file-p)
+      (:linear lofat-fs-p-correctness-1)
+      (:rewrite fat32-filename-fix-when-fat32-filename-p))))))
 
 (defthm
   lofat-place-file-correctness-lemma-169
