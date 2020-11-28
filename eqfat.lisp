@@ -2055,35 +2055,33 @@ Some (rather awful) testing forms are
          first-cluster
          (stobj-set-indices-in-fa-table
           fat32$c
-          (mv-nth
-           0
-           (fat32-build-index-list (effective-fat fat32$c)
-                                   first-cluster
-                                   2097152 (cluster-size fat32$c)))
+          (mv-nth 0
+                  (fat32-build-index-list (effective-fat fat32$c)
+                                          first-cluster
+                                          2097152 (cluster-size fat32$c)))
           (make-list-ac
            (len
             (cdr
              (mv-nth
               0
               (fat32-build-index-list (effective-fat fat32$c)
-                                      first-cluster 2097152
-                                      (cluster-size fat32$c)))))
+                                      first-cluster
+                                      2097152 (cluster-size fat32$c)))))
            0 '(0))))
         268435455)
        (stobj-set-indices-in-fa-table
         fat32$c
-        (mv-nth
-         0
-         (fat32-build-index-list (effective-fat fat32$c)
-                                 first-cluster
-                                 2097152 (cluster-size fat32$c)))
+        (mv-nth 0
+                (fat32-build-index-list (effective-fat fat32$c)
+                                        first-cluster
+                                        2097152 (cluster-size fat32$c)))
         (make-list-ac
          (len
           (cdr
            (mv-nth 0
                    (fat32-build-index-list (effective-fat fat32$c)
-                                           first-cluster 2097152
-                                           (cluster-size fat32$c)))))
+                                           first-cluster
+                                           2097152 (cluster-size fat32$c)))))
          0 '(0))))
       (mv-nth 0
               (fat32-build-index-list (effective-fat fat32$c)
@@ -2092,8 +2090,8 @@ Some (rather awful) testing forms are
       (append
        (cdr (mv-nth 0
                     (fat32-build-index-list (effective-fat fat32$c)
-                                            first-cluster 2097152
-                                            (cluster-size fat32$c))))
+                                            first-cluster
+                                            2097152 (cluster-size fat32$c))))
        (list
         (fat32-entry-mask
          (fati
@@ -2103,8 +2101,8 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (fat32-build-index-list (effective-fat fat32$c)
-                                      first-cluster 2097152
-                                      (cluster-size fat32$c))))))
+                                      first-cluster
+                                      2097152 (cluster-size fat32$c))))))
           fat32$c)))))
      (stobj-set-indices-in-fa-table
       fat32$c
@@ -2115,8 +2113,8 @@ Some (rather awful) testing forms are
       (append
        (cdr (mv-nth 0
                     (fat32-build-index-list (effective-fat fat32$c)
-                                            first-cluster 2097152
-                                            (cluster-size fat32$c))))
+                                            first-cluster
+                                            2097152 (cluster-size fat32$c))))
        (list
         (fat32-entry-mask
          (fati
@@ -2126,8 +2124,8 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (fat32-build-index-list (effective-fat fat32$c)
-                                      first-cluster 2097152
-                                      (cluster-size fat32$c))))))
+                                      first-cluster
+                                      2097152 (cluster-size fat32$c))))))
           fat32$c))))))
     (lofat-fs-p fat32$c)
     (fat32-masked-entry-p first-cluster)
@@ -2136,8 +2134,8 @@ Some (rather awful) testing forms are
     (consp
      (cdr (mv-nth 0
                   (fat32-build-index-list (effective-fat fat32$c)
-                                          first-cluster 2097152
-                                          (cluster-size fat32$c))))))
+                                          first-cluster
+                                          2097152 (cluster-size fat32$c))))))
    (equal
     (stobj-set-indices-in-fa-table
      (update-fati
@@ -2146,18 +2144,17 @@ Some (rather awful) testing forms are
                              268435455)
       (stobj-set-indices-in-fa-table
        fat32$c
-       (mv-nth
-        0
-        (fat32-build-index-list (effective-fat fat32$c)
-                                first-cluster
-                                2097152 (cluster-size fat32$c)))
+       (mv-nth 0
+               (fat32-build-index-list (effective-fat fat32$c)
+                                       first-cluster
+                                       2097152 (cluster-size fat32$c)))
        (make-list-ac
         (len
          (cdr
           (mv-nth 0
                   (fat32-build-index-list (effective-fat fat32$c)
-                                          first-cluster 2097152
-                                          (cluster-size fat32$c)))))
+                                          first-cluster
+                                          2097152 (cluster-size fat32$c)))))
         0 '(0))))
      (mv-nth 0
              (fat32-build-index-list (effective-fat fat32$c)
@@ -2166,8 +2163,8 @@ Some (rather awful) testing forms are
      (append
       (cdr (mv-nth 0
                    (fat32-build-index-list (effective-fat fat32$c)
-                                           first-cluster 2097152
-                                           (cluster-size fat32$c))))
+                                           first-cluster
+                                           2097152 (cluster-size fat32$c))))
       (list
        (fat32-entry-mask
         (fati
@@ -2177,17 +2174,38 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (fat32-build-index-list (effective-fat fat32$c)
-                                     first-cluster 2097152
-                                     (cluster-size fat32$c))))))
+                                     first-cluster
+                                     2097152 (cluster-size fat32$c))))))
          fat32$c)))))
     fat32$c))
   :hints
   (("goal"
     :in-theory
-    (disable (:rewrite fat32-update-lower-28-of-fat32-update-lower-28)
-             (:rewrite clear-cc-reversibility-lemma-2)
-             nth-of-set-indices-in-fa-table-when-member
-             (:rewrite stobj-set-indices-in-fa-table-correctness-1))
+    (disable
+     (:rewrite fat32-update-lower-28-of-fat32-update-lower-28)
+     (:rewrite clear-cc-reversibility-lemma-2)
+     nth-of-set-indices-in-fa-table-when-member
+     (:rewrite stobj-set-indices-in-fa-table-correctness-1)
+     (:rewrite cdr-cons)
+     (:rewrite cluster-size-of-stobj-set-indices-in-fa-table)
+     (:rewrite fat-length-of-stobj-set-indices-in-fa-table)
+     (:rewrite fat32-entry-mask-correctness-1)
+     (:rewrite fat32-masked-entry-list-p-of-append)
+     (:rewrite
+      fat32-masked-entry-list-p-of-cdr-when-fat32-masked-entry-list-p)
+     (:rewrite fat32-masked-entry-list-p-of-cons)
+     (:rewrite fat32-masked-entry-list-p-of-fat32-build-index-list)
+     (:rewrite len-of-append)
+     (:rewrite list-fix-when-true-listp)
+     (:rewrite lofat-fs-p-correctness-1)
+     (:rewrite lofat-fs-p-of-stobj-set-indices-in-fa-table)
+     (:rewrite stobj-set-indices-in-fa-table-of-stobj-set-indices-in-fa-table)
+     (:rewrite
+      stobj-set-indices-in-fa-table-of-stobj-set-indices-in-fa-table-lemma-3)
+     (:rewrite subsetp-member . 1)
+     (:rewrite subsetp-refl)
+     (:type-prescription fat-entry-count)
+     (:type-prescription member-equal))
     :use
     ((:instance
       (:rewrite nth-of-set-indices-in-fa-table-when-member)
@@ -2195,15 +2213,14 @@ Some (rather awful) testing forms are
       (index-list
        (mv-nth 0
                (fat32-build-index-list (effective-fat fat32$c)
-                                       first-cluster 2097152
-                                       (cluster-size fat32$c))))
+                                       first-cluster
+                                       2097152 (cluster-size fat32$c))))
       (fa-table (effective-fat fat32$c))
       (n first-cluster))
      (:instance (:rewrite fat32-update-lower-28-of-fat32-update-lower-28)
                 (masked-entry2 268435455)
                 (masked-entry1 0)
-                (entry (nth first-cluster
-                            (effective-fat fat32$c))))
+                (entry (nth first-cluster (effective-fat fat32$c))))
      (:instance (:rewrite clear-cc-reversibility-lemma-2)
                 (length 2097152)
                 (masked-current-cluster first-cluster)
@@ -2214,14 +2231,14 @@ Some (rather awful) testing forms are
        (make-list-ac
         (len (mv-nth 0
                      (fat32-build-index-list (effective-fat fat32$c)
-                                             first-cluster 2097152
-                                             (cluster-size fat32$c))))
+                                             first-cluster
+                                             2097152 (cluster-size fat32$c))))
         0 nil))
       (index-list
        (mv-nth 0
                (fat32-build-index-list (effective-fat fat32$c)
-                                       first-cluster 2097152
-                                       (cluster-size fat32$c))))
+                                       first-cluster
+                                       2097152 (cluster-size fat32$c))))
       (fat32$c fat32$c))))))
 
 (defthm
