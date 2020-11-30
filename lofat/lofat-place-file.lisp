@@ -386,7 +386,4346 @@
    (m1-directory-file-p (m1-file-fix file))))
  :hints (("goal" :in-theory (enable hifat-place-file))))
 
-(defstub helper-2 (fat32$c * * *) => *)
+(skip-proofs
+ (defund-nx
+   helper-2
+   (fat32$c root-d-e path file)
+   (declare
+    (xargs
+     :stobjs fat32$c
+     :guard
+     (or
+      (b*
+          (((mv root-d-e-cc error-code) (d-e-cc fat32$c root-d-e)))
+        (and
+         (no-duplicatesp-equal root-d-e-cc)
+         (equal error-code 0)
+         (d-e-directory-p root-d-e)
+         (lofat-file-p file)
+         (fat32-filename-list-p path)
+         (<= 2 (d-e-first-cluster root-d-e))
+         (d-e-p root-d-e)
+         (lofat-fs-p fat32$c)
+         (consp path)
+         (or (lofat-regular-file-p file)
+             (equal (lofat-file->contents file) nil))))
+      t)))
+   (cond
+    ((and
+      (lofat-regular-file-p file)
+      (equal
+       (mv-nth
+        1
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))
+       0)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (equal
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c)))
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<=
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (equal
+       (fat32-entry-mask
+        (fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))))
+             0 nil))
+           1))
+         fat32$c))
+       0)
+      (<
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c))))
+      (<=
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c)))
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))))
+     *enospc*)
+    ((and
+      (lofat-regular-file-p file)
+      (equal
+       (mv-nth
+        1
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))
+       0)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (not
+       (equal
+        (len
+         (make-clusters
+          (nats=>string
+           (insert-d-e
+            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (d-e-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path)))
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e (make-d-e-list
+                                (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                               (car path))))))
+                 0 nil))
+               1))
+             (len (explode (lofat-file->contents file))))))
+          (cluster-size fat32$c)))
+        (+
+         1
+         (count-free-clusters (effective-fat fat32$c))
+         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+         (- (len (make-clusters (lofat-file->contents file)
+                                (cluster-size fat32$c))))
+         (len
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))))))
+      (<
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c))))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c))))
+      (equal
+       (fat32-entry-mask
+        (fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))))
+             0 nil))
+           1))
+         fat32$c))
+       0)
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152))
+     *enospc*)
+    ((and
+      (equal
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c)))
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (lofat-regular-file-p file)
+      (equal
+       (mv-nth
+        1
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))
+       0)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (<
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<=
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (not
+       (equal
+        (fat32-entry-mask
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))))
+              0 nil))
+            1))
+          fat32$c))
+        0))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152))
+     *enospc*)
+    ((and
+      (lofat-regular-file-p file)
+      (equal
+       (mv-nth
+        1
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))
+       0)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (<=
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c)))
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (not
+       (equal
+        (fat32-entry-mask
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))))
+              0 nil))
+            1))
+          fat32$c))
+        0))
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152))
+     0)
+    ((and
+      (lofat-regular-file-p file)
+      (equal
+       (mv-nth
+        1
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))
+       0)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c))))
+      (<
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c))))
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152))
+     *enospc*)
+    ((and
+      (lofat-regular-file-p file)
+      (equal
+       (mv-nth
+        1
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))
+       0)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (equal
+       (fat32-entry-mask
+        (fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))))
+             0 nil))
+           1))
+         fat32$c))
+       0)
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (<=
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c)))
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))))
+     0)
+    ((and
+      (lofat-regular-file-p file)
+      (equal
+       (mv-nth
+        1
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))
+       0)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (<
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c))))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (not
+       (member-equal
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32$c)
+           (mv-nth
+            0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path)))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path))))))
+            0 nil))
+          1))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (not
+       (equal
+        (fat32-entry-mask
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))))
+              0 nil))
+            1))
+          fat32$c))
+        0))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152))
+     *enospc*)
+    ((and
+      (lofat-regular-file-p file)
+      (equal
+       (mv-nth
+        1
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))
+       0)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (not
+       (member-equal
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32$c)
+           (mv-nth
+            0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path)))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path))))))
+            0 nil))
+          1))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (not
+       (equal
+        (fat32-entry-mask
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))))
+              0 nil))
+            1))
+          fat32$c))
+        0))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (<=
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file))))))
+         (cluster-size fat32$c)))
+       (+
+        1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (- (len (make-clusters (lofat-file->contents file)
+                               (cluster-size fat32$c))))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))))
+     0)
+    ((and
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (<
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))
+       (+ 2 (count-of-clusters fat32$c)))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (not
+       (equal
+        (mv-nth
+         1
+         (d-e-cc-contents
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))
+        0))
+      (<= 1
+          (count-free-clusters (effective-fat fat32$c)))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (<
+       (+ -1
+          (count-free-clusters (effective-fat fat32$c))
+          (len (mv-nth 0 (d-e-cc fat32$c root-d-e))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth 0
+                 (find-n-free-clusters (effective-fat fat32$c)
+                                       1))
+            0)))
+         (cluster-size fat32$c)))))
+     *enospc*)
+    ((and
+      (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+      (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
+             0)
+      (d-e-directory-p root-d-e)
+      (not (lofat-file->contents file))
+      (lofat-file-p file)
+      (fat32-filename-list-p path)
+      (<= 2 (d-e-first-cluster root-d-e))
+      (d-e-p root-d-e)
+      (lofat-fs-p fat32$c)
+      (consp path)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (not (lofat-regular-file-p file))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (equal
+        (fat32-entry-mask
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))))
+              0 nil))
+            1))
+          fat32$c))
+        0))
+      (not
+       (member-equal
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32$c)
+           (mv-nth
+            0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path)))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path))))))
+            0 nil))
+          1))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path)))))))
+      (<=
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e (make-d-e-list
+                               (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                              (car path))))))
+                0 nil))
+              1))
+            0)))
+         (cluster-size fat32$c)))
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c))))
+     0)
+    ((and
+      (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+      (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
+             0)
+      (d-e-directory-p root-d-e)
+      (not (lofat-file->contents file))
+      (lofat-file-p file)
+      (fat32-filename-list-p path)
+      (<= 2 (d-e-first-cluster root-d-e))
+      (d-e-p root-d-e)
+      (lofat-fs-p fat32$c)
+      (consp path)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (not (lofat-regular-file-p file))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (equal
+        (fat32-entry-mask
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))))
+              0 nil))
+            1))
+          fat32$c))
+        0))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (not
+       (member-equal
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32$c)
+           (mv-nth
+            0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path)))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path))))))
+            0 nil))
+          1))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path)))))))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<
+       (+
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e (make-d-e-list
+                               (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                              (car path))))))
+                0 nil))
+              1))
+            0)))
+         (cluster-size fat32$c)))))
+     *enospc*)
+    ((and
+      (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+      (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
+             0)
+      (d-e-directory-p root-d-e)
+      (not (lofat-file->contents file))
+      (lofat-file-p file)
+      (fat32-filename-list-p path)
+      (<= 2 (d-e-first-cluster root-d-e))
+      (d-e-p root-d-e)
+      (lofat-fs-p fat32$c)
+      (consp path)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (not (lofat-regular-file-p file))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (equal
+        (fat32-entry-mask
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))))
+              0 nil))
+            1))
+          fat32$c))
+        0))
+      (<
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e (make-d-e-list
+                               (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                              (car path))))))
+                0 nil))
+              1))
+            0)))
+         (cluster-size fat32$c))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))))
+     *enospc*)
+    ((and
+      (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+      (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
+             0)
+      (d-e-directory-p root-d-e)
+      (not (lofat-file->contents file))
+      (lofat-file-p file)
+      (fat32-filename-list-p path)
+      (<= 2 (d-e-first-cluster root-d-e))
+      (d-e-p root-d-e)
+      (lofat-fs-p fat32$c)
+      (consp path)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (not (lofat-regular-file-p file))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (equal
+        (fat32-entry-mask
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))))
+              0 nil))
+            1))
+          fat32$c))
+        0))
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (<=
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e (make-d-e-list
+                               (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                              (car path))))))
+                0 nil))
+              1))
+            0)))
+         (cluster-size fat32$c)))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))))
+     0)
+    ((and
+      (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+      (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
+             0)
+      (d-e-directory-p root-d-e)
+      (not (lofat-file->contents file))
+      (lofat-file-p file)
+      (fat32-filename-list-p path)
+      (<= 2 (d-e-first-cluster root-d-e))
+      (d-e-p root-d-e)
+      (lofat-fs-p fat32$c)
+      (consp path)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (not (lofat-regular-file-p file))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (equal
+        (len
+         (make-clusters
+          (nats=>string
+           (insert-d-e
+            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (d-e-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path)))
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                      (car path))))))
+                 0 nil))
+               1))
+             0)))
+          (cluster-size fat32$c)))
+        (+
+         (count-free-clusters (effective-fat fat32$c))
+         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+         (len
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))))))
+      (<=
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e (make-d-e-list
+                               (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                              (car path))))))
+                0 nil))
+              1))
+            0)))
+         (cluster-size fat32$c)))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path))))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (equal
+       (fat32-entry-mask
+        (fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))))
+             0 nil))
+           1))
+         fat32$c))
+       0))
+     0)
+    ((and
+      (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+      (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
+             0)
+      (d-e-directory-p root-d-e)
+      (not (lofat-file->contents file))
+      (lofat-file-p file)
+      (fat32-filename-list-p path)
+      (<= 2 (d-e-first-cluster root-d-e))
+      (d-e-p root-d-e)
+      (lofat-fs-p fat32$c)
+      (consp path)
+      (not (consp (cdr path)))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (not (lofat-regular-file-p file))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (not
+       (equal
+        (len
+         (make-clusters
+          (nats=>string
+           (insert-d-e
+            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            (d-e-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (car path)))
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                      (car path))))))
+                 0 nil))
+               1))
+             0)))
+          (cluster-size fat32$c)))
+        (+
+         (count-free-clusters (effective-fat fat32$c))
+         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+         (len
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (equal
+       (fat32-entry-mask
+        (fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))))
+             0 nil))
+           1))
+         fat32$c))
+       0)
+      (<
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e (make-d-e-list
+                               (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                              (car path))))))
+                0 nil))
+              1))
+            0)))
+         (cluster-size fat32$c)))))
+     *enospc*)
+    ((and
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+      (not
+       (intersectp-equal
+        (mv-nth 0 (d-e-cc fat32$c root-d-e))
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (d-e-cc-contents
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path)))))
+       0)
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152))
+     (if
+         (and
+          (equal
+           (len
+            (make-clusters
+             (nats=>string
+              (insert-d-e
+               (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (d-e-set-first-cluster-file-size
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (set-indices-in-fa-table
+                   (effective-fat fat32$c)
+                   (mv-nth
+                    0
+                    (d-e-cc
+                     fat32$c
+                     (mv-nth
+                      0
+                      (find-d-e
+                       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                       (car path)))))
+                   (make-list-ac
+                    (len
+                     (mv-nth
+                      0
+                      (d-e-cc
+                       fat32$c
+                       (mv-nth
+                        0
+                        (find-d-e
+                         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                         (car path))))))
+                    0 nil))
+                  1))
+                0)))
+             (cluster-size fat32$c)))
+           (+
+            (count-free-clusters (effective-fat fat32$c))
+            (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path))))))))
+          (<=
+           (+
+            (count-free-clusters (effective-fat fat32$c))
+            (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))))
+           (+
+            (count-free-clusters (effective-fat fat32$c))
+            (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path))))))))
+          (<
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (car path))))))
+               0 nil))
+             1))
+           (+ 2 (count-of-clusters fat32$c)))
+          (<
+           (+
+            -1
+            (count-free-clusters (effective-fat fat32$c))
+            (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))))
+           (+
+            (count-free-clusters (effective-fat fat32$c))
+            (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))))))))
+         *enospc*
+       (if
+           (member-equal
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                     (car path))))))
+                0 nil))
+              1))
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                         (car path))))))
+           (if
+               (equal
+                (len
+                 (make-clusters
+                  (nats=>string
+                   (insert-d-e
+                    (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                    (d-e-set-first-cluster-file-size
+                     (mv-nth
+                      0
+                      (find-d-e
+                       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                       (car path)))
+                     (nth
+                      0
+                      (find-n-free-clusters
+                       (set-indices-in-fa-table
+                        (effective-fat fat32$c)
+                        (mv-nth
+                         0
+                         (d-e-cc
+                          fat32$c
+                          (mv-nth
+                           0
+                           (find-d-e
+                            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                            (car path)))))
+                        (make-list-ac
+                         (len
+                          (mv-nth
+                           0
+                           (d-e-cc
+                            fat32$c
+                            (mv-nth
+                             0
+                             (find-d-e (make-d-e-list
+                                        (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                       (car path))))))
+                         0 nil))
+                       1))
+                     0)))
+                  (cluster-size fat32$c)))
+                (+
+                 (count-free-clusters (effective-fat fat32$c))
+                 (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                      (car path))))))))
+               *enospc*
+             (if
+                 (<
+                  (+
+                   -1
+                   (count-free-clusters (effective-fat fat32$c))
+                   (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+                   (len
+                    (mv-nth
+                     0
+                     (d-e-cc
+                      fat32$c
+                      (mv-nth
+                       0
+                       (find-d-e
+                        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                        (car path)))))))
+                  (len
+                   (make-clusters
+                    (nats=>string
+                     (insert-d-e
+                      (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                      (d-e-set-first-cluster-file-size
+                       (mv-nth
+                        0
+                        (find-d-e
+                         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                         (car path)))
+                       (nth
+                        0
+                        (find-n-free-clusters
+                         (set-indices-in-fa-table
+                          (effective-fat fat32$c)
+                          (mv-nth
+                           0
+                           (d-e-cc
+                            fat32$c
+                            (mv-nth
+                             0
+                             (find-d-e
+                              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                              (car path)))))
+                          (make-list-ac
+                           (len
+                            (mv-nth
+                             0
+                             (d-e-cc
+                              fat32$c
+                              (mv-nth
+                               0
+                               (find-d-e
+                                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                (car path))))))
+                           0 nil))
+                         1))
+                       0)))
+                    (cluster-size fat32$c))))
+                 *enospc*
+               (if
+                   (equal
+                    (fat32-entry-mask
+                     (fati
+                      (nth
+                       0
+                       (find-n-free-clusters
+                        (set-indices-in-fa-table
+                         (effective-fat fat32$c)
+                         (mv-nth
+                          0
+                          (d-e-cc
+                           fat32$c
+                           (mv-nth
+                            0
+                            (find-d-e
+                             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                             (car path)))))
+                         (make-list-ac
+                          (len
+                           (mv-nth
+                            0
+                            (d-e-cc
+                             fat32$c
+                             (mv-nth
+                              0
+                              (find-d-e
+                               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                               (car path))))))
+                          0 nil))
+                        1))
+                      fat32$c))
+                    0)
+                   (if
+                       (equal
+                        (len
+                         (make-clusters
+                          (nats=>string
+                           (insert-d-e
+                            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                            (d-e-set-first-cluster-file-size
+                             (mv-nth
+                              0
+                              (find-d-e
+                               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                               (car path)))
+                             (nth
+                              0
+                              (find-n-free-clusters
+                               (set-indices-in-fa-table
+                                (effective-fat fat32$c)
+                                (mv-nth
+                                 0
+                                 (d-e-cc
+                                  fat32$c
+                                  (mv-nth
+                                   0
+                                   (find-d-e
+                                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                    (car path)))))
+                                (make-list-ac
+                                 (len
+                                  (mv-nth
+                                   0
+                                   (d-e-cc
+                                    fat32$c
+                                    (mv-nth
+                                     0
+                                     (find-d-e
+                                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                      (car path))))))
+                                 0 nil))
+                               1))
+                             0)))
+                          (cluster-size fat32$c)))
+                        (+
+                         (count-free-clusters (effective-fat fat32$c))
+                         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+                         (len
+                          (mv-nth
+                           0
+                           (d-e-cc
+                            fat32$c
+                            (mv-nth
+                             0
+                             (find-d-e
+                              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                              (car path))))))))
+                       (if
+                           (and
+                            (<=
+                             (+
+                              (count-free-clusters (effective-fat fat32$c))
+                              (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+                              (len
+                               (mv-nth
+                                0
+                                (d-e-cc
+                                 fat32$c
+                                 (mv-nth
+                                  0
+                                  (find-d-e
+                                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                   (car path)))))))
+                             (+
+                              (count-free-clusters (effective-fat fat32$c))
+                              (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+                              (len
+                               (mv-nth
+                                0
+                                (d-e-cc
+                                 fat32$c
+                                 (mv-nth
+                                  0
+                                  (find-d-e
+                                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                   (car path))))))))
+                            (<
+                             (nth
+                              0
+                              (find-n-free-clusters
+                               (set-indices-in-fa-table
+                                (effective-fat fat32$c)
+                                (mv-nth
+                                 0
+                                 (d-e-cc
+                                  fat32$c
+                                  (mv-nth
+                                   0
+                                   (find-d-e
+                                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                    (car path)))))
+                                (make-list-ac
+                                 (len
+                                  (mv-nth
+                                   0
+                                   (d-e-cc
+                                    fat32$c
+                                    (mv-nth
+                                     0
+                                     (find-d-e
+                                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                      (car path))))))
+                                 0 nil))
+                               1))
+                             (+ 2 (count-of-clusters fat32$c)))
+                            (<
+                             (+
+                              -1
+                              (count-free-clusters (effective-fat fat32$c))
+                              (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+                              (len
+                               (mv-nth
+                                0
+                                (d-e-cc
+                                 fat32$c
+                                 (mv-nth
+                                  0
+                                  (find-d-e
+                                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                   (car path)))))))
+                             (+
+                              (count-free-clusters (effective-fat fat32$c))
+                              (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+                              (len
+                               (mv-nth
+                                0
+                                (d-e-cc
+                                 fat32$c
+                                 (mv-nth
+                                  0
+                                  (find-d-e
+                                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                   (car path)))))))))
+                           *enospc*
+                         (if
+                             (member-equal
+                              (nth
+                               0
+                               (find-n-free-clusters
+                                (set-indices-in-fa-table
+                                 (effective-fat fat32$c)
+                                 (mv-nth
+                                  0
+                                  (d-e-cc
+                                   fat32$c
+                                   (mv-nth
+                                    0
+                                    (find-d-e
+                                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                     (car path)))))
+                                 (make-list-ac
+                                  (len
+                                   (mv-nth
+                                    0
+                                    (d-e-cc
+                                     fat32$c
+                                     (mv-nth
+                                      0
+                                      (find-d-e
+                                       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                       (car path))))))
+                                  0 nil))
+                                1))
+                              (mv-nth
+                               0
+                               (d-e-cc
+                                fat32$c
+                                (mv-nth
+                                 0
+                                 (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                           (car path))))))
+                             (if
+                                 (<=
+                                  (len
+                                   (make-clusters
+                                    (nats=>string
+                                     (insert-d-e
+                                      (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                      (d-e-set-first-cluster-file-size
+                                       (mv-nth
+                                        0
+                                        (find-d-e
+                                         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                         (car path)))
+                                       (nth
+                                        0
+                                        (find-n-free-clusters
+                                         (set-indices-in-fa-table
+                                          (effective-fat fat32$c)
+                                          (mv-nth
+                                           0
+                                           (d-e-cc
+                                            fat32$c
+                                            (mv-nth
+                                             0
+                                             (find-d-e
+                                              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                              (car path)))))
+                                          (make-list-ac
+                                           (len
+                                            (mv-nth
+                                             0
+                                             (d-e-cc
+                                              fat32$c
+                                              (mv-nth
+                                               0
+                                               (find-d-e
+                                                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                                (car path))))))
+                                           0 nil))
+                                         1))
+                                       0)))
+                                    (cluster-size fat32$c)))
+                                  (+
+                                   -1
+                                   (count-free-clusters (effective-fat fat32$c))
+                                   (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+                                   (len
+                                    (mv-nth
+                                     0
+                                     (d-e-cc
+                                      fat32$c
+                                      (mv-nth
+                                       0
+                                       (find-d-e
+                                        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                        (car path))))))))
+                                 0
+                               *enospc*)
+                           *enospc*))
+                     (if
+                         (<
+                          (+
+                           -1
+                           (count-free-clusters (effective-fat fat32$c))
+                           (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+                           (len
+                            (mv-nth
+                             0
+                             (d-e-cc
+                              fat32$c
+                              (mv-nth
+                               0
+                               (find-d-e
+                                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                (car path)))))))
+                          (len
+                           (make-clusters
+                            (nats=>string
+                             (insert-d-e
+                              (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                              (d-e-set-first-cluster-file-size
+                               (mv-nth
+                                0
+                                (find-d-e
+                                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                 (car path)))
+                               (nth
+                                0
+                                (find-n-free-clusters
+                                 (set-indices-in-fa-table
+                                  (effective-fat fat32$c)
+                                  (mv-nth
+                                   0
+                                   (d-e-cc
+                                    fat32$c
+                                    (mv-nth
+                                     0
+                                     (find-d-e
+                                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                      (car path)))))
+                                  (make-list-ac
+                                   (len
+                                    (mv-nth
+                                     0
+                                     (d-e-cc
+                                      fat32$c
+                                      (mv-nth
+                                       0
+                                       (find-d-e
+                                        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                                        (car path))))))
+                                   0 nil))
+                                 1))
+                               0)))
+                            (cluster-size fat32$c))))
+                         *enospc*
+                       0))
+                 0)))
+         *enospc*)))
+    ((and
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (<=
+       (+ 2 (count-of-clusters fat32$c))
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))))
+     (if
+         (<=
+          (len
+           (make-clusters
+            (nats=>string
+             (insert-d-e
+              (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (d-e-set-first-cluster-file-size
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))
+               (nth 0
+                    (find-n-free-clusters (effective-fat fat32$c)
+                                          1))
+               0)))
+            (cluster-size fat32$c)))
+          (+ -1
+             (count-free-clusters (effective-fat fat32$c))
+             (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))))
+         0
+       *enospc*))
+    ((and
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (<
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                   (car path))))
+       2))
+     (if
+         (<=
+          (len
+           (make-clusters
+            (nats=>string
+             (insert-d-e
+              (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (d-e-set-first-cluster-file-size
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                 (car path)))
+               (nth 0
+                    (find-n-free-clusters (effective-fat fat32$c)
+                                          1))
+               0)))
+            (cluster-size fat32$c)))
+          (+ -1
+             (count-free-clusters (effective-fat fat32$c))
+             (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))))
+         0
+       *enospc*))
+    ((and
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152)
+      (<
+       (+ -1
+          (count-free-clusters (effective-fat fat32$c))
+          (len (mv-nth 0 (d-e-cc fat32$c root-d-e))))
+       (len
+        (make-clusters
+         (nats=>string
+          (insert-d-e
+           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (d-e-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+              (car path)))
+            (nth 0
+                 (find-n-free-clusters (effective-fat fat32$c)
+                                       1))
+            0)))
+         (cluster-size fat32$c)))))
+     *enospc*)
+    ((and
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path))))
+      (<=
+       (+ 64
+          (* 32
+             (len (make-d-e-list (mv-nth 0
+                                         (d-e-cc-contents fat32$c root-d-e))))))
+       2097152))
+     0)
+    ((<=
+      (len
+       (make-clusters
+        (nats=>string
+         (insert-d-e
+          (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          (d-e-set-first-cluster-file-size
+           (d-e-install-directory-bit (make-d-e-with-filename (car path))
+                                      t)
+           (nth 0
+                (find-n-free-clusters (effective-fat fat32$c)
+                                      1))
+           0)))
+        (cluster-size fat32$c)))
+      (+ -1
+         (count-free-clusters (effective-fat fat32$c))
+         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))))
+     0)
+    (t *enospc*))))
 
 (defun
     lofat-place-file
@@ -554,8 +4893,8 @@
          new-dir-contents))
        ((when (and
                (not
-                (zp (mbe :exec update-dir-contents-error-code
-                         :logic error-code)))
+                (zp (mbe :logic update-dir-contents-error-code
+                         :exec error-code)))
                (consp cc)))
         (b*
             ((fat32$c (stobj-set-indices-in-fa-table
@@ -686,4308 +5025,6 @@
                     (masked-current-cluster (d-e-first-cluster d-e1))
                     (length (d-e-file-size d-e1))))))
 
-(defaxiom
-  helper-2-correctness
-  (implies
-   (and
-    (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-    (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
-           0)
-    (d-e-directory-p root-d-e)
-    (lofat-file-p file)
-    (fat32-filename-list-p path)
-    (<= 2 (d-e-first-cluster root-d-e))
-    (d-e-p root-d-e)
-    (lofat-fs-p fat32$c)
-    (consp path)
-    (or (lofat-regular-file-p file)
-        (equal (lofat-file->contents file) nil)))
-   (equal
-    (helper-2 fat32$c root-d-e path file)
-    (cond
-     ((and
-       (lofat-regular-file-p file)
-       (equal
-        (mv-nth
-         1
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path)))
-        0)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (equal
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c)))
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (<=
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (equal
-        (fat32-entry-mask
-         (fati
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32$c)
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path)))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (d-e-cc
-                 fat32$c
-                 (mv-nth
-                  0
-                  (find-d-e
-                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))))
-              0 nil))
-            1))
-          fat32$c))
-        0)
-       (<
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c))))
-       (<=
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c)))
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (< 0
-          (len (explode (lofat-file->contents file))))
-       (<=
-        (+ -1
-           (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32$c))))
-        (+
-         -1
-         (count-free-clusters (effective-fat fat32$c))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152)
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (not
-        (d-e-directory-p
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path))))))
-      *enospc*)
-     ((and
-       (lofat-regular-file-p file)
-       (equal
-        (mv-nth
-         1
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path)))
-        0)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (not
-        (equal
-         (len
-          (make-clusters
-           (nats=>string
-            (insert-d-e
-             (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (d-e-set-first-cluster-file-size
-              (mv-nth
-               0
-               (find-d-e
-                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                (car path)))
-              (nth
-               0
-               (find-n-free-clusters
-                (set-indices-in-fa-table
-                 (effective-fat fat32$c)
-                 (mv-nth
-                  0
-                  (d-e-cc
-                   fat32$c
-                   (mv-nth
-                    0
-                    (find-d-e
-                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-                 (make-list-ac
-                  (len
-                   (mv-nth
-                    0
-                    (d-e-cc
-                     fat32$c
-                     (mv-nth
-                      0
-                      (find-d-e (make-d-e-list
-                                 (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                (car path))))))
-                  0 nil))
-                1))
-              (len (explode (lofat-file->contents file))))))
-           (cluster-size fat32$c)))
-         (+
-          1
-          (count-free-clusters (effective-fat fat32$c))
-          (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-          (- (len (make-clusters (lofat-file->contents file)
-                                 (cluster-size fat32$c))))
-          (len
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))))))
-       (<
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c))))
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (<
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c))))
-       (equal
-        (fat32-entry-mask
-         (fati
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32$c)
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path)))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (d-e-cc
-                 fat32$c
-                 (mv-nth
-                  0
-                  (find-d-e
-                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))))
-              0 nil))
-            1))
-          fat32$c))
-        0)
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (< 0
-          (len (explode (lofat-file->contents file))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (not
-        (d-e-directory-p
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (<=
-        (+ -1
-           (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32$c))))
-        (+
-         -1
-         (count-free-clusters (effective-fat fat32$c))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152))
-      *enospc*)
-     ((and
-       (equal
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c)))
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (lofat-regular-file-p file)
-       (equal
-        (mv-nth
-         1
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path)))
-        0)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (<
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (<=
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (not
-        (equal
-         (fat32-entry-mask
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32$c)
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path))))))
-               0 nil))
-             1))
-           fat32$c))
-         0))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (< 0
-          (len (explode (lofat-file->contents file))))
-       (member-equal
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (not
-        (d-e-directory-p
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (<=
-        (+ -1
-           (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32$c))))
-        (+
-         -1
-         (count-free-clusters (effective-fat fat32$c))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152))
-      *enospc*)
-     ((and
-       (lofat-regular-file-p file)
-       (equal
-        (mv-nth
-         1
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path)))
-        0)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (<=
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c)))
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (not
-        (equal
-         (fat32-entry-mask
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32$c)
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path))))))
-               0 nil))
-             1))
-           fat32$c))
-         0))
-       (member-equal
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (d-e-directory-p
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (< 0
-          (len (explode (lofat-file->contents file))))
-       (<=
-        (+ -1
-           (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32$c))))
-        (+
-         -1
-         (count-free-clusters (effective-fat fat32$c))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152))
-      0)
-     ((and
-       (lofat-regular-file-p file)
-       (equal
-        (mv-nth
-         1
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path)))
-        0)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (<
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c))))
-       (<
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c))))
-       (member-equal
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (d-e-directory-p
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (< 0
-          (len (explode (lofat-file->contents file))))
-       (<=
-        (+ -1
-           (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32$c))))
-        (+
-         -1
-         (count-free-clusters (effective-fat fat32$c))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152))
-      *enospc*)
-     ((and
-       (lofat-regular-file-p file)
-       (equal
-        (mv-nth
-         1
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path)))
-        0)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (equal
-        (fat32-entry-mask
-         (fati
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32$c)
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path)))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (d-e-cc
-                 fat32$c
-                 (mv-nth
-                  0
-                  (find-d-e
-                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))))
-              0 nil))
-            1))
-          fat32$c))
-        0)
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (d-e-directory-p
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (< 0
-          (len (explode (lofat-file->contents file))))
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (<=
-        (+ -1
-           (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32$c))))
-        (+
-         -1
-         (count-free-clusters (effective-fat fat32$c))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152)
-       (<=
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c)))
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))))
-      0)
-     ((and
-       (lofat-regular-file-p file)
-       (equal
-        (mv-nth
-         1
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path)))
-        0)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (<
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c))))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (d-e-directory-p
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (< 0
-          (len (explode (lofat-file->contents file))))
-       (not
-        (member-equal
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32$c)
-            (mv-nth
-             0
-             (d-e-cc
-              fat32$c
-              (mv-nth
-               0
-               (find-d-e
-                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                (car path)))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path))))))
-             0 nil))
-           1))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (not
-        (equal
-         (fat32-entry-mask
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32$c)
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path))))))
-               0 nil))
-             1))
-           fat32$c))
-         0))
-       (<=
-        (+ -1
-           (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32$c))))
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152))
-      *enospc*)
-     ((and
-       (lofat-regular-file-p file)
-       (equal
-        (mv-nth
-         1
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path)))
-        0)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (d-e-directory-p
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (< 0
-          (len (explode (lofat-file->contents file))))
-       (not
-        (member-equal
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32$c)
-            (mv-nth
-             0
-             (d-e-cc
-              fat32$c
-              (mv-nth
-               0
-               (find-d-e
-                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                (car path)))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path))))))
-             0 nil))
-           1))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (not
-        (equal
-         (fat32-entry-mask
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32$c)
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path))))))
-               0 nil))
-             1))
-           fat32$c))
-         0))
-       (<=
-        (+ -1
-           (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32$c))))
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152)
-       (<=
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (len (explode (lofat-file->contents file))))))
-          (cluster-size fat32$c)))
-        (+
-         1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (- (len (make-clusters (lofat-file->contents file)
-                                (cluster-size fat32$c))))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))))
-      0)
-     ((and
-       (d-e-directory-p
-        (mv-nth
-         0
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (<
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path))))
-        (+ 2 (count-of-clusters fat32$c)))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (not
-        (equal
-         (mv-nth
-          1
-          (d-e-cc-contents
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))
-         0))
-       (<= 1
-           (count-free-clusters (effective-fat fat32$c)))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152)
-       (<
-        (+ -1
-           (count-free-clusters (effective-fat fat32$c))
-           (len (mv-nth 0 (d-e-cc fat32$c root-d-e))))
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth 0
-                  (find-n-free-clusters (effective-fat fat32$c)
-                                        1))
-             0)))
-          (cluster-size fat32$c)))))
-      *enospc*)
-     ((and
-       (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-       (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
-              0)
-       (d-e-directory-p root-d-e)
-       (not (lofat-file->contents file))
-       (lofat-file-p file)
-       (fat32-filename-list-p path)
-       (<= 2 (d-e-first-cluster root-d-e))
-       (d-e-p root-d-e)
-       (lofat-fs-p fat32$c)
-       (consp path)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (d-e-directory-p
-        (mv-nth
-         0
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))
-       (not (lofat-regular-file-p file))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e
-             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (equal
-         (fat32-entry-mask
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32$c)
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path))))))
-               0 nil))
-             1))
-           fat32$c))
-         0))
-       (not
-        (member-equal
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32$c)
-            (mv-nth
-             0
-             (d-e-cc
-              fat32$c
-              (mv-nth
-               0
-               (find-d-e
-                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                (car path)))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path))))))
-             0 nil))
-           1))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e
-             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (car path)))))))
-       (<=
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e (make-d-e-list
-                                (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                               (car path))))))
-                 0 nil))
-               1))
-             0)))
-          (cluster-size fat32$c)))
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152)
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c))))
-      0)
-     ((and
-       (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-       (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
-              0)
-       (d-e-directory-p root-d-e)
-       (not (lofat-file->contents file))
-       (lofat-file-p file)
-       (fat32-filename-list-p path)
-       (<= 2 (d-e-first-cluster root-d-e))
-       (d-e-p root-d-e)
-       (lofat-fs-p fat32$c)
-       (consp path)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (d-e-directory-p
-        (mv-nth
-         0
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))
-       (not (lofat-regular-file-p file))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e
-             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (equal
-         (fat32-entry-mask
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32$c)
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path))))))
-               0 nil))
-             1))
-           fat32$c))
-         0))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152)
-       (not
-        (member-equal
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32$c)
-            (mv-nth
-             0
-             (d-e-cc
-              fat32$c
-              (mv-nth
-               0
-               (find-d-e
-                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                (car path)))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path))))))
-             0 nil))
-           1))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e
-             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (car path)))))))
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (<
-        (+
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e (make-d-e-list
-                                (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                               (car path))))))
-                 0 nil))
-               1))
-             0)))
-          (cluster-size fat32$c)))))
-      *enospc*)
-     ((and
-       (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-       (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
-              0)
-       (d-e-directory-p root-d-e)
-       (not (lofat-file->contents file))
-       (lofat-file-p file)
-       (fat32-filename-list-p path)
-       (<= 2 (d-e-first-cluster root-d-e))
-       (d-e-p root-d-e)
-       (lofat-fs-p fat32$c)
-       (consp path)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (d-e-directory-p
-        (mv-nth
-         0
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))
-       (not (lofat-regular-file-p file))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e
-             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (equal
-         (fat32-entry-mask
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32$c)
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path))))))
-               0 nil))
-             1))
-           fat32$c))
-         0))
-       (<
-        (+
-         -1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e (make-d-e-list
-                                (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                               (car path))))))
-                 0 nil))
-               1))
-             0)))
-          (cluster-size fat32$c))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152)
-       (member-equal
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))))
-      *enospc*)
-     ((and
-       (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-       (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
-              0)
-       (d-e-directory-p root-d-e)
-       (not (lofat-file->contents file))
-       (lofat-file-p file)
-       (fat32-filename-list-p path)
-       (<= 2 (d-e-first-cluster root-d-e))
-       (d-e-p root-d-e)
-       (lofat-fs-p fat32$c)
-       (consp path)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (d-e-directory-p
-        (mv-nth
-         0
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))
-       (not (lofat-regular-file-p file))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e
-             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (equal
-         (fat32-entry-mask
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32$c)
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path))))))
-               0 nil))
-             1))
-           fat32$c))
-         0))
-       (member-equal
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152)
-       (<=
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e (make-d-e-list
-                                (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                               (car path))))))
-                 0 nil))
-               1))
-             0)))
-          (cluster-size fat32$c)))
-        (+
-         -1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))))
-      0)
-     ((and
-       (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-       (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
-              0)
-       (d-e-directory-p root-d-e)
-       (not (lofat-file->contents file))
-       (lofat-file-p file)
-       (fat32-filename-list-p path)
-       (<= 2 (d-e-first-cluster root-d-e))
-       (d-e-p root-d-e)
-       (lofat-fs-p fat32$c)
-       (consp path)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (d-e-directory-p
-        (mv-nth
-         0
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))
-       (not (lofat-regular-file-p file))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e
-             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (equal
-         (len
-          (make-clusters
-           (nats=>string
-            (insert-d-e
-             (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (d-e-set-first-cluster-file-size
-              (mv-nth
-               0
-               (find-d-e
-                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                (car path)))
-              (nth
-               0
-               (find-n-free-clusters
-                (set-indices-in-fa-table
-                 (effective-fat fat32$c)
-                 (mv-nth
-                  0
-                  (d-e-cc
-                   fat32$c
-                   (mv-nth
-                    0
-                    (find-d-e
-                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-                 (make-list-ac
-                  (len
-                   (mv-nth
-                    0
-                    (d-e-cc
-                     fat32$c
-                     (mv-nth
-                      0
-                      (find-d-e
-                       (make-d-e-list
-                        (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                       (car path))))))
-                  0 nil))
-                1))
-              0)))
-           (cluster-size fat32$c)))
-         (+
-          (count-free-clusters (effective-fat fat32$c))
-          (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-          (len
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))))))
-       (<=
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e (make-d-e-list
-                                (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                               (car path))))))
-                 0 nil))
-               1))
-             0)))
-          (cluster-size fat32$c)))
-        (+
-         -1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path))))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152)
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (equal
-        (fat32-entry-mask
-         (fati
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32$c)
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path)))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (d-e-cc
-                 fat32$c
-                 (mv-nth
-                  0
-                  (find-d-e
-                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))))
-              0 nil))
-            1))
-          fat32$c))
-        0))
-      0)
-     ((and
-       (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-       (equal (mv-nth 1 (d-e-cc-contents fat32$c root-d-e))
-              0)
-       (d-e-directory-p root-d-e)
-       (not (lofat-file->contents file))
-       (lofat-file-p file)
-       (fat32-filename-list-p path)
-       (<= 2 (d-e-first-cluster root-d-e))
-       (d-e-p root-d-e)
-       (lofat-fs-p fat32$c)
-       (consp path)
-       (not (consp (cdr path)))
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (d-e-directory-p
-        (mv-nth
-         0
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))
-       (not (lofat-regular-file-p file))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e
-             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (not
-        (equal
-         (len
-          (make-clusters
-           (nats=>string
-            (insert-d-e
-             (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-             (d-e-set-first-cluster-file-size
-              (mv-nth
-               0
-               (find-d-e
-                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                (car path)))
-              (nth
-               0
-               (find-n-free-clusters
-                (set-indices-in-fa-table
-                 (effective-fat fat32$c)
-                 (mv-nth
-                  0
-                  (d-e-cc
-                   fat32$c
-                   (mv-nth
-                    0
-                    (find-d-e
-                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-                 (make-list-ac
-                  (len
-                   (mv-nth
-                    0
-                    (d-e-cc
-                     fat32$c
-                     (mv-nth
-                      0
-                      (find-d-e
-                       (make-d-e-list
-                        (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                       (car path))))))
-                  0 nil))
-                1))
-              0)))
-           (cluster-size fat32$c)))
-         (+
-          (count-free-clusters (effective-fat fat32$c))
-          (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-          (len
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152)
-       (<
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            0 nil))
-          1))
-        (+ 2 (count-of-clusters fat32$c)))
-       (equal
-        (fat32-entry-mask
-         (fati
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32$c)
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e
-                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                 (car path)))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (d-e-cc
-                 fat32$c
-                 (mv-nth
-                  0
-                  (find-d-e
-                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))))
-              0 nil))
-            1))
-          fat32$c))
-        0)
-       (<
-        (+
-         -1
-         (count-free-clusters (effective-fat fat32$c))
-         (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-         (len
-          (mv-nth
-           0
-           (d-e-cc
-            fat32$c
-            (mv-nth
-             0
-             (find-d-e
-              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-              (car path)))))))
-        (len
-         (make-clusters
-          (nats=>string
-           (insert-d-e
-            (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-            (d-e-set-first-cluster-file-size
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e (make-d-e-list
-                                (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                               (car path))))))
-                 0 nil))
-               1))
-             0)))
-          (cluster-size fat32$c)))))
-      *enospc*)
-     ((and
-       (<=
-        2
-        (d-e-first-cluster
-         (mv-nth
-          0
-          (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-       (d-e-directory-p
-        (mv-nth
-         0
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))
-       (no-duplicatesp-equal
-        (mv-nth
-         0
-         (d-e-cc
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-       (not
-        (intersectp-equal
-         (mv-nth 0 (d-e-cc fat32$c root-d-e))
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))))))
-       (equal
-        (mv-nth
-         1
-         (d-e-cc-contents
-          fat32$c
-          (mv-nth
-           0
-           (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path)))))
-        0)
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152))
-      (if
-          (and
-           (equal
-            (len
-             (make-clusters
-              (nats=>string
-               (insert-d-e
-                (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                (d-e-set-first-cluster-file-size
-                 (mv-nth
-                  0
-                  (find-d-e
-                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path)))
-                 (nth
-                  0
-                  (find-n-free-clusters
-                   (set-indices-in-fa-table
-                    (effective-fat fat32$c)
-                    (mv-nth
-                     0
-                     (d-e-cc
-                      fat32$c
-                      (mv-nth
-                       0
-                       (find-d-e
-                        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                        (car path)))))
-                    (make-list-ac
-                     (len
-                      (mv-nth
-                       0
-                       (d-e-cc
-                        fat32$c
-                        (mv-nth
-                         0
-                         (find-d-e
-                          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                          (car path))))))
-                     0 nil))
-                   1))
-                 0)))
-              (cluster-size fat32$c)))
-            (+
-             (count-free-clusters (effective-fat fat32$c))
-             (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-             (len
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path))))))))
-           (<=
-            (+
-             (count-free-clusters (effective-fat fat32$c))
-             (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-             (len
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))))
-            (+
-             (count-free-clusters (effective-fat fat32$c))
-             (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-             (len
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path))))))))
-           (<
-            (nth
-             0
-             (find-n-free-clusters
-              (set-indices-in-fa-table
-               (effective-fat fat32$c)
-               (mv-nth
-                0
-                (d-e-cc
-                 fat32$c
-                 (mv-nth
-                  0
-                  (find-d-e
-                   (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path)))))
-               (make-list-ac
-                (len
-                 (mv-nth
-                  0
-                  (d-e-cc
-                   fat32$c
-                   (mv-nth
-                    0
-                    (find-d-e
-                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (car path))))))
-                0 nil))
-              1))
-            (+ 2 (count-of-clusters fat32$c)))
-           (<
-            (+
-             -1
-             (count-free-clusters (effective-fat fat32$c))
-             (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-             (len
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))))
-            (+
-             (count-free-clusters (effective-fat fat32$c))
-             (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-             (len
-              (mv-nth
-               0
-               (d-e-cc
-                fat32$c
-                (mv-nth
-                 0
-                 (find-d-e
-                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                  (car path)))))))))
-          *enospc*
-        (if
-            (member-equal
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32$c)
-                (mv-nth
-                 0
-                 (d-e-cc
-                  fat32$c
-                  (mv-nth
-                   0
-                   (find-d-e
-                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                    (car path)))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (d-e-cc
-                    fat32$c
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path))))))
-                 0 nil))
-               1))
-             (mv-nth
-              0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                0
-                (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                          (car path))))))
-            (if
-                (equal
-                 (len
-                  (make-clusters
-                   (nats=>string
-                    (insert-d-e
-                     (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (d-e-set-first-cluster-file-size
-                      (mv-nth
-                       0
-                       (find-d-e
-                        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                        (car path)))
-                      (nth
-                       0
-                       (find-n-free-clusters
-                        (set-indices-in-fa-table
-                         (effective-fat fat32$c)
-                         (mv-nth
-                          0
-                          (d-e-cc
-                           fat32$c
-                           (mv-nth
-                            0
-                            (find-d-e
-                             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                             (car path)))))
-                         (make-list-ac
-                          (len
-                           (mv-nth
-                            0
-                            (d-e-cc
-                             fat32$c
-                             (mv-nth
-                              0
-                              (find-d-e (make-d-e-list
-                                         (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                        (car path))))))
-                          0 nil))
-                        1))
-                      0)))
-                   (cluster-size fat32$c)))
-                 (+
-                  (count-free-clusters (effective-fat fat32$c))
-                  (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-                  (len
-                   (mv-nth
-                    0
-                    (d-e-cc
-                     fat32$c
-                     (mv-nth
-                      0
-                      (find-d-e
-                       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                       (car path))))))))
-                *enospc*
-              (if
-                  (<
-                   (+
-                    -1
-                    (count-free-clusters (effective-fat fat32$c))
-                    (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-                    (len
-                     (mv-nth
-                      0
-                      (d-e-cc
-                       fat32$c
-                       (mv-nth
-                        0
-                        (find-d-e
-                         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                         (car path)))))))
-                   (len
-                    (make-clusters
-                     (nats=>string
-                      (insert-d-e
-                       (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                       (d-e-set-first-cluster-file-size
-                        (mv-nth
-                         0
-                         (find-d-e
-                          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                          (car path)))
-                        (nth
-                         0
-                         (find-n-free-clusters
-                          (set-indices-in-fa-table
-                           (effective-fat fat32$c)
-                           (mv-nth
-                            0
-                            (d-e-cc
-                             fat32$c
-                             (mv-nth
-                              0
-                              (find-d-e
-                               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                               (car path)))))
-                           (make-list-ac
-                            (len
-                             (mv-nth
-                              0
-                              (d-e-cc
-                               fat32$c
-                               (mv-nth
-                                0
-                                (find-d-e
-                                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                 (car path))))))
-                            0 nil))
-                          1))
-                        0)))
-                     (cluster-size fat32$c))))
-                  *enospc*
-                (if
-                    (equal
-                     (fat32-entry-mask
-                      (fati
-                       (nth
-                        0
-                        (find-n-free-clusters
-                         (set-indices-in-fa-table
-                          (effective-fat fat32$c)
-                          (mv-nth
-                           0
-                           (d-e-cc
-                            fat32$c
-                            (mv-nth
-                             0
-                             (find-d-e
-                              (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                              (car path)))))
-                          (make-list-ac
-                           (len
-                            (mv-nth
-                             0
-                             (d-e-cc
-                              fat32$c
-                              (mv-nth
-                               0
-                               (find-d-e
-                                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                (car path))))))
-                           0 nil))
-                         1))
-                       fat32$c))
-                     0)
-                    (if
-                        (equal
-                         (len
-                          (make-clusters
-                           (nats=>string
-                            (insert-d-e
-                             (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                             (d-e-set-first-cluster-file-size
-                              (mv-nth
-                               0
-                               (find-d-e
-                                (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                (car path)))
-                              (nth
-                               0
-                               (find-n-free-clusters
-                                (set-indices-in-fa-table
-                                 (effective-fat fat32$c)
-                                 (mv-nth
-                                  0
-                                  (d-e-cc
-                                   fat32$c
-                                   (mv-nth
-                                    0
-                                    (find-d-e
-                                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                     (car path)))))
-                                 (make-list-ac
-                                  (len
-                                   (mv-nth
-                                    0
-                                    (d-e-cc
-                                     fat32$c
-                                     (mv-nth
-                                      0
-                                      (find-d-e
-                                       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                       (car path))))))
-                                  0 nil))
-                                1))
-                              0)))
-                           (cluster-size fat32$c)))
-                         (+
-                          (count-free-clusters (effective-fat fat32$c))
-                          (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-                          (len
-                           (mv-nth
-                            0
-                            (d-e-cc
-                             fat32$c
-                             (mv-nth
-                              0
-                              (find-d-e
-                               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                               (car path))))))))
-                        (if
-                            (and
-                             (<=
-                              (+
-                               (count-free-clusters (effective-fat fat32$c))
-                               (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-                               (len
-                                (mv-nth
-                                 0
-                                 (d-e-cc
-                                  fat32$c
-                                  (mv-nth
-                                   0
-                                   (find-d-e
-                                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                    (car path)))))))
-                              (+
-                               (count-free-clusters (effective-fat fat32$c))
-                               (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-                               (len
-                                (mv-nth
-                                 0
-                                 (d-e-cc
-                                  fat32$c
-                                  (mv-nth
-                                   0
-                                   (find-d-e
-                                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                    (car path))))))))
-                             (<
-                              (nth
-                               0
-                               (find-n-free-clusters
-                                (set-indices-in-fa-table
-                                 (effective-fat fat32$c)
-                                 (mv-nth
-                                  0
-                                  (d-e-cc
-                                   fat32$c
-                                   (mv-nth
-                                    0
-                                    (find-d-e
-                                     (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                     (car path)))))
-                                 (make-list-ac
-                                  (len
-                                   (mv-nth
-                                    0
-                                    (d-e-cc
-                                     fat32$c
-                                     (mv-nth
-                                      0
-                                      (find-d-e
-                                       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                       (car path))))))
-                                  0 nil))
-                                1))
-                              (+ 2 (count-of-clusters fat32$c)))
-                             (<
-                              (+
-                               -1
-                               (count-free-clusters (effective-fat fat32$c))
-                               (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-                               (len
-                                (mv-nth
-                                 0
-                                 (d-e-cc
-                                  fat32$c
-                                  (mv-nth
-                                   0
-                                   (find-d-e
-                                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                    (car path)))))))
-                              (+
-                               (count-free-clusters (effective-fat fat32$c))
-                               (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-                               (len
-                                (mv-nth
-                                 0
-                                 (d-e-cc
-                                  fat32$c
-                                  (mv-nth
-                                   0
-                                   (find-d-e
-                                    (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                    (car path)))))))))
-                            *enospc*
-                          (if
-                              (member-equal
-                               (nth
-                                0
-                                (find-n-free-clusters
-                                 (set-indices-in-fa-table
-                                  (effective-fat fat32$c)
-                                  (mv-nth
-                                   0
-                                   (d-e-cc
-                                    fat32$c
-                                    (mv-nth
-                                     0
-                                     (find-d-e
-                                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                      (car path)))))
-                                  (make-list-ac
-                                   (len
-                                    (mv-nth
-                                     0
-                                     (d-e-cc
-                                      fat32$c
-                                      (mv-nth
-                                       0
-                                       (find-d-e
-                                        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                        (car path))))))
-                                   0 nil))
-                                 1))
-                               (mv-nth
-                                0
-                                (d-e-cc
-                                 fat32$c
-                                 (mv-nth
-                                  0
-                                  (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                            (car path))))))
-                              (if
-                                  (<=
-                                   (len
-                                    (make-clusters
-                                     (nats=>string
-                                      (insert-d-e
-                                       (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                       (d-e-set-first-cluster-file-size
-                                        (mv-nth
-                                         0
-                                         (find-d-e
-                                          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                          (car path)))
-                                        (nth
-                                         0
-                                         (find-n-free-clusters
-                                          (set-indices-in-fa-table
-                                           (effective-fat fat32$c)
-                                           (mv-nth
-                                            0
-                                            (d-e-cc
-                                             fat32$c
-                                             (mv-nth
-                                              0
-                                              (find-d-e
-                                               (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                               (car path)))))
-                                           (make-list-ac
-                                            (len
-                                             (mv-nth
-                                              0
-                                              (d-e-cc
-                                               fat32$c
-                                               (mv-nth
-                                                0
-                                                (find-d-e
-                                                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                                 (car path))))))
-                                            0 nil))
-                                          1))
-                                        0)))
-                                     (cluster-size fat32$c)))
-                                   (+
-                                    -1
-                                    (count-free-clusters (effective-fat fat32$c))
-                                    (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-                                    (len
-                                     (mv-nth
-                                      0
-                                      (d-e-cc
-                                       fat32$c
-                                       (mv-nth
-                                        0
-                                        (find-d-e
-                                         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                         (car path))))))))
-                                  0
-                                *enospc*)
-                            *enospc*))
-                      (if
-                          (<
-                           (+
-                            -1
-                            (count-free-clusters (effective-fat fat32$c))
-                            (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-                            (len
-                             (mv-nth
-                              0
-                              (d-e-cc
-                               fat32$c
-                               (mv-nth
-                                0
-                                (find-d-e
-                                 (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                 (car path)))))))
-                           (len
-                            (make-clusters
-                             (nats=>string
-                              (insert-d-e
-                               (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                               (d-e-set-first-cluster-file-size
-                                (mv-nth
-                                 0
-                                 (find-d-e
-                                  (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                  (car path)))
-                                (nth
-                                 0
-                                 (find-n-free-clusters
-                                  (set-indices-in-fa-table
-                                   (effective-fat fat32$c)
-                                   (mv-nth
-                                    0
-                                    (d-e-cc
-                                     fat32$c
-                                     (mv-nth
-                                      0
-                                      (find-d-e
-                                       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                       (car path)))))
-                                   (make-list-ac
-                                    (len
-                                     (mv-nth
-                                      0
-                                      (d-e-cc
-                                       fat32$c
-                                       (mv-nth
-                                        0
-                                        (find-d-e
-                                         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                                         (car path))))))
-                                    0 nil))
-                                  1))
-                                0)))
-                             (cluster-size fat32$c))))
-                          *enospc*
-                        0))
-                  0)))
-          *enospc*)))
-     ((and
-       (d-e-directory-p
-        (mv-nth
-         0
-         (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (car path))))
-       (<=
-        (+ 64
-           (* 32
-              (len (make-d-e-list (mv-nth 0
-                                          (d-e-cc-contents fat32$c root-d-e))))))
-        2097152))
-      (if
-          (<=
-           (+ 2 (count-of-clusters fat32$c))
-           (d-e-first-cluster
-            (mv-nth
-             0
-             (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                       (car path)))))
-          (if
-              (<=
-               (len
-                (make-clusters
-                 (nats=>string
-                  (insert-d-e
-                   (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (d-e-set-first-cluster-file-size
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))
-                    (nth 0
-                         (find-n-free-clusters (effective-fat fat32$c)
-                                               1))
-                    0)))
-                 (cluster-size fat32$c)))
-               (+ -1
-                  (count-free-clusters (effective-fat fat32$c))
-                  (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))))
-              0
-            *enospc*)
-        (if
-            (<
-             (d-e-first-cluster
-              (mv-nth
-               0
-               (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                         (car path))))
-             2)
-            (if
-                (<=
-                 (len
-                  (make-clusters
-                   (nats=>string
-                    (insert-d-e
-                     (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                     (d-e-set-first-cluster-file-size
-                      (mv-nth
-                       0
-                       (find-d-e
-                        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                        (car path)))
-                      (nth 0
-                           (find-n-free-clusters (effective-fat fat32$c)
-                                                 1))
-                      0)))
-                   (cluster-size fat32$c)))
-                 (+ -1
-                    (count-free-clusters (effective-fat fat32$c))
-                    (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))))
-                0
-              *enospc*)
-          (if
-              (<
-               (+ -1
-                  (count-free-clusters (effective-fat fat32$c))
-                  (len (mv-nth 0 (d-e-cc fat32$c root-d-e))))
-               (len
-                (make-clusters
-                 (nats=>string
-                  (insert-d-e
-                   (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   (d-e-set-first-cluster-file-size
-                    (mv-nth
-                     0
-                     (find-d-e
-                      (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                      (car path)))
-                    (nth 0
-                         (find-n-free-clusters (effective-fat fat32$c)
-                                               1))
-                    0)))
-                 (cluster-size fat32$c))))
-              *enospc*
-            0))))
-     ((<=
-       (len
-        (make-clusters
-         (nats=>string
-          (insert-d-e
-           (string=>nats (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-           (d-e-set-first-cluster-file-size
-            (d-e-install-directory-bit (make-d-e-with-filename (car path))
-                                       t)
-            (nth 0
-                 (find-n-free-clusters (effective-fat fat32$c)
-                                       1))
-            0)))
-         (cluster-size fat32$c)))
-       (+ -1
-          (count-free-clusters (effective-fat fat32$c))
-          (len (mv-nth 0 (d-e-cc fat32$c root-d-e)))))
-      0)
-     (t *enospc*)))))
-
 (encapsulate
   ()
 
@@ -5068,7 +5105,56 @@
   (verify-guards
     lofat-place-file
     :hints
-    (("goal" :in-theory (e/d () (unsigned-byte-p))
+    (("goal"
+      :in-theory
+      (e/d
+       (helper-2)
+       (unsigned-byte-p
+        (:rewrite last-when-equal-len-1)
+        (:rewrite consp-of-find-n-free-clusters)
+        (:definition non-free-index-listp)
+        (:definition find-d-e)
+        (:rewrite nfix-when-zp)
+        (:rewrite
+         lofat-place-file-correctness-lemma-87)
+        (:rewrite
+         count-free-clusters-of-set-indices-in-fa-table-1)
+        (:rewrite subsetp-when-atom-left)
+        (:rewrite default-+-2)
+        (:rewrite subsetp-when-atom-right)
+        (:definition last)
+        (:rewrite hifat-to-lofat-inversion-lemma-10)
+        (:rewrite
+         lofat-place-file-correctness-lemma-5)
+        (:definition free-index-listp)
+        (:rewrite
+         d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-4)
+        (:rewrite d-e-p-of-car-when-d-e-list-p)
+        (:rewrite intersectp-member . 1)
+        (:rewrite get-cc-contents-of-lofat-remove-file-coincident-lemma-5
+                  . 1)
+        (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
+        (:rewrite d-e-p-when-member-equal-of-d-e-list-p)
+        (:rewrite d-e-cc-contents-of-lofat-place-file-coincident-lemma-13)
+        (:rewrite not-intersectp-list-of-find-n-free-clusters)
+        (:rewrite set-indices-in-fa-table-when-atom)
+        (:rewrite non-free-index-list-listp-of-set-indices-in-fa-table)
+        (:linear nth-when-d-e-p)
+        (:rewrite natp-of-car-when-nat-listp)
+        (:linear lower-bounded-integer-listp-of-find-n-free-clusters)
+        (:linear find-n-free-clusters-correctness-2)
+        (:rewrite rationalp-implies-acl2-numberp)
+        (:definition non-free-index-list-listp)
+        (:definition bounded-nat-listp)
+        (:rewrite not-intersectp-list-when-atom)
+        (:rewrite set-indices-in-fa-table-correctness-3)
+        (:rewrite subsetp-trans2)
+        (:rewrite subsetp-trans)
+        (:linear car-of-last-when-bounded-nat-listp)
+        (:linear len-when-hifat-bounded-file-alist-p . 3)
+        (:rewrite painful-debugging-lemma-24)
+        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2)
+        (:rewrite intersectp-member . 3)))
       :expand
       ((:with
         (:rewrite place-contents-expansion-2)
