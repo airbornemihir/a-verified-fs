@@ -5011,13 +5011,12 @@
        ;; place-contents operation will be based on whether the subsequent
        ;; update-dir-contents operation succeeds. That's why we called helper-2
        ;; above. Now, we have to use it to preempt a messy place-contents which
-       ;; we might have to roll back.
-       ((when (and
-               (not
-                (zp update-dir-contents-error-code))
-               (consp cc)))
+       ;; we would otherwise have to roll back.
+       ((when (not (zp update-dir-contents-error-code)))
         (b*
-            ((fat32$c (stobj-set-indices-in-fa-table
+            ((fat32$c (update-fati first-cluster first-cluster-val fat32$c))
+             ((unless (consp cc)) (mv fat32$c update-dir-contents-error-code))
+             (fat32$c (stobj-set-indices-in-fa-table
                        fat32$c cc
                        (append (cdr cc) (list last-value)))))
           (mv fat32$c update-dir-contents-error-code)))
@@ -5043,7 +5042,7 @@
        ((when (not (zp error-code)))
         (b*
             ((fat32$c (update-fati first-cluster first-cluster-val fat32$c))
-             ((when (atom cc)) (mv fat32$c error-code))
+             ((unless (consp cc)) (mv fat32$c error-code))
              (fat32$c (stobj-set-indices-in-fa-table
                        fat32$c cc
                        (append (cdr cc) (list last-value)))))
@@ -5366,9 +5365,9 @@
     (equal (fati i
                  (mv-nth 0
                          (clear-cc fat32$c masked-current-cluster length)))
-           (fati i fat32$c)))
+           v))
    (equal
-    (update-fati i (fati i fat32$c)
+    (update-fati i v
                  (mv-nth 0
                          (clear-cc fat32$c masked-current-cluster length)))
     (mv-nth 0
