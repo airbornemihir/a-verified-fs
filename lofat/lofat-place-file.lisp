@@ -595,6 +595,134 @@
     :hints
     (("goal" :in-theory (disable unsigned-byte-p)))))
 
+;; This is supposed to be equivalent to lofat-place-file, but a no-change loser.
+(defun
+    lofat-place-file-alt
+    (fat32$c root-d-e path file)
+  (declare
+   (xargs :guard (and (lofat-fs-p fat32$c)
+                      (d-e-p root-d-e)
+                      (>= (d-e-first-cluster root-d-e)
+                          *ms-first-data-cluster*)
+                      (< (d-e-first-cluster root-d-e)
+                         (+ *ms-first-data-cluster*
+                            (count-of-clusters fat32$c)))
+                      (fat32-filename-list-p path)
+                      (lofat-file-p file)
+                      (or (lofat-regular-file-p file)
+                          (equal (lofat-file->contents file)
+                                 nil)))
+          :measure (acl2-count path)
+          :stobjs fat32$c
+          :verify-guards nil))
+  (b*
+      (((unless (consp path))
+        (mv fat32$c *enoent*))
+       (name (mbe :logic (fat32-filename-fix (car path))
+                  :exec (car path)))
+       ((mv dir-contents &)
+        (d-e-cc-contents fat32$c root-d-e))
+       (d-e-list (make-d-e-list dir-contents))
+       ((mv d-e error-code)
+        (find-d-e d-e-list name))
+       (d-e (if (equal error-code 0)
+                d-e (make-d-e-with-filename name)))
+       (d-e (if (equal error-code 0)
+                d-e
+              (d-e-install-directory-bit
+               d-e (lofat-directory-file-p file))))
+       ((when (and (consp (cdr path))
+                   (not (d-e-directory-p d-e))))
+        (mv fat32$c *enotdir*))
+       (first-cluster (d-e-first-cluster d-e))
+       ((when (and (or (< first-cluster 2)
+                       (<= (+ 2 (count-of-clusters fat32$c))
+                           first-cluster))
+                   (consp (cdr path))))
+        (mv fat32$c *eio*))
+       ((when (consp (cdr path)))
+        (lofat-place-file-alt fat32$c d-e (cdr path)
+                              file))
+       (length (if (d-e-directory-p d-e)
+                   *ms-max-dir-size* (d-e-file-size d-e)))
+       ((when (or (and (d-e-directory-p d-e)
+                       (lofat-regular-file-p file))
+                  (and (not (d-e-directory-p d-e))
+                       (lofat-directory-file-p file))))
+        (mv fat32$c *enoent*))
+       ((mv fat32$c &)
+        (if (or (< first-cluster 2)
+                (<= (+ 2 (count-of-clusters fat32$c))
+                    first-cluster))
+            (mv fat32$c 0)
+          (clear-cc fat32$c first-cluster length)))
+       (file-length (if (lofat-regular-file-p file)
+                        (length (lofat-file->contents file))
+                      (+ *ms-d-e-length* *ms-d-e-length*)))
+       (new-dir-contents
+        (nats=>string
+         (insert-d-e (string=>nats dir-contents)
+                     (d-e-set-first-cluster-file-size d-e 0 0))))
+       ((when (and (zp file-length)
+                   (<= (length new-dir-contents)
+                       *ms-max-dir-size*)))
+        (update-dir-contents fat32$c (d-e-first-cluster root-d-e)
+                             new-dir-contents))
+       ((when (zp file-length))
+        (mv fat32$c *enospc*))
+       (indices (stobj-find-n-free-clusters fat32$c 1))
+       ((when (< (len indices) 1))
+        (mv fat32$c *enospc*))
+       (first-cluster (nth 0 indices))
+       (fat32$c
+        (update-fati
+         first-cluster
+         (fat32-update-lower-28 (fati first-cluster fat32$c)
+                                *ms-end-of-cc*)
+         fat32$c))
+       (contents (if (lofat-regular-file-p file)
+                     (lofat-file->contents file)
+                   (make-empty-subdir-contents
+                    first-cluster
+                    (d-e-first-cluster root-d-e))))
+       (file-length (if (lofat-regular-file-p file)
+                        (length contents)
+                      0))
+       ((mv fat32$c d-e error-code &)
+        (place-contents fat32$c
+                        d-e contents file-length first-cluster))
+       ((unless (zp error-code))
+        (mv fat32$c error-code))
+       (new-dir-contents
+        (nats=>string (insert-d-e (string=>nats dir-contents)
+                                  d-e)))
+       ((unless (<= (length new-dir-contents)
+                    *ms-max-dir-size*))
+        (mv fat32$c *enospc*)))
+    (update-dir-contents fat32$c (d-e-first-cluster root-d-e)
+                         new-dir-contents)))
+
+(defthm lofat-place-file-alt-correctness-1
+  (implies (and (lofat-fs-p fat32$c))
+           (and
+            (equal (mv-nth 1
+                           (lofat-place-file-alt
+                            fat32$c root-d-e path file))
+                   (mv-nth 1
+                           (lofat-place-file
+                            fat32$c root-d-e path file)))
+            (equal (mv-nth 0
+                           (lofat-place-file-alt
+                            fat32$c root-d-e path file))
+                   (if
+                       (zp (mv-nth 1
+                                   (lofat-place-file-alt
+                                    fat32$c root-d-e path file)))
+                       (mv-nth 0
+                               (lofat-place-file
+                                fat32$c root-d-e path file))
+                     fat32$c)))))
+
 (defthm natp-of-lofat-place-file
   (natp (mv-nth 1
                 (lofat-place-file fat32$c
