@@ -1330,6 +1330,33 @@
   :hints (("goal" :induct (lofat-place-file fat32$c
                                             root-d-e path file))))
 
+(defthm lofat-place-file-guard-lemma-8
+  (implies (not (integerp i))
+           (equal (fati i fat32$c)
+                  (fati 0 fat32$c)))
+  :hints (("goal" :in-theory (enable fati nth))))
+
+;; Move later.
+(defthm integer-listp-of-d-e-cc
+  (integer-listp (mv-nth 0 (d-e-cc fat32$c d-e)))
+  :hints (("goal" :in-theory (enable d-e-cc))))
+
+(defthm
+  lofat-place-file-guard-lemma-7
+  (implies (and (d-e-p d-e)
+                (< (d-e-first-cluster d-e)
+                   (len (effective-fat fat32$c))))
+           (< (car (last (mv-nth 0 (d-e-cc fat32$c d-e))))
+              (+ 2 (count-of-clusters fat32$c))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (disable car-of-last-when-bounded-nat-listp)
+    :use (:instance car-of-last-when-bounded-nat-listp
+                    (l (mv-nth '0 (d-e-cc fat32$c d-e)))
+                    (b (binary-+ '2
+                                 (count-of-clusters fat32$c))))))
+  :rule-classes :linear)
+
 (encapsulate
   ()
 
@@ -1498,46 +1525,6 @@
     :use (:instance clear-cc-reversibility
                     (masked-current-cluster (d-e-first-cluster d-e))
                     (length (d-e-file-size d-e))))))
-
-;; Slightly better version of d-e-cc-contents-of-clear-cc.
-(defthm
-  lofat-place-file-guard-lemma-9
-  (implies
-   (and (lofat-fs-p fat32$c)
-        (d-e-directory-p d-e1)
-        (not (intersectp-equal (mv-nth '0 (d-e-cc fat32$c d-e1))
-                               (mv-nth '0 (d-e-cc fat32$c d-e2)))))
-   (equal (d-e-cc-contents (mv-nth 0
-                                   (clear-cc fat32$c (d-e-first-cluster d-e1)
-                                             *ms-max-dir-size*))
-                           d-e2)
-          (d-e-cc-contents fat32$c d-e2)))
-  :hints
-  (("goal" :in-theory (e/d (d-e-cc)
-                           (d-e-cc-contents-of-clear-cc))
-    :use (:instance d-e-cc-contents-of-clear-cc (d-e d-e2)
-                    (masked-current-cluster (d-e-first-cluster d-e1))
-                    (length *ms-max-dir-size*)))))
-
-;; Slightly better version of d-e-cc-contents-of-clear-cc.
-(defthm
-  lofat-place-file-guard-lemma-11
-  (implies
-   (and (lofat-fs-p fat32$c)
-        (not (d-e-directory-p d-e1))
-        (not (intersectp-equal (mv-nth '0 (d-e-cc fat32$c d-e1))
-                               (mv-nth '0 (d-e-cc fat32$c d-e2)))))
-   (equal (d-e-cc-contents (mv-nth 0
-                                   (clear-cc fat32$c (d-e-first-cluster d-e1)
-                                             (d-e-file-size d-e1)))
-                           d-e2)
-          (d-e-cc-contents fat32$c d-e2)))
-  :hints
-  (("goal" :in-theory (e/d (d-e-cc)
-                           (d-e-cc-contents-of-clear-cc))
-    :use (:instance d-e-cc-contents-of-clear-cc (d-e d-e2)
-                    (masked-current-cluster (d-e-first-cluster d-e1))
-                    (length (d-e-file-size d-e1))))))
 
 (defthm
   lofat-place-file-helper-correctness-1
