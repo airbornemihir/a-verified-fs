@@ -387,342 +387,6 @@
    (m1-directory-file-p (m1-file-fix file))))
  :hints (("goal" :in-theory (enable hifat-place-file))))
 
-(defun
-    lofat-place-file
-    (fat32$c root-d-e path file)
-  (declare
-   (xargs
-    :guard (and (lofat-fs-p fat32$c)
-                (d-e-p root-d-e)
-                (>= (d-e-first-cluster root-d-e) *ms-first-data-cluster*)
-                (< (d-e-first-cluster root-d-e)
-                   (+ *ms-first-data-cluster*
-                      (count-of-clusters fat32$c)))
-                (fat32-filename-list-p path)
-                (lofat-file-p file)
-                (or (lofat-regular-file-p file)
-                    (equal (lofat-file->contents file) nil)))
-    :measure (acl2-count path)
-    :stobjs fat32$c
-    :verify-guards nil))
-  (b* (((unless (consp path)) (mv fat32$c *enoent*))
-       ;; Design choice - calls which ask for the entire root directory to be affected will fail.
-       (name (mbe :logic (fat32-filename-fix (car path)) :exec (car path)))
-       ((mv dir-contents &) (d-e-cc-contents fat32$c root-d-e))
-       (d-e-list (make-d-e-list dir-contents))
-       ((mv d-e error-code) (find-d-e d-e-list name))
-       ;; If it's not there, it's a new file. In either case, though, we shouldn't give it the name
-       ;; of the old file, that is, we shouldn't be inserting a directory entry with the name of
-       ;; the old file. We may be moving a file and changing its name in the process.
-       (d-e (if (equal error-code 0) d-e
-                  (make-d-e-with-filename name)))
-       (d-e (if (equal error-code 0) d-e
-                  (d-e-install-directory-bit d-e (lofat-directory-file-p file))))
-       ;; ENOTDIR - can't act on anything that supposedly exists inside a regular file.
-       ((when (and (consp (cdr path)) (not (d-e-directory-p d-e))))
-        (mv fat32$c *enotdir*))
-       (first-cluster (d-e-first-cluster d-e))
-       ((when (and (or (< first-cluster 2)
-                       (<= (+ 2 (count-of-clusters fat32$c)) first-cluster))
-                   (consp (cdr path))))
-        (mv fat32$c *eio*))
-       ;; Recursion
-       ((when (consp(cdr path))) (lofat-place-file fat32$c d-e (cdr path) file))
-       ;; After these conditionals, the only remaining possibility is that (cdr path)
-       ;; is an atom, which means we need to place a regular file or an empty directory, which
-       ;; we have now ensured in the guard.
-       (length (if (d-e-directory-p d-e) *ms-max-dir-size* (d-e-file-size d-e)))
-       ;; Replacing a directory with a regular file is not permitted.
-       ((when (or (and (d-e-directory-p d-e)
-                       (lofat-regular-file-p file))
-                  (and (not (d-e-directory-p d-e))
-                       (lofat-directory-file-p file))))
-        (mv fat32$c *enoent*))
-       ((mv fat32$c &)
-        (if (or (< first-cluster 2) (<= (+ 2 (count-of-clusters fat32$c)) first-cluster))
-            (mv fat32$c 0) (clear-cc fat32$c first-cluster length)))
-       ;; We're going to have to refer to two different values of file-length:
-       ;; one which refers to how much space we need to allocate, which will be
-       ;; non-zero for directories (remember, we're not adding any root
-       ;; directories lol so we need to have dot and dotdot entries) and
-       ;; another which refers to the filesize field in the directory entry,
-       ;; which will be zero for directories.
-       (file-length (if (lofat-regular-file-p file)
-                        (length (lofat-file->contents file))
-                      ;; 32 bytes for dot, 32 bytes for dotdot.
-                      (+ *ms-d-e-length* *ms-d-e-length*)))
-       ;; Note, this value of new-dir-contents only gets used when file-length
-       ;; is zero - an empty regular file.
-       (new-dir-contents
-        (nats=>string (insert-d-e (string=>nats dir-contents)
-                                      (d-e-set-first-cluster-file-size d-e 0 0))))
-       ((when (and (zp file-length) (<= (length new-dir-contents) *ms-max-dir-size*)))
-        (update-dir-contents fat32$c (d-e-first-cluster root-d-e)
-                             new-dir-contents))
-       ((when (zp file-length)) (mv fat32$c *enospc*))
-       (indices (stobj-find-n-free-clusters fat32$c 1))
-       ((when (< (len indices) 1)) (mv fat32$c *enospc*))
-       (first-cluster (nth 0 indices))
-       ;; Mark this cluster as used, without possibly interfering with any
-       ;; existing clusterchains.
-       (fat32$c (update-fati first-cluster (fat32-update-lower-28
-                                                    (fati first-cluster fat32$c)
-                                                    *ms-end-of-cc*)
-                                     fat32$c))
-       (contents (if (lofat-regular-file-p file) (lofat-file->contents file)
-                   ;; Our guard ensures that the contents of this directory
-                   ;; file are empty - so the only thing here is to add a dot
-                   ;; entry and a dotdot entry.
-                   (make-empty-subdir-contents first-cluster
-                                               (d-e-first-cluster root-d-e))))
-       ;; OK, we've been done with the previous value of file-length for a
-       ;; while. Now, we need a value that's going in the directory entry.
-       (file-length (if (lofat-regular-file-p file) (length contents) 0))
-       ((mv fat32$c d-e error-code &)
-        (place-contents fat32$c d-e contents file-length first-cluster))
-       ((unless (zp error-code)) (mv fat32$c error-code))
-       (new-dir-contents (nats=>string (insert-d-e (string=>nats dir-contents) d-e)))
-       ((unless (<= (length new-dir-contents) *ms-max-dir-size*)) (mv fat32$c *enospc*)))
-    (update-dir-contents
-     fat32$c
-     (d-e-first-cluster root-d-e)
-     new-dir-contents)))
-
-(defthm
-  count-of-clusters-of-lofat-place-file
-  (equal
-   (count-of-clusters
-    (mv-nth
-     0
-     (lofat-place-file
-      fat32$c root-d-e path file)))
-   (count-of-clusters fat32$c)))
-
-(defthm
-  lofat-fs-p-of-lofat-place-file
-  (implies
-   (and (lofat-fs-p fat32$c)
-        (d-e-p root-d-e)
-        (>= (d-e-first-cluster root-d-e)
-            *ms-first-data-cluster*)
-        (< (d-e-first-cluster root-d-e)
-           (+ *ms-first-data-cluster*
-              (count-of-clusters fat32$c))))
-   (lofat-fs-p (mv-nth 0
-                       (lofat-place-file fat32$c
-                                         root-d-e path file))))
-  :hints (("goal" :induct (lofat-place-file fat32$c
-                                            root-d-e path file))))
-
-(encapsulate
-  ()
-
-  (local
-   (defthm
-     lemma
-     (implies
-      (<=
-       1
-       (count-free-clusters
-        (set-indices-in-fa-table
-         (effective-fat fat32$c)
-         (mv-nth
-          0
-          (d-e-cc
-           fat32$c
-           (mv-nth
-            0
-            (find-d-e
-             (make-d-e-list
-              (mv-nth
-               0
-               (d-e-cc-contents fat32$c root-d-e)))
-             (car path)))))
-         (make-list-ac
-          (len
-           (mv-nth
-            0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              0
-              (find-d-e
-               (make-d-e-list
-                (mv-nth
-                 0
-                 (d-e-cc-contents fat32$c root-d-e)))
-               (car path))))))
-          0 nil))))
-      (not
-       (<
-        (nth
-         '0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32$c)
-           (mv-nth
-            '0
-            (d-e-cc
-             fat32$c
-             (mv-nth
-              '0
-              (find-d-e
-               (make-d-e-list
-                (mv-nth
-                 '0
-                 (d-e-cc-contents fat32$c root-d-e)))
-               (car path)))))
-           (make-list-ac
-            (len
-             (mv-nth
-              '0
-              (d-e-cc
-               fat32$c
-               (mv-nth
-                '0
-                (find-d-e
-                 (make-d-e-list
-                  (mv-nth
-                   '0
-                   (d-e-cc-contents fat32$c root-d-e)))
-                 (car path))))))
-            '0
-            'nil))
-          '1))
-        '0)))))
-
-  (verify-guards
-    lofat-place-file
-    :hints
-    (("goal" :in-theory (disable unsigned-byte-p)))))
-
-(defthm
-  lofat-place-file-correctness-lemma-75
-  (implies
-   (and
-    (fat32$c-p (mv-nth 0
-                       (clear-cc fat32$c masked-current-cluster length)))
-    (< (nfix i)
-       (fat-length (mv-nth 0
-                           (clear-cc fat32$c
-                                     masked-current-cluster length))))
-    (equal (fati i
-                 (mv-nth 0
-                         (clear-cc fat32$c masked-current-cluster length)))
-           v))
-   (equal
-    (update-fati i v
-                 (mv-nth 0
-                         (clear-cc fat32$c masked-current-cluster length)))
-    (mv-nth 0
-            (clear-cc fat32$c
-                      masked-current-cluster length))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (disable update-fati-of-fati-when-fat32$c-p)
-    :use
-    (:instance update-fati-of-fati-when-fat32$c-p
-               (fat32$c (mv-nth 0
-                                (clear-cc fat32$c
-                                          masked-current-cluster length)))))))
-
-(defthm
-  lofat-place-file-correctness-lemma-76
-  (implies
-   (and (lofat-fs-p fat32$c)
-        (d-e-directory-p d-e)
-        (fat32-masked-entry-p (d-e-first-cluster d-e))
-        (<= 2 (d-e-first-cluster d-e))
-        (< (d-e-first-cluster d-e)
-           (+ (count-of-clusters fat32$c) 2)))
-   (equal
-    (stobj-set-indices-in-fa-table
-     (mv-nth 0
-             (clear-cc fat32$c (d-e-first-cluster d-e)
-                       2097152))
-     (mv-nth 0 (d-e-cc fat32$c d-e))
-     (append
-      (cdr (mv-nth 0 (d-e-cc fat32$c d-e)))
-      (list
-       (fat32-entry-mask (fati (car (last (mv-nth 0 (d-e-cc fat32$c d-e))))
-                               fat32$c)))))
-    fat32$c))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory (e/d (d-e-cc) (clear-cc-reversibility))
-    :use (:instance clear-cc-reversibility
-                    (masked-current-cluster (d-e-first-cluster d-e))
-                    (length *ms-max-dir-size*)))))
-
-(defthm
-  lofat-place-file-correctness-lemma-78
-  (implies
-   (and (lofat-fs-p fat32$c)
-        (not (d-e-directory-p d-e))
-        (fat32-masked-entry-p (d-e-first-cluster d-e))
-        (<= 2 (d-e-first-cluster d-e))
-        (< (d-e-first-cluster d-e)
-           (+ (count-of-clusters fat32$c) 2)))
-   (equal
-    (stobj-set-indices-in-fa-table
-     (mv-nth 0
-             (clear-cc fat32$c (d-e-first-cluster d-e)
-                       (d-e-file-size d-e)))
-     (mv-nth 0 (d-e-cc fat32$c d-e))
-     (append
-      (cdr (mv-nth 0 (d-e-cc fat32$c d-e)))
-      (list
-       (fat32-entry-mask (fati (car (last (mv-nth 0 (d-e-cc fat32$c d-e))))
-                               fat32$c)))))
-    fat32$c))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory (e/d (d-e-cc) (clear-cc-reversibility))
-    :use (:instance clear-cc-reversibility
-                    (masked-current-cluster (d-e-first-cluster d-e))
-                    (length (d-e-file-size d-e))))))
-
-;; Slightly better version of d-e-cc-contents-of-clear-cc.
-(defthm
-  lofat-place-file-guard-lemma-9
-  (implies
-   (and (lofat-fs-p fat32$c)
-        (d-e-directory-p d-e1)
-        (not (intersectp-equal (mv-nth '0 (d-e-cc fat32$c d-e1))
-                               (mv-nth '0 (d-e-cc fat32$c d-e2)))))
-   (equal (d-e-cc-contents (mv-nth 0
-                                   (clear-cc fat32$c (d-e-first-cluster d-e1)
-                                             *ms-max-dir-size*))
-                           d-e2)
-          (d-e-cc-contents fat32$c d-e2)))
-  :hints
-  (("goal" :in-theory (e/d (d-e-cc)
-                           (d-e-cc-contents-of-clear-cc))
-    :use (:instance d-e-cc-contents-of-clear-cc (d-e d-e2)
-                    (masked-current-cluster (d-e-first-cluster d-e1))
-                    (length *ms-max-dir-size*)))))
-
-;; Slightly better version of d-e-cc-contents-of-clear-cc.
-(defthm
-  lofat-place-file-guard-lemma-11
-  (implies
-   (and (lofat-fs-p fat32$c)
-        (not (d-e-directory-p d-e1))
-        (not (intersectp-equal (mv-nth '0 (d-e-cc fat32$c d-e1))
-                               (mv-nth '0 (d-e-cc fat32$c d-e2)))))
-   (equal (d-e-cc-contents (mv-nth 0
-                                   (clear-cc fat32$c (d-e-first-cluster d-e1)
-                                             (d-e-file-size d-e1)))
-                           d-e2)
-          (d-e-cc-contents fat32$c d-e2)))
-  :hints
-  (("goal" :in-theory (e/d (d-e-cc)
-                           (d-e-cc-contents-of-clear-cc))
-    :use (:instance d-e-cc-contents-of-clear-cc (d-e d-e2)
-                    (masked-current-cluster (d-e-first-cluster d-e1))
-                    (length (d-e-file-size d-e1))))))
-
 (skip-proofs
  (defund lofat-place-file-helper
    (fat32$c root-d-e path file)
@@ -1474,9 +1138,9 @@
        28)
       (t 0)))))
 
-;; This is supposed to be equivalent to lofat-place-file, but a no-change loser.
+;; This is a no-change loser.
 (defun
-    lofat-place-file-alt
+    lofat-place-file
     (fat32$c root-d-e path file)
   (declare
    (xargs :guard (and (lofat-fs-p fat32$c)
@@ -1540,7 +1204,7 @@
              (fat32-entry-mask (fati (car (last cc)) fat32$c))
            (fat32-entry-mask (fati 0 fat32$c)))))
        ((when (consp (cdr path)))
-        (lofat-place-file-alt fat32$c d-e (cdr path)
+        (lofat-place-file fat32$c d-e (cdr path)
                               file))
        (length (if (d-e-directory-p d-e)
                    *ms-max-dir-size* (d-e-file-size d-e)))
@@ -1639,6 +1303,241 @@
                                   d-e))))
     (update-dir-contents fat32$c (d-e-first-cluster root-d-e)
                          new-dir-contents)))
+
+(defthm
+  count-of-clusters-of-lofat-place-file
+  (equal
+   (count-of-clusters
+    (mv-nth
+     0
+     (lofat-place-file
+      fat32$c root-d-e path file)))
+   (count-of-clusters fat32$c)))
+
+(defthm
+  lofat-fs-p-of-lofat-place-file
+  (implies
+   (and (lofat-fs-p fat32$c)
+        (d-e-p root-d-e)
+        (>= (d-e-first-cluster root-d-e)
+            *ms-first-data-cluster*)
+        (< (d-e-first-cluster root-d-e)
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32$c))))
+   (lofat-fs-p (mv-nth 0
+                       (lofat-place-file fat32$c
+                                         root-d-e path file))))
+  :hints (("goal" :induct (lofat-place-file fat32$c
+                                            root-d-e path file))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     lemma
+     (implies
+      (<=
+       1
+       (count-free-clusters
+        (set-indices-in-fa-table
+         (effective-fat fat32$c)
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list
+              (mv-nth
+               0
+               (d-e-cc-contents fat32$c root-d-e)))
+             (car path)))))
+         (make-list-ac
+          (len
+           (mv-nth
+            0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth
+                 0
+                 (d-e-cc-contents fat32$c root-d-e)))
+               (car path))))))
+          0 nil))))
+      (not
+       (<
+        (nth
+         '0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32$c)
+           (mv-nth
+            '0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              '0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth
+                 '0
+                 (d-e-cc-contents fat32$c root-d-e)))
+               (car path)))))
+           (make-list-ac
+            (len
+             (mv-nth
+              '0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                '0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   '0
+                   (d-e-cc-contents fat32$c root-d-e)))
+                 (car path))))))
+            '0
+            'nil))
+          '1))
+        '0)))))
+
+  (verify-guards
+    lofat-place-file
+    :hints
+    (("goal" :in-theory (disable unsigned-byte-p)))))
+
+(defthm
+  lofat-place-file-correctness-lemma-75
+  (implies
+   (and
+    (fat32$c-p (mv-nth 0
+                       (clear-cc fat32$c masked-current-cluster length)))
+    (< (nfix i)
+       (fat-length (mv-nth 0
+                           (clear-cc fat32$c
+                                     masked-current-cluster length))))
+    (equal (fati i
+                 (mv-nth 0
+                         (clear-cc fat32$c masked-current-cluster length)))
+           v))
+   (equal
+    (update-fati i v
+                 (mv-nth 0
+                         (clear-cc fat32$c masked-current-cluster length)))
+    (mv-nth 0
+            (clear-cc fat32$c
+                      masked-current-cluster length))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable update-fati-of-fati-when-fat32$c-p)
+    :use
+    (:instance update-fati-of-fati-when-fat32$c-p
+               (fat32$c (mv-nth 0
+                                (clear-cc fat32$c
+                                          masked-current-cluster length)))))))
+
+(defthm
+  lofat-place-file-correctness-lemma-76
+  (implies
+   (and (lofat-fs-p fat32$c)
+        (d-e-directory-p d-e)
+        (fat32-masked-entry-p (d-e-first-cluster d-e))
+        (<= 2 (d-e-first-cluster d-e))
+        (< (d-e-first-cluster d-e)
+           (+ (count-of-clusters fat32$c) 2)))
+   (equal
+    (stobj-set-indices-in-fa-table
+     (mv-nth 0
+             (clear-cc fat32$c (d-e-first-cluster d-e)
+                       2097152))
+     (mv-nth 0 (d-e-cc fat32$c d-e))
+     (append
+      (cdr (mv-nth 0 (d-e-cc fat32$c d-e)))
+      (list
+       (fat32-entry-mask (fati (car (last (mv-nth 0 (d-e-cc fat32$c d-e))))
+                               fat32$c)))))
+    fat32$c))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (d-e-cc) (clear-cc-reversibility))
+    :use (:instance clear-cc-reversibility
+                    (masked-current-cluster (d-e-first-cluster d-e))
+                    (length *ms-max-dir-size*)))))
+
+(defthm
+  lofat-place-file-correctness-lemma-78
+  (implies
+   (and (lofat-fs-p fat32$c)
+        (not (d-e-directory-p d-e))
+        (fat32-masked-entry-p (d-e-first-cluster d-e))
+        (<= 2 (d-e-first-cluster d-e))
+        (< (d-e-first-cluster d-e)
+           (+ (count-of-clusters fat32$c) 2)))
+   (equal
+    (stobj-set-indices-in-fa-table
+     (mv-nth 0
+             (clear-cc fat32$c (d-e-first-cluster d-e)
+                       (d-e-file-size d-e)))
+     (mv-nth 0 (d-e-cc fat32$c d-e))
+     (append
+      (cdr (mv-nth 0 (d-e-cc fat32$c d-e)))
+      (list
+       (fat32-entry-mask (fati (car (last (mv-nth 0 (d-e-cc fat32$c d-e))))
+                               fat32$c)))))
+    fat32$c))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (d-e-cc) (clear-cc-reversibility))
+    :use (:instance clear-cc-reversibility
+                    (masked-current-cluster (d-e-first-cluster d-e))
+                    (length (d-e-file-size d-e))))))
+
+;; Slightly better version of d-e-cc-contents-of-clear-cc.
+(defthm
+  lofat-place-file-guard-lemma-9
+  (implies
+   (and (lofat-fs-p fat32$c)
+        (d-e-directory-p d-e1)
+        (not (intersectp-equal (mv-nth '0 (d-e-cc fat32$c d-e1))
+                               (mv-nth '0 (d-e-cc fat32$c d-e2)))))
+   (equal (d-e-cc-contents (mv-nth 0
+                                   (clear-cc fat32$c (d-e-first-cluster d-e1)
+                                             *ms-max-dir-size*))
+                           d-e2)
+          (d-e-cc-contents fat32$c d-e2)))
+  :hints
+  (("goal" :in-theory (e/d (d-e-cc)
+                           (d-e-cc-contents-of-clear-cc))
+    :use (:instance d-e-cc-contents-of-clear-cc (d-e d-e2)
+                    (masked-current-cluster (d-e-first-cluster d-e1))
+                    (length *ms-max-dir-size*)))))
+
+;; Slightly better version of d-e-cc-contents-of-clear-cc.
+(defthm
+  lofat-place-file-guard-lemma-11
+  (implies
+   (and (lofat-fs-p fat32$c)
+        (not (d-e-directory-p d-e1))
+        (not (intersectp-equal (mv-nth '0 (d-e-cc fat32$c d-e1))
+                               (mv-nth '0 (d-e-cc fat32$c d-e2)))))
+   (equal (d-e-cc-contents (mv-nth 0
+                                   (clear-cc fat32$c (d-e-first-cluster d-e1)
+                                             (d-e-file-size d-e1)))
+                           d-e2)
+          (d-e-cc-contents fat32$c d-e2)))
+  :hints
+  (("goal" :in-theory (e/d (d-e-cc)
+                           (d-e-cc-contents-of-clear-cc))
+    :use (:instance d-e-cc-contents-of-clear-cc (d-e d-e2)
+                    (masked-current-cluster (d-e-first-cluster d-e1))
+                    (length (d-e-file-size d-e1))))))
 
 (defthm
   lofat-place-file-helper-correctness-1
@@ -3616,62 +3515,168 @@
          (cluster-size fat32$c))))
       28)
      (t 0))))
-  :hints (("Goal" :in-theory (e/d
+  :hints (("goal" :in-theory (e/d
                               (lofat-place-file-helper)
                               ((:rewrite
                                 d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
                                 . 5))))))
 
-(defthm lofat-place-file-alt-correctness-1
-  (implies (and (good-root-d-e-p root-d-e fat32$c)
-                ;; This is actually a consequence of the good-root-d-e-p
-                ;; hypothesis above, but I seem to remember other proofs
-                ;; getting screwed up when I made this part of
-                ;; lofat-place-file-correctness-lemma-5, so maybe later.
-                (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
-                (equal
-                 (mv-nth
-                  3
-                  (lofat-to-hifat-helper
-                   fat32$c
-                   (make-d-e-list
-                    (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                   entry-limit))
-                 0)
-                (not-intersectp-list
-                 (mv-nth 0 (d-e-cc fat32$c root-d-e))
-                 (mv-nth 2
-                         (lofat-to-hifat-helper
-                          fat32$c
-                          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
-                          entry-limit)))
-                (or (lofat-regular-file-p file)
-                    (equal (lofat-file->contents file) nil)))
-           (and
-            (equal (mv-nth 1
-                           (lofat-place-file-alt
-                            fat32$c root-d-e path file))
-                   (mv-nth 1
-                           (lofat-place-file
-                            fat32$c root-d-e path file)))
-            (equal (mv-nth 0
-                           (lofat-place-file-alt
-                            fat32$c root-d-e path file))
-                   (if
-                       (zp (mv-nth 1
-                                   (lofat-place-file-alt
-                                    fat32$c root-d-e path file)))
-                       (mv-nth 0
-                               (lofat-place-file
-                                fat32$c root-d-e path file))
-                     fat32$c))))
-  :hints
-  (("Goal" :in-theory
-    (e/d (place-contents-correctness-1
-          update-dir-contents-correctness-1)
-         ((:rewrite
-           d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
-           . 5))))))
+(encapsulate
+  ()
+
+  (local
+   (defun
+       lofat-place-file-alt
+       (fat32$c root-d-e path file)
+     (declare
+      (xargs
+       :guard (and (lofat-fs-p fat32$c)
+                   (d-e-p root-d-e)
+                   (>= (d-e-first-cluster root-d-e) *ms-first-data-cluster*)
+                   (< (d-e-first-cluster root-d-e)
+                      (+ *ms-first-data-cluster*
+                         (count-of-clusters fat32$c)))
+                   (fat32-filename-list-p path)
+                   (lofat-file-p file)
+                   (or (lofat-regular-file-p file)
+                       (equal (lofat-file->contents file) nil)))
+       :measure (acl2-count path)
+       :stobjs fat32$c
+       :verify-guards nil))
+     (b* (((unless (consp path)) (mv fat32$c *enoent*))
+          ;; Design choice - calls which ask for the entire root directory to be affected will fail.
+          (name (mbe :logic (fat32-filename-fix (car path)) :exec (car path)))
+          ((mv dir-contents &) (d-e-cc-contents fat32$c root-d-e))
+          (d-e-list (make-d-e-list dir-contents))
+          ((mv d-e error-code) (find-d-e d-e-list name))
+          ;; If it's not there, it's a new file. In either case, though, we shouldn't give it the name
+          ;; of the old file, that is, we shouldn't be inserting a directory entry with the name of
+          ;; the old file. We may be moving a file and changing its name in the process.
+          (d-e (if (equal error-code 0) d-e
+                 (make-d-e-with-filename name)))
+          (d-e (if (equal error-code 0) d-e
+                 (d-e-install-directory-bit d-e (lofat-directory-file-p file))))
+          ;; ENOTDIR - can't act on anything that supposedly exists inside a regular file.
+          ((when (and (consp (cdr path)) (not (d-e-directory-p d-e))))
+           (mv fat32$c *enotdir*))
+          (first-cluster (d-e-first-cluster d-e))
+          ((when (and (or (< first-cluster 2)
+                          (<= (+ 2 (count-of-clusters fat32$c)) first-cluster))
+                      (consp (cdr path))))
+           (mv fat32$c *eio*))
+          ;; Recursion
+          ((when (consp(cdr path))) (lofat-place-file-alt fat32$c d-e (cdr path) file))
+          ;; After these conditionals, the only remaining possibility is that (cdr path)
+          ;; is an atom, which means we need to place a regular file or an empty directory, which
+          ;; we have now ensured in the guard.
+          (length (if (d-e-directory-p d-e) *ms-max-dir-size* (d-e-file-size d-e)))
+          ;; Replacing a directory with a regular file is not permitted.
+          ((when (or (and (d-e-directory-p d-e)
+                          (lofat-regular-file-p file))
+                     (and (not (d-e-directory-p d-e))
+                          (lofat-directory-file-p file))))
+           (mv fat32$c *enoent*))
+          ((mv fat32$c &)
+           (if (or (< first-cluster 2) (<= (+ 2 (count-of-clusters fat32$c)) first-cluster))
+               (mv fat32$c 0) (clear-cc fat32$c first-cluster length)))
+          ;; We're going to have to refer to two different values of file-length:
+          ;; one which refers to how much space we need to allocate, which will be
+          ;; non-zero for directories (remember, we're not adding any root
+          ;; directories lol so we need to have dot and dotdot entries) and
+          ;; another which refers to the filesize field in the directory entry,
+          ;; which will be zero for directories.
+          (file-length (if (lofat-regular-file-p file)
+                           (length (lofat-file->contents file))
+                         ;; 32 bytes for dot, 32 bytes for dotdot.
+                         (+ *ms-d-e-length* *ms-d-e-length*)))
+          ;; Note, this value of new-dir-contents only gets used when file-length
+          ;; is zero - an empty regular file.
+          (new-dir-contents
+           (nats=>string (insert-d-e (string=>nats dir-contents)
+                                     (d-e-set-first-cluster-file-size d-e 0 0))))
+          ((when (and (zp file-length) (<= (length new-dir-contents) *ms-max-dir-size*)))
+           (update-dir-contents fat32$c (d-e-first-cluster root-d-e)
+                                new-dir-contents))
+          ((when (zp file-length)) (mv fat32$c *enospc*))
+          (indices (stobj-find-n-free-clusters fat32$c 1))
+          ((when (< (len indices) 1)) (mv fat32$c *enospc*))
+          (first-cluster (nth 0 indices))
+          ;; Mark this cluster as used, without possibly interfering with any
+          ;; existing clusterchains.
+          (fat32$c (update-fati first-cluster (fat32-update-lower-28
+                                               (fati first-cluster fat32$c)
+                                               *ms-end-of-cc*)
+                                fat32$c))
+          (contents (if (lofat-regular-file-p file) (lofat-file->contents file)
+                      ;; Our guard ensures that the contents of this directory
+                      ;; file are empty - so the only thing here is to add a dot
+                      ;; entry and a dotdot entry.
+                      (make-empty-subdir-contents first-cluster
+                                                  (d-e-first-cluster root-d-e))))
+          ;; OK, we've been done with the previous value of file-length for a
+          ;; while. Now, we need a value that's going in the directory entry.
+          (file-length (if (lofat-regular-file-p file) (length contents) 0))
+          ((mv fat32$c d-e error-code &)
+           (place-contents fat32$c d-e contents file-length first-cluster))
+          ((unless (zp error-code)) (mv fat32$c error-code))
+          (new-dir-contents (nats=>string (insert-d-e (string=>nats dir-contents) d-e)))
+          ((unless (<= (length new-dir-contents) *ms-max-dir-size*)) (mv fat32$c *enospc*)))
+       (update-dir-contents
+        fat32$c
+        (d-e-first-cluster root-d-e)
+        new-dir-contents))))
+
+  (local
+   (defthm lofat-place-file-alt-correctness-1
+     (implies (and (good-root-d-e-p root-d-e fat32$c)
+                   ;; This is actually a consequence of the good-root-d-e-p
+                   ;; hypothesis above, but I seem to remember other proofs
+                   ;; getting screwed up when I made this part of
+                   ;; lofat-place-file-correctness-lemma-5, so maybe later.
+                   (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c root-d-e)))
+                   (equal
+                    (mv-nth
+                     3
+                     (lofat-to-hifat-helper
+                      fat32$c
+                      (make-d-e-list
+                       (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                      entry-limit))
+                    0)
+                   (not-intersectp-list
+                    (mv-nth 0 (d-e-cc fat32$c root-d-e))
+                    (mv-nth 2
+                            (lofat-to-hifat-helper
+                             fat32$c
+                             (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                             entry-limit)))
+                   (or (lofat-regular-file-p file)
+                       (equal (lofat-file->contents file) nil)))
+              (and
+               (equal (mv-nth 1
+                              (lofat-place-file
+                               fat32$c root-d-e path file))
+                      (mv-nth 1
+                              (lofat-place-file-alt
+                               fat32$c root-d-e path file)))
+               (equal (mv-nth 0
+                              (lofat-place-file
+                               fat32$c root-d-e path file))
+                      (if
+                          (zp (mv-nth 1
+                                      (lofat-place-file
+                                       fat32$c root-d-e path file)))
+                          (mv-nth 0
+                                  (lofat-place-file-alt
+                                   fat32$c root-d-e path file))
+                        fat32$c))))
+     :hints
+     (("Goal" :in-theory
+       (e/d (place-contents-correctness-1
+             update-dir-contents-correctness-1)
+            ((:rewrite
+              d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
+              . 5))))))))
 
 (defthm natp-of-lofat-place-file
   (natp (mv-nth 1
