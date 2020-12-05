@@ -16647,7 +16647,7 @@
          entry-limit))
        path (m1-file (d-e-fix nil) nil))))
     (>=
-     *ms-first-data-cluster*
+     *ms-max-dir-size*
      (+
       96
       (*
@@ -16656,7 +16656,11 @@
         (make-d-e-list
          (mv-nth 0
                  (d-e-cc-contents fat32$c
-                                  (mv-nth 0 (find-d-e d-e-list name))))))))))
+                                  (mv-nth 0 (find-d-e d-e-list name)))))))))
+    (equal (lofat-place-file-helper fat32$c
+                                    (mv-nth 0 (find-d-e d-e-list name))
+                                    path file)
+           0))
    (and
     (hifat-equiv
      (mv-nth
@@ -16697,9 +16701,8 @@
        d-e-list entry-limit))
      0)))
   :hints
-  (("goal"
-    :in-theory (e/d (stobj-disjoins-list lofat-place-file-spec-1)
-                    (lofat-place-file))
+  (("goal" :in-theory (e/d (stobj-disjoins-list lofat-place-file-spec-1)
+                           (lofat-place-file))
     :do-not-induct t
     :use (:instance lofat-place-file-correctness-lemma-143
                     (x nil)
