@@ -11004,7 +11004,7 @@ channel state))
                                             i 0))
           entry-limit)))))))
 
-  (defthm
+  (defthmd
     lofat-place-file-correctness-lemma-189
     (implies
      (and
@@ -11996,7 +11996,6 @@ channel state))
       entry-limit))
     0))
   :hints (("goal" :do-not-induct t
-           :in-theory (disable lofat-place-file-correctness-lemma-189)
            :use (:instance lofat-place-file-correctness-lemma-189
                            (x nil)))))
 
