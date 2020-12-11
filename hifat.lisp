@@ -2158,7 +2158,7 @@
        ((unless (consp alist-elem))
         (if (atom (cdr path))
             (mv (put-assoc-equal name file fs) 0)
-          (mv fs *enotdir*)))
+          (mv fs *enoent*)))
        ((when (and (not (m1-directory-file-p (cdr alist-elem)))
                    (or (consp (cdr path))
                        ;; This is the case where a regular file could get replaced by
@@ -2283,11 +2283,15 @@
   :hints (("goal" :in-theory (enable hifat-place-file)))
   :rule-classes :type-prescription)
 
+(defstub foo (* * * *) => *)
+
 (defthm
   hifat-place-file-of-append-1
   (equal
    (hifat-place-file fs (append x y) file)
    (cond
+    ((not (zp (mv-nth 1 (hifat-find-file fs x))))
+     (mv (hifat-file-alist-fix fs) *enoent*))
     ((atom y) (hifat-place-file fs x file))
     ((and (zp (mv-nth 1 (hifat-find-file fs x)))
           (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x))))
