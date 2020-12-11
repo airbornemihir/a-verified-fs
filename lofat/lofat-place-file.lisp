@@ -1165,7 +1165,7 @@
                    (not (d-e-directory-p d-e))))
         (mv fat32$c *enotdir*))
        (first-cluster (d-e-first-cluster d-e))
-       ((when (and (equal error-code 0)
+       ((when (and (not (equal error-code 0))
                    (consp (cdr path))))
         ;; This is messy.
         (mv fat32$c *enotdir*))
@@ -3536,7 +3536,7 @@
           ((when (and (consp (cdr path)) (not (d-e-directory-p d-e))))
            (mv fat32$c *enotdir*))
           (first-cluster (d-e-first-cluster d-e))
-          ((when (and (equal error-code 0)
+          ((when (and (not (equal error-code 0))
                       (consp (cdr path))))
            ;; This is messy.
            (mv fat32$c *enotdir*))
@@ -31321,10 +31321,10 @@
           entry-limit))
         path
         (m1-file d-e (lofat-file->contents file))))
-      20)
+      *enotdir*)
      (equal (mv-nth 1
                     (lofat-place-file fat32$c root-d-e path file))
-            5)))
+            *enotdir*)))
    :hints
    (("goal"
      :do-not-induct t
