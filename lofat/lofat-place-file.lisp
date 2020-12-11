@@ -1165,6 +1165,10 @@
                    (not (d-e-directory-p d-e))))
         (mv fat32$c *enotdir*))
        (first-cluster (d-e-first-cluster d-e))
+       ((when (and (equal error-code 0)
+                   (consp (cdr path))))
+        ;; This is messy.
+        (mv fat32$c *enotdir*))
        ((when (and (or (< first-cluster 2)
                        (<= (+ 2 (count-of-clusters fat32$c))
                            first-cluster))
@@ -3532,6 +3536,10 @@
           ((when (and (consp (cdr path)) (not (d-e-directory-p d-e))))
            (mv fat32$c *enotdir*))
           (first-cluster (d-e-first-cluster d-e))
+          ((when (and (equal error-code 0)
+                      (consp (cdr path))))
+           ;; This is messy.
+           (mv fat32$c *enotdir*))
           ((when (and (or (< first-cluster 2)
                           (<= (+ 2 (count-of-clusters fat32$c)) first-cluster))
                       (consp (cdr path))))
@@ -31274,6 +31282,11 @@
   (local (include-book "std/lists/intersectp" :dir :system))
 
   ;; Counterexample.
+  ;; This is a painful situation where we would like both hifat-place-file and
+  ;; lofat-place-file to do the right thing, but there's too much chaos
+  ;; currently in any attempt to change hifat-place-file... So we will probably
+  ;; have to just get both to do the same incorrect thing instead of different
+  ;; incorrect things.
   (thm
    (implies
     (and
