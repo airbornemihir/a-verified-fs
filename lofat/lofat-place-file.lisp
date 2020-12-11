@@ -31284,9 +31284,8 @@
   ;; Counterexample.
   ;; This is a painful situation where we would like both hifat-place-file and
   ;; lofat-place-file to do the right thing, but there's too much chaos
-  ;; currently in any attempt to change hifat-place-file... So we will probably
-  ;; have to just get both to do the same incorrect thing instead of different
-  ;; incorrect things.
+  ;; currently in any attempt to change hifat-place-file... So we just got both
+  ;; to do the same incorrect thing instead of different incorrect things.
   (thm
    (implies
     (and
@@ -31325,6 +31324,67 @@
      (equal (mv-nth 1
                     (lofat-place-file fat32$c root-d-e path file))
             *enotdir*)))
+   :hints
+   (("goal"
+     :do-not-induct t
+     :expand ((lofat-place-file fat32$c root-d-e path file))
+     :in-theory
+     (e/d (hifat-place-file (:rewrite lofat-to-hifat-inversion-lemma-4)
+                            hifat-find-file)
+          ((:definition find-d-e)
+           (:definition place-d-e)
+           (:rewrite d-e-p-when-member-equal-of-d-e-list-p)
+           (:rewrite lofat-fs-p-of-lofat-place-file-lemma-1)
+           (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
+                     . 5))))))
+
+  ;; Counterexample.
+  (thm
+   (implies
+    (and
+     (not
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))))
+     (fat32-filename-list-p path)
+     (equal
+      (mv-nth
+       3
+       (lofat-to-hifat-helper
+        fat32$c
+        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+        entry-limit))
+      0)
+     (lofat-file-p file)
+     (not (lofat-file->contents file))
+     (<=
+      2
+      (d-e-first-cluster
+       (mv-nth
+        0
+        (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                  (car path)))))
+     (consp path)
+     (not (consp (cdr path))))
+    (and
+     (equal
+      (mv-nth
+       1
+       (hifat-place-file
+        (mv-nth
+         0
+         (lofat-to-hifat-helper
+          fat32$c
+          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          entry-limit))
+        path
+        (m1-file d-e (lofat-file->contents file))))
+      *enotdir*)
+     (equal (mv-nth 1
+                    (lofat-place-file fat32$c root-d-e path file))
+            *enoent*)))
    :hints
    (("goal"
      :do-not-induct t
