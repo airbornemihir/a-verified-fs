@@ -1197,11 +1197,13 @@
                           file))
        (length (if (d-e-directory-p d-e)
                    *ms-max-dir-size* (d-e-file-size d-e)))
-       ((when (or (and (d-e-directory-p d-e)
-                       (lofat-regular-file-p file))
-                  (and (not (d-e-directory-p d-e))
-                       (lofat-directory-file-p file))))
+       ((when (and (d-e-directory-p d-e)
+                   (lofat-regular-file-p file)))
         (mv fat32$c *enoent*))
+       ;; This is messy.
+       ((when (and (not (d-e-directory-p d-e))
+                   (lofat-directory-file-p file)))
+        (mv fat32$c *enotdir*))
        ((mv fat32$c &)
         (if (or (< first-cluster 2)
                 (<= (+ 2 (count-of-clusters fat32$c))
@@ -3551,11 +3553,13 @@
           ;; we have now ensured in the guard.
           (length (if (d-e-directory-p d-e) *ms-max-dir-size* (d-e-file-size d-e)))
           ;; Replacing a directory with a regular file is not permitted.
-          ((when (or (and (d-e-directory-p d-e)
-                          (lofat-regular-file-p file))
-                     (and (not (d-e-directory-p d-e))
-                          (lofat-directory-file-p file))))
+          ((when (and (d-e-directory-p d-e)
+                      (lofat-regular-file-p file)))
            (mv fat32$c *enoent*))
+          ;; This is messy.
+          ((when (and (not (d-e-directory-p d-e))
+                      (lofat-directory-file-p file)))
+           (mv fat32$c *enotdir*))
           ((mv fat32$c &)
            (if (or (< first-cluster 2) (<= (+ 2 (count-of-clusters fat32$c)) first-cluster))
                (mv fat32$c 0) (clear-cc fat32$c first-cluster length)))
@@ -31282,10 +31286,12 @@
   (local (include-book "std/lists/intersectp" :dir :system))
 
   ;; Counterexample.
+  ;;
   ;; This is a painful situation where we would like both hifat-place-file and
-  ;; lofat-place-file to do the right thing, but there's too much chaos
-  ;; currently in any attempt to change hifat-place-file... So we just got both
-  ;; to do the same incorrect thing instead of different incorrect things.
+  ;;lofat-place-file to do the right thing and return *enoent*, but there's too
+  ;;much chaos currently in any attempt to change hifat-place-file... So we
+  ;;just got both to do the same incorrect thing instead of different incorrect
+  ;;things.
   (thm
    (implies
     (and
@@ -31338,7 +31344,7 @@
            (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
                      . 5))))))
 
-  ;; Counterexample.
+  ;; Counterexample. Here, again, both should return an EEXIST code, but...
   (thm
    (implies
     (and
@@ -31384,7 +31390,7 @@
       *enotdir*)
      (equal (mv-nth 1
                     (lofat-place-file fat32$c root-d-e path file))
-            *enoent*)))
+            *enotdir*)))
    :hints
    (("goal"
      :do-not-induct t
