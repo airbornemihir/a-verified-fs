@@ -187,7 +187,7 @@
        ((unless (consp path)) (mv fs *enoent*))
        (name (fat32-filename-fix (car path)))
        (alist-elem (abs-assoc name fs))
-       ((unless (consp alist-elem)) (if (consp (cdr path)) (mv fs *enotdir*)
+       ((unless (consp alist-elem)) (if (consp (cdr path)) (mv fs *enoent*)
                                       (mv (abs-put-assoc name file fs) 0)))
        ((when (and (not (abs-directory-file-p (cdr alist-elem)))
                    (or (consp (cdr path)) (abs-directory-file-p file))))
@@ -2171,20 +2171,19 @@
       (and
        (equal (mv-nth 1
                       (abs-place-file-helper fs2 path file))
-              *enoent*)
+              *enotdir*)
        (abs-fs-p fs1)
        (abs-fs-p fs2)
        (absfat-subsetp fs2 fs1))
-      (> (mv-nth 1
-                 (abs-place-file-helper fs1 path file))
-         0))
+      (not (equal (mv-nth 1
+                          (abs-place-file-helper fs1 path file))
+                  *enospc*)))
      :hints
      (("goal"
        :in-theory (enable abs-place-file-helper
                           absfat-subsetp abs-file-p-alt)
        :induct (mv (abs-place-file-helper fs1 path file)
-                   (abs-place-file-helper fs2 path file))))
-     :rule-classes :linear))
+                   (abs-place-file-helper fs2 path file))))))
 
   (defthm
     abs-mkdir-correctness-lemma-69
@@ -2192,15 +2191,15 @@
      (and
       (equal (mv-nth 1
                      (abs-place-file-helper fs2 path file))
-             *enoent*)
+             *enotdir*)
       (absfat-subsetp (abs-fs-fix fs2)
                       (abs-fs-fix fs1)))
-     (> (mv-nth 1
-                (abs-place-file-helper fs1 path file))
-        0))
+     (not
+      (equal (mv-nth 1
+                     (abs-place-file-helper fs1 path file))
+             *enospc*)))
     :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1))
-                                    (fs2 (abs-fs-fix fs2)))))
-    :rule-classes :linear))
+                                    (fs2 (abs-fs-fix fs2)))))))
 
 (encapsulate
   ()
@@ -2208,33 +2207,39 @@
   (local
    (defthmd
      lemma
-     (implies (and (equal (mv-nth 1
-                                  (abs-place-file-helper fs2 path file))
-                          *enotdir*)
-                   (abs-fs-p fs1)
-                   (absfat-subsetp (abs-fs-fix fs1)
-                                   (abs-fs-fix fs2))
-                   (not (abs-directory-file-p (abs-no-dups-file-fix file))))
-              (equal (mv-nth 1
-                             (abs-place-file-helper fs1 path file))
-                     *enotdir*))
-     :hints (("goal" :in-theory (enable abs-place-file-helper
-                                        absfat-subsetp abs-file-p-alt)
-              :induct (mv (abs-place-file-helper fs1 path file)
-                          (abs-place-file-helper fs2 path file))))))
+     (implies
+      (and
+       (equal (mv-nth 1
+                      (abs-place-file-helper fs2 path file))
+              *enotdir*)
+       (abs-fs-p fs1)
+       (abs-fs-p fs2)
+       (absfat-subsetp fs2 fs1))
+      (not (equal (mv-nth 1
+                          (abs-place-file-helper fs1 path file))
+                  *enoent*)))
+     :hints
+     (("goal"
+       :in-theory (enable abs-place-file-helper
+                          absfat-subsetp abs-file-p-alt)
+       :induct (mv (abs-place-file-helper fs1 path file)
+                   (abs-place-file-helper fs2 path file))))))
 
   (defthm
-    abs-mkdir-correctness-lemma-70
-    (implies (and (equal (mv-nth 1
-                                 (abs-place-file-helper fs2 path file))
-                         *enotdir*)
-                  (absfat-subsetp (abs-fs-fix fs1)
-                                  (abs-fs-fix fs2))
-                  (case-split (not (abs-directory-file-p (abs-no-dups-file-fix file)))))
-             (equal (mv-nth 1
-                            (abs-place-file-helper fs1 path file))
-                    *enotdir*))
-    :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1)))))))
+    abs-mkdir-correctness-lemma-101
+    (implies
+     (and
+      (equal (mv-nth 1
+                     (abs-place-file-helper fs2 path file))
+             *enotdir*)
+      (absfat-subsetp (abs-fs-fix fs2)
+                      (abs-fs-fix fs1)))
+     (not
+      (equal (mv-nth 1
+                     (abs-place-file-helper fs1 path file))
+             *enoent*)))
+    :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1))
+                                    (fs2 (abs-fs-fix fs2)))))))
 
 (defthm
   abs-mkdir-correctness-lemma-71
@@ -2323,6 +2328,160 @@
                          *enotdir*)
                   (absfat-equiv fs1 fs2)
                   (abs-directory-file-p (abs-no-dups-file-fix file)))
+             (equal (mv-nth 1
+                            (abs-place-file-helper fs1 path file))
+                    *enotdir*))
+    :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1))
+                                    (fs2 (abs-fs-fix fs2)))))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies (and (equal (mv-nth 1 (abs-place-file-helper fs2 path file))
+                          *enospc*)
+                   (abs-fs-p fs1)
+                   (abs-fs-p fs2)
+                   (absfat-equiv fs1 fs2)
+                   (abs-directory-file-p (abs-no-dups-file-fix file)))
+              (equal (mv-nth 1 (abs-place-file-helper fs1 path file))
+                     *enospc*))
+     :hints
+     (("goal" :in-theory
+       (e/d (abs-place-file-helper abs-file-p-alt)
+            ((:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-4)
+             (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
+             (:definition put-assoc-equal)
+             (:rewrite abs-file-alist-p-correctness-1)
+             (:rewrite hifat-find-file-correctness-1-lemma-1)
+             (:definition abs-complete)
+             (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
+             abs-mkdir-correctness-lemma-71))
+       :induct (mv (abs-place-file-helper fs1 path file)
+                   (abs-place-file-helper fs2 path file)))
+      ("subgoal *1/3"
+       :use
+       (abs-mkdir-correctness-lemma-71
+        (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
+                   (abs-file-alist2 fs1)
+                   (abs-file-alist1 fs2)
+                   (x (fat32-filename-fix (car path))))))
+      ("subgoal *1/1"
+       :use
+       (abs-mkdir-correctness-lemma-71
+        (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
+                   (abs-file-alist2 fs1)
+                   (abs-file-alist1 fs2)
+                   (x (fat32-filename-fix (car path)))))))))
+
+  (defthm
+    abs-mkdir-correctness-lemma-37
+    (implies (and (equal (mv-nth 1
+                                 (abs-place-file-helper fs2 path file))
+                         *enospc*)
+                  (absfat-equiv fs1 fs2)
+                  (abs-directory-file-p (abs-no-dups-file-fix file)))
+             (equal (mv-nth 1
+                            (abs-place-file-helper fs1 path file))
+                    *enospc*))
+    :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1))
+                                    (fs2 (abs-fs-fix fs2)))))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies (and (equal (mv-nth 1 (abs-place-file-helper fs2 path file))
+                          *enoent*)
+                   (abs-fs-p fs1)
+                   (abs-fs-p fs2)
+                   (absfat-equiv fs1 fs2))
+              (equal (mv-nth 1 (abs-place-file-helper fs1 path file))
+                     *enoent*))
+     :hints
+     (("goal" :in-theory
+       (e/d (abs-place-file-helper abs-file-p-alt)
+            ((:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-4)
+             (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
+             (:definition put-assoc-equal)
+             (:rewrite abs-file-alist-p-correctness-1)
+             (:rewrite hifat-find-file-correctness-1-lemma-1)
+             (:definition abs-complete)
+             (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
+             abs-mkdir-correctness-lemma-71))
+       :induct (mv (abs-place-file-helper fs1 path file)
+                   (abs-place-file-helper fs2 path file)))
+      ("subgoal *1/4"
+       :use
+       (abs-mkdir-correctness-lemma-71
+        (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
+                   (abs-file-alist2 fs1)
+                   (abs-file-alist1 fs2)
+                   (x (fat32-filename-fix (car path)))))))))
+
+  (defthm
+    abs-mkdir-correctness-lemma-111
+    (implies (and (equal (mv-nth 1
+                                 (abs-place-file-helper fs2 path file))
+                         *enoent*)
+                  (absfat-equiv fs1 fs2))
+             (equal (mv-nth 1
+                            (abs-place-file-helper fs1 path file))
+                    *enoent*))
+    :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1))
+                                    (fs2 (abs-fs-fix fs2)))))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies (and (equal (mv-nth 1 (abs-place-file-helper fs2 path file))
+                          *enotdir*)
+                   (abs-fs-p fs1)
+                   (abs-fs-p fs2)
+                   (absfat-equiv fs1 fs2))
+              (equal (mv-nth 1 (abs-place-file-helper fs1 path file))
+                     *enotdir*))
+     :hints
+     (("goal" :in-theory
+       (e/d (abs-place-file-helper abs-file-p-alt)
+            ((:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-4)
+             (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
+             (:definition put-assoc-equal)
+             (:rewrite abs-file-alist-p-correctness-1)
+             (:rewrite hifat-find-file-correctness-1-lemma-1)
+             (:definition abs-complete)
+             (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
+             abs-mkdir-correctness-lemma-71))
+       :induct (mv (abs-place-file-helper fs1 path file)
+                   (abs-place-file-helper fs2 path file)))
+      ("subgoal *1/4"
+       :use
+       (abs-mkdir-correctness-lemma-71
+        (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
+                   (abs-file-alist2 fs1)
+                   (abs-file-alist1 fs2)
+                   (x (fat32-filename-fix (car path))))))
+      ("subgoal *1/1"
+       :use
+       (abs-mkdir-correctness-lemma-71
+        (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
+                   (abs-file-alist2 fs1)
+                   (abs-file-alist1 fs2)
+                   (x (fat32-filename-fix (car path)))))))))
+
+  (defthm
+    abs-mkdir-correctness-lemma-70
+    (implies (and (equal (mv-nth 1
+                                 (abs-place-file-helper fs2 path file))
+                         *enotdir*)
+                  (absfat-equiv fs1 fs2))
              (equal (mv-nth 1
                             (abs-place-file-helper fs1 path file))
                     *enotdir*))
