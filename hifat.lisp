@@ -2285,35 +2285,39 @@
 
 (defthm
   hifat-place-file-of-append-1
-  (implies
-   (or (atom x)
-       (atom y)
-       (not (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x))))
-       (zp (mv-nth 1 (hifat-find-file fs x))))
-   (equal
-    (hifat-place-file fs (append x y) file)
-    (cond
-     ((atom x) (hifat-place-file fs y file))
-     ((atom y) (hifat-place-file fs x file))
-     ((not (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x))))
-      (mv (hifat-file-alist-fix fs) 20))
-     (t
-      (mv
-       (mv-nth
-        0
-        (hifat-place-file
-         fs x
-         (make-m1-file
-          :contents
-          (mv-nth 0
-                  (hifat-place-file
-                   (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
-                   y file))
-          :d-e (m1-file->d-e (mv-nth 0 (hifat-find-file fs x))))))
-       (mv-nth 1
-               (hifat-place-file
-                (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
-                y file)))))))
+  (equal
+   (hifat-place-file fs (append x y) file)
+   (cond
+    ((and (< 0 (mv-nth 1 (hifat-find-file fs x)))
+          (not (equal (mv-nth 1 (hifat-find-file fs x))
+                      2)))
+     (mv (hifat-file-alist-fix fs)
+         *enotdir*))
+    ((atom x) (hifat-place-file fs y file))
+    ((atom y) (hifat-place-file fs x file))
+    ((equal (mv-nth 1 (hifat-find-file fs x))
+            *enoent*)
+     (mv (hifat-file-alist-fix fs) *enoent*))
+    ((not (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x))))
+     (mv (hifat-file-alist-fix fs)
+         *enotdir*))
+    (t
+     (mv
+      (mv-nth
+       0
+       (hifat-place-file
+        fs x
+        (make-m1-file
+         :contents
+         (mv-nth 0
+                 (hifat-place-file
+                  (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
+                  y file))
+         :d-e (m1-file->d-e (mv-nth 0 (hifat-find-file fs x))))))
+      (mv-nth
+       1
+       (hifat-place-file (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
+                         y file))))))
   :hints
   (("goal"
     :in-theory (enable hifat-place-file hifat-find-file)

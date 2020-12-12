@@ -29827,7 +29827,7 @@
           entry-limit))
         path
         (m1-file d-e (lofat-file->contents file))))
-      *enotdir*)
+      *enoent*)
      (equal (mv-nth 1
                     (lofat-place-file fat32$c root-d-e path file))
             *enotdir*)))
