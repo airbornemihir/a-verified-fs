@@ -31528,8 +31528,8 @@
     (("goal"
       :induct (induction-scheme entry-limit
                                 fat32$c file path root-d-e x)
-      :expand
-      ((lofat-place-file fat32$c root-d-e path file))
+      :do-not-induct t
+      :expand ((lofat-place-file fat32$c root-d-e path file))
       :in-theory
       (e/d (hifat-place-file (:rewrite lofat-to-hifat-inversion-lemma-4)
                              hifat-find-file)
@@ -31579,8 +31579,9 @@
             (and (equal (lofat-file->contents file) nil)
                  (<= 1
                      (count-free-clusters (effective-fat fat32$c)))))
-        (zp (mv-nth 1
-                    (lofat-place-file fat32$c root-d-e path file)))
+        (not (equal (mv-nth 1
+                            (lofat-place-file fat32$c root-d-e path file))
+                    *enospc*))
         (integerp entry-limit)
         (<
          (hifat-entry-count
@@ -31700,7 +31701,8 @@
          entry-limit))
        path
        (m1-file d-e (lofat-file->contents file))))
-     0)))
+     (mv-nth 1
+             (lofat-place-file fat32$c root-d-e path file)))))
   :hints
   (("goal"
     :in-theory
