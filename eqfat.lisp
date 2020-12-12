@@ -9069,29 +9069,30 @@ channel state))
   :hints (("goal" :do-not-induct t
            :use lofat-to-hifat-helper-correctness-4)))
 
-(defthm
-  lofat-remove-file-correctness-lemma-14
-  (implies
-   (and
+(local
+ (defthm
+   lofat-remove-file-correctness-lemma-14
+   (implies
+    (and
+     (< x
+        (hifat-entry-count
+         (mv-nth 0
+                 (lofat-to-hifat-helper fat32$c d-e-list entry-limit1))))
+     (equal (mv-nth 3
+                    (lofat-to-hifat-helper fat32$c d-e-list entry-limit1))
+            0)
+     (>= (nfix entry-limit2)
+         (mv-nth 1
+                 (lofat-to-hifat-helper fat32$c d-e-list entry-limit1))))
     (< x
        (hifat-entry-count
         (mv-nth 0
-                (lofat-to-hifat-helper fat32$c d-e-list entry-limit1))))
-    (equal (mv-nth 3
-                   (lofat-to-hifat-helper fat32$c d-e-list entry-limit1))
-           0)
-    (>= (nfix entry-limit2)
-        (mv-nth 1
-                (lofat-to-hifat-helper fat32$c d-e-list entry-limit1))))
-   (< x
-      (hifat-entry-count
-       (mv-nth 0
-               (lofat-to-hifat-helper fat32$c d-e-list entry-limit2)))))
-  :hints (("goal" :do-not-induct t
-           :use lofat-to-hifat-helper-correctness-4)))
+                (lofat-to-hifat-helper fat32$c d-e-list entry-limit2)))))
+   :hints (("goal" :do-not-induct t
+            :use lofat-to-hifat-helper-correctness-4))))
 
 (defthm
-  lofat-place-file-correctness-lemma-70
+  lofat-place-file-correctness-lemma-38
   (implies
    (and
     (equal
@@ -10174,7 +10175,6 @@ channel state))
         (:rewrite intersectp-equal-of-atom-left)
         (:rewrite lofat-place-file-correctness-lemma-58)
         (:linear lofat-place-file-correctness-1-lemma-25)
-        (:rewrite lofat-place-file-correctness-lemma-70)
         (:rewrite nth-of-set-indices-in-fa-table-when-member)
         (:rewrite lofat-place-file-correctness-lemma-18)
         (:rewrite lofat-place-file-correctness-lemma-121
@@ -11246,151 +11246,6 @@ channel state))
                       i
                       (len (explode (lofat-file->contents file)))))
           entry-limit))))))))
-
-(defthm
-  lofat-place-file-correctness-lemma-38
-  (implies
-   (and
-    (equal
-     (mv-nth
-      2
-      (place-contents
-       (update-fati
-        i
-        (fat32-update-lower-28 (fati i fat32$c)
-                               268435455)
-        (mv-nth
-         0
-         (clear-cc
-          fat32$c
-          (d-e-first-cluster (mv-nth 0 (find-d-e d-e-list name)))
-          2097152)))
-       (mv-nth 0 (find-d-e d-e-list name))
-       (make-empty-subdir-contents i (d-e-first-cluster root-d-e))
-       0 i))
-     0)
-    (d-e-directory-p (mv-nth 0 (find-d-e d-e-list name)))
-    (good-root-d-e-p root-d-e fat32$c)
-    (equal (mv-nth 3
-                   (lofat-to-hifat-helper fat32$c
-                                          d-e-list entry-limit))
-           0)
-    (not-intersectp-list
-     (mv-nth 0
-             (d-e-cc fat32$c root-d-e))
-     (mv-nth 2
-             (lofat-to-hifat-helper fat32$c
-                                    d-e-list entry-limit)))
-    (fat32-masked-entry-p i)
-    (<= 2 i)
-    (< i
-       (+ 2 (count-of-clusters fat32$c)))
-    (case-split
-     (equal
-      (fat32-entry-mask
-       (nth
-        i
-        (set-indices-in-fa-table
-         (effective-fat fat32$c)
-         (mv-nth
-          0
-          (d-e-cc fat32$c
-                  (mv-nth 0 (find-d-e d-e-list name))))
-         (make-list-ac
-          (len (mv-nth 0
-                       (d-e-cc
-                        fat32$c
-                        (mv-nth 0 (find-d-e d-e-list name)))))
-          0 nil))))
-      0))
-    (useful-d-e-list-p d-e-list))
-   (and
-    (hifat-equiv
-     (mv-nth
-      0
-      (lofat-to-hifat-helper
-       (mv-nth
-        0
-        (update-dir-contents
-         (mv-nth
-          0
-          (place-contents
-           (update-fati
-            i
-            (fat32-update-lower-28 (fati i fat32$c)
-                                   268435455)
-            (mv-nth 0
-                    (clear-cc
-                     fat32$c
-                     (d-e-first-cluster
-                      (mv-nth 0 (find-d-e d-e-list name)))
-                     2097152)))
-           (mv-nth 0 (find-d-e d-e-list name))
-           (make-empty-subdir-contents i (d-e-first-cluster root-d-e))
-           0 i))
-         (d-e-first-cluster root-d-e)
-         (nats=>string
-          (insert-d-e
-           (string=>nats
-            (mv-nth
-             0
-             (d-e-cc-contents fat32$c root-d-e)))
-           (d-e-set-first-cluster-file-size
-            (mv-nth 0 (find-d-e d-e-list name))
-            i 0)))))
-       (place-d-e d-e-list
-                  (d-e-set-first-cluster-file-size
-                   (mv-nth 0 (find-d-e d-e-list name))
-                   i 0))
-       entry-limit))
-     (put-assoc-equal
-      name (m1-file (d-e-fix nil) nil)
-      (mv-nth 0
-              (lofat-to-hifat-helper fat32$c
-                                     d-e-list entry-limit))))
-    (equal
-     (mv-nth
-      3
-      (lofat-to-hifat-helper
-       (mv-nth
-        0
-        (update-dir-contents
-         (mv-nth
-          0
-          (place-contents
-           (update-fati
-            i
-            (fat32-update-lower-28 (fati i fat32$c)
-                                   268435455)
-            (mv-nth 0
-                    (clear-cc
-                     fat32$c
-                     (d-e-first-cluster
-                      (mv-nth 0 (find-d-e d-e-list name)))
-                     2097152)))
-           (mv-nth 0 (find-d-e d-e-list name))
-           (make-empty-subdir-contents i (d-e-first-cluster root-d-e))
-           0 i))
-         (d-e-first-cluster root-d-e)
-         (nats=>string
-          (insert-d-e
-           (string=>nats
-            (mv-nth
-             0
-             (d-e-cc-contents fat32$c root-d-e)))
-           (d-e-set-first-cluster-file-size
-            (mv-nth 0 (find-d-e d-e-list name))
-            i 0)))))
-       (place-d-e d-e-list
-                  (d-e-set-first-cluster-file-size
-                   (mv-nth 0 (find-d-e d-e-list name))
-                   i 0))
-       entry-limit))
-     0)))
-  :hints (("goal" :do-not-induct t
-           :use (:instance lofat-place-file-correctness-lemma-37
-                           (x nil)
-                           (d-e (d-e-fix nil))))))
 
 (defthm
   lofat-place-file-correctness-lemma-91

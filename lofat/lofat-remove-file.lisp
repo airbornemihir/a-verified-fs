@@ -2444,7 +2444,6 @@
       (:rewrite lofat-remove-file-correctness-1-lemma-14)
       (:rewrite d-e-cc-of-update-dir-contents-coincident)
       (:rewrite lofat-place-file-correctness-lemma-56)
-      (:rewrite lofat-place-file-correctness-lemma-70)
       (:rewrite lofat-place-file-correctness-lemma-83)
       (:rewrite subsetp-append1)
       (:rewrite lofat-place-file-correctness-lemma-93)
