@@ -20375,6 +20375,71 @@
           (:rewrite abs-find-file-correctness-lemma-12)
           (:rewrite path-clear-partial-collapse-when-zp-src-lemma-3)))))
 
+  ;; Counterexample.
+  (thm
+   (implies
+    (and
+     (mv-nth 1 (collapse frame))
+     (not (frame-val->path (cdr (assoc-equal 0 frame))))
+     (consp (assoc-equal 0 frame))
+     (frame-p frame)
+     (no-duplicatesp-equal (strip-cars frame))
+     (abs-separate frame)
+     (subsetp-equal (abs-addrs (frame->root frame))
+                    (frame-addrs-root (frame->frame frame)))
+     (consp (assoc-equal fd fd-table))
+     (not (stringp buf))
+     (integerp (+ offset (len buf)))
+     (<= 0 (+ offset (len buf)))
+     (< (+ offset (len buf)) 4294967296)
+     (not
+      (m1-directory-file-p
+       (mv-nth
+        0
+        (hifat-find-file
+         (mv-nth 0 (collapse frame))
+         (dirname (file-table-element->fid
+                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                     file-table))))))))
+     (not
+      (m1-regular-file-p
+       (mv-nth
+        0
+        (hifat-find-file (mv-nth 0 (collapse frame))
+                         (file-table-element->fid
+                          (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                            file-table)))))))
+     (equal
+      (mv-nth
+       1
+       (hifat-find-file
+        (mv-nth 0 (collapse frame))
+        (dirname (file-table-element->fid
+                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                    file-table))))))
+      2))
+    (and (equal (mv-nth 2
+                        (abs-pwrite fd
+                                    buf offset frame fd-table file-table))
+                *enotdir*)
+         (equal (mv-nth 2
+                        (hifat-pwrite fd
+                                      buf offset (mv-nth 0 (collapse frame))
+                                      fd-table file-table))
+                *enoent*)))
+   :hints
+   (("goal"
+     :do-not-induct t
+     :expand
+     ((:with abs-pwrite-correctness-lemma-1
+             (:free (file)
+                    (hifat-place-file
+                     (mv-nth 0 (collapse frame))
+                     (file-table-element->fid
+                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                        file-table)))
+                     file)))))))
+
   (defthm
     abs-pwrite-correctness-1
     (implies
