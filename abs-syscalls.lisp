@@ -6555,6 +6555,9 @@
        ;; After partial-collapse, either the parent directory is there in one
        ;; variable, or it isn't there at all.
        ((mv parent-dir error-code) (abs-find-file frame dirname))
+       ((when (and (consp dirname) (not (zp error-code))
+                   (not (equal error-code *enoent*))))
+        (mv frame -1 *enotdir*))
        ((when (and (consp dirname) (not (zp error-code))))
         (mv frame -1 *enoent*))
        ((when (and (consp dirname) (m1-regular-file-p parent-dir)))
@@ -20442,7 +20445,7 @@
                                         file-table)))
                      file)))))))
 
-  ;; Counterexample.
+  ;; This used to be a counterexample, because abs-pwrite returned *enoent*.
   (thm
    (implies
     (and
@@ -20481,7 +20484,7 @@
     (and (equal (mv-nth 2
                         (abs-pwrite fd
                                     buf offset frame fd-table file-table))
-                *enoent*)
+                *enotdir*)
          (equal (mv-nth 2
                         (hifat-pwrite fd
                                       buf offset (mv-nth 0 (collapse frame))
