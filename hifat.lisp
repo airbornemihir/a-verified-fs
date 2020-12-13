@@ -2160,11 +2160,13 @@
             (mv (put-assoc-equal name file fs) 0)
           (mv fs *enoent*)))
        ((when (and (not (m1-directory-file-p (cdr alist-elem)))
-                   (or (consp (cdr path))
-                       ;; This is the case where a regular file could get replaced by
-                       ;; a directory, which is a bad idea.
-                       (m1-directory-file-p file))))
+                   (consp (cdr path))))
         (mv fs *enotdir*))
+       ((when (and (not (m1-directory-file-p (cdr alist-elem)))
+                   ;; This is the case where a regular file could get replaced by
+                   ;; a directory, which is a bad idea.
+                   (m1-directory-file-p file)))
+        (mv fs *eexist*))
        ((when (not (or (m1-directory-file-p (cdr alist-elem))
                        (consp (cdr path))
                        (m1-directory-file-p file)
