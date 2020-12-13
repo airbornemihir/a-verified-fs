@@ -1163,6 +1163,13 @@
                 d-e
               (d-e-install-directory-bit
                d-e (lofat-directory-file-p file))))
+       ((when (and (not (equal error-code 0))
+                   (consp (cdr path))))
+        ;; This used to be the home of a bug! Initially the error code we
+        ;; returned here was *enotdir* and the error code we returned in
+        ;; hifat-place-file was *enoent*. Clearly, the former was wrong, which
+        ;; we fixed.
+        (mv fat32$c *enoent*))
        ((when (and (consp (cdr path))
                    (not (d-e-directory-p d-e))))
         (mv fat32$c *enotdir*))
@@ -3539,6 +3546,10 @@
                  (make-d-e-with-filename name)))
           (d-e (if (equal error-code 0) d-e
                  (d-e-install-directory-bit d-e (lofat-directory-file-p file))))
+          ((when (and (not (equal error-code 0))
+                      (consp (cdr path))))
+           ;; This used to be the home of a bug!
+           (mv fat32$c *enoent*))
           ;; ENOTDIR - can't act on anything that supposedly exists inside a regular file.
           ((when (and (consp (cdr path)) (not (d-e-directory-p d-e))))
            (mv fat32$c *enotdir*))
@@ -29851,7 +29862,8 @@
            (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
                      . 5))))))
 
-  ;; Counterexample.
+  ;; This used to be a counterexample because lofat-place-file used to return
+  ;; *ENOTDIR*, but no longer.
   (thm
    (implies
     (and
@@ -29889,7 +29901,7 @@
       *enoent*)
      (equal (mv-nth 1
                     (lofat-place-file fat32$c root-d-e path file))
-            *enotdir*)))
+            *enoent*)))
    :hints
    (("goal"
      :do-not-induct t
