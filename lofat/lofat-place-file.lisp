@@ -392,25 +392,22 @@
           1
           (min
            (count-free-clusters
-            (if (< (nfix (nth 0
-                              (find-n-free-clusters (effective-fat fat32$c)
-                                                    1)))
-                   (+ (count-of-clusters fat32$c) 2))
-                (update-nth
-                 (nth 0
-                      (find-n-free-clusters (effective-fat fat32$c)
-                                            1))
-                 (fat32-update-lower-28
-                  (fati (nth 0
-                             (find-n-free-clusters (effective-fat fat32$c)
-                                                   1))
-                        fat32$c)
-                  268435455)
-                 (effective-fat fat32$c))
-              (effective-fat fat32$c)))
-           (nfix (+ -1
-                    (len (make-clusters (lofat-file->contents file)
-                                        (cluster-size fat32$c)))))))
+            (if
+             (< (nth 0
+                     (stobj-find-n-free-clusters fat32$c 1))
+                (+ (count-of-clusters fat32$c) 2))
+             (update-nth (nth 0
+                              (stobj-find-n-free-clusters fat32$c 1))
+                         (fat32-update-lower-28
+                          (fati (nth 0
+                                     (stobj-find-n-free-clusters fat32$c 1))
+                                fat32$c)
+                          268435455)
+                         (effective-fat fat32$c))
+             (effective-fat fat32$c)))
+           (+ -1
+              (len (make-clusters (lofat-file->contents file)
+                                  (cluster-size fat32$c))))))
          (len (make-clusters (lofat-file->contents file)
                              (cluster-size fat32$c))))
         (not (equal error-code 0))
@@ -434,8 +431,7 @@
                (make-d-e-with-filename (fat32-filename-fix (car path)))
                nil)
               (nth 0
-                   (find-n-free-clusters (effective-fat fat32$c)
-                                         1))
+                   (stobj-find-n-free-clusters fat32$c 1))
               (len (explode (lofat-file->contents file))))))
            (cluster-size fat32$c)))
          (+ (count-free-clusters (effective-fat fat32$c))
@@ -499,25 +495,22 @@
           1
           (min
            (count-free-clusters
-            (if (< (nfix (nth 0
-                              (find-n-free-clusters (effective-fat fat32$c)
-                                                    1)))
-                   (+ (count-of-clusters fat32$c) 2))
-                (update-nth
-                 (nth 0
-                      (find-n-free-clusters (effective-fat fat32$c)
-                                            1))
-                 (fat32-update-lower-28
-                  (fati (nth 0
-                             (find-n-free-clusters (effective-fat fat32$c)
-                                                   1))
-                        fat32$c)
-                  268435455)
-                 (effective-fat fat32$c))
-              (effective-fat fat32$c)))
-           (nfix (+ -1
-                    (len (make-clusters (lofat-file->contents file)
-                                        (cluster-size fat32$c)))))))
+            (if
+             (< (nth 0
+                     (stobj-find-n-free-clusters fat32$c 1))
+                (+ (count-of-clusters fat32$c) 2))
+             (update-nth (nth 0
+                              (stobj-find-n-free-clusters fat32$c 1))
+                         (fat32-update-lower-28
+                          (fati (nth 0
+                                     (stobj-find-n-free-clusters fat32$c 1))
+                                fat32$c)
+                          268435455)
+                         (effective-fat fat32$c))
+             (effective-fat fat32$c)))
+           (+ -1
+              (len (make-clusters (lofat-file->contents file)
+                                  (cluster-size fat32$c))))))
          (len (make-clusters (lofat-file->contents file)
                              (cluster-size fat32$c))))
         (not (equal error-code 0))
@@ -544,8 +537,7 @@
                (make-d-e-with-filename (fat32-filename-fix (car path)))
                nil)
               (nth 0
-                   (find-n-free-clusters (effective-fat fat32$c)
-                                         1))
+                   (stobj-find-n-free-clusters fat32$c 1))
               (len (explode (lofat-file->contents file))))))
            (cluster-size fat32$c)))))
        28)
@@ -571,8 +563,7 @@
                (make-d-e-with-filename (fat32-filename-fix (car path)))
                nil)
               (nth 0
-                   (find-n-free-clusters (effective-fat fat32$c)
-                                         1))
+                   (stobj-find-n-free-clusters fat32$c 1))
               0)))
            (cluster-size fat32$c)))
          (+ -1
@@ -604,8 +595,7 @@
                (make-d-e-with-filename (fat32-filename-fix (car path)))
                nil)
               (nth 0
-                   (find-n-free-clusters (effective-fat fat32$c)
-                                         1))
+                   (stobj-find-n-free-clusters fat32$c 1))
               0)))
            (cluster-size fat32$c)))))
        28)
@@ -631,8 +621,7 @@
                (make-d-e-with-filename (fat32-filename-fix (car path)))
                t)
               (nth 0
-                   (find-n-free-clusters (effective-fat fat32$c)
-                                         1))
+                   (stobj-find-n-free-clusters fat32$c 1))
               0)))
            (cluster-size fat32$c)))
          (+ -1
@@ -664,8 +653,7 @@
                (make-d-e-with-filename (fat32-filename-fix (car path)))
                t)
               (nth 0
-                   (find-n-free-clusters (effective-fat fat32$c)
-                                         1))
+                   (stobj-find-n-free-clusters fat32$c 1))
               0)))
            (cluster-size fat32$c)))))
        28)
@@ -675,22 +663,19 @@
           1
           (len
            (find-n-free-clusters
-            (if (< (nth 0
-                        (find-n-free-clusters (effective-fat fat32$c)
-                                              1))
-                   (+ (count-of-clusters fat32$c) 2))
-                (update-nth
-                 (nth 0
-                      (find-n-free-clusters (effective-fat fat32$c)
-                                            1))
-                 (fat32-update-lower-28
-                  (fati (nth 0
-                             (find-n-free-clusters (effective-fat fat32$c)
-                                                   1))
-                        fat32$c)
-                  268435455)
-                 (effective-fat fat32$c))
-              (effective-fat fat32$c))
+            (if
+             (< (nth 0
+                     (stobj-find-n-free-clusters fat32$c 1))
+                (+ (count-of-clusters fat32$c) 2))
+             (update-nth (nth 0
+                              (stobj-find-n-free-clusters fat32$c 1))
+                         (fat32-update-lower-28
+                          (fati (nth 0
+                                     (stobj-find-n-free-clusters fat32$c 1))
+                                fat32$c)
+                          268435455)
+                         (effective-fat fat32$c))
+             (effective-fat fat32$c))
             (+ -1
                (len (make-clusters (lofat-file->contents file)
                                    (cluster-size fat32$c)))))))
@@ -714,8 +699,7 @@
                         (d-e-set-first-cluster-file-size
                          d-e
                          (nth 0
-                              (find-n-free-clusters (effective-fat fat32$c)
-                                                    1))
+                              (stobj-find-n-free-clusters fat32$c 1))
                          (len (explode (lofat-file->contents file))))))
            (cluster-size fat32$c)))
          (+ (count-free-clusters (effective-fat fat32$c))
@@ -730,40 +714,40 @@
           (len
            (find-n-free-clusters
             (if
-                (<
-                 (nth
-                  0
-                  (find-n-free-clusters
-                   (set-indices-in-fa-table (effective-fat fat32$c)
-                                            d-e-cc
-                                            (make-list-ac (len d-e-cc) 0 nil))
-                   1))
-                 (+ (count-of-clusters fat32$c) 2))
-                (update-nth
-                 (nth
-                  0
-                  (find-n-free-clusters
-                   (set-indices-in-fa-table (effective-fat fat32$c)
-                                            d-e-cc
-                                            (make-list-ac (len d-e-cc) 0 nil))
-                   1))
-                 (fat32-update-lower-28
-                  (fati
-                   (nth
-                    0
-                    (find-n-free-clusters
-                     (set-indices-in-fa-table (effective-fat fat32$c)
-                                              d-e-cc
-                                              (make-list-ac (len d-e-cc) 0 nil))
-                     1))
-                   fat32$c)
-                  268435455)
-                 (set-indices-in-fa-table (effective-fat fat32$c)
-                                          d-e-cc
-                                          (make-list-ac (len d-e-cc) 0 nil)))
+             (<
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table (effective-fat fat32$c)
+                                         d-e-cc
+                                         (make-list-ac (len d-e-cc) 0 nil))
+                1))
+              (+ (count-of-clusters fat32$c) 2))
+             (update-nth
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table (effective-fat fat32$c)
+                                         d-e-cc
+                                         (make-list-ac (len d-e-cc) 0 nil))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (set-indices-in-fa-table (effective-fat fat32$c)
+                                           d-e-cc
+                                           (make-list-ac (len d-e-cc) 0 nil))
+                  1))
+                fat32$c)
+               268435455)
               (set-indices-in-fa-table (effective-fat fat32$c)
                                        d-e-cc
                                        (make-list-ac (len d-e-cc) 0 nil)))
+             (set-indices-in-fa-table (effective-fat fat32$c)
+                                      d-e-cc
+                                      (make-list-ac (len d-e-cc) 0 nil)))
             (+ -1
                (len (make-clusters (lofat-file->contents file)
                                    (cluster-size fat32$c)))))))
@@ -823,40 +807,40 @@
           (len
            (find-n-free-clusters
             (if
-                (<
-                 (nth
-                  0
-                  (find-n-free-clusters
-                   (set-indices-in-fa-table (effective-fat fat32$c)
-                                            d-e-cc
-                                            (make-list-ac (len d-e-cc) 0 nil))
-                   1))
-                 (+ (count-of-clusters fat32$c) 2))
-                (update-nth
-                 (nth
-                  0
-                  (find-n-free-clusters
-                   (set-indices-in-fa-table (effective-fat fat32$c)
-                                            d-e-cc
-                                            (make-list-ac (len d-e-cc) 0 nil))
-                   1))
-                 (fat32-update-lower-28
-                  (fati
-                   (nth
-                    0
-                    (find-n-free-clusters
-                     (set-indices-in-fa-table (effective-fat fat32$c)
-                                              d-e-cc
-                                              (make-list-ac (len d-e-cc) 0 nil))
-                     1))
-                   fat32$c)
-                  268435455)
-                 (set-indices-in-fa-table (effective-fat fat32$c)
-                                          d-e-cc
-                                          (make-list-ac (len d-e-cc) 0 nil)))
+             (<
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table (effective-fat fat32$c)
+                                         d-e-cc
+                                         (make-list-ac (len d-e-cc) 0 nil))
+                1))
+              (+ (count-of-clusters fat32$c) 2))
+             (update-nth
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table (effective-fat fat32$c)
+                                         d-e-cc
+                                         (make-list-ac (len d-e-cc) 0 nil))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (set-indices-in-fa-table (effective-fat fat32$c)
+                                           d-e-cc
+                                           (make-list-ac (len d-e-cc) 0 nil))
+                  1))
+                fat32$c)
+               268435455)
               (set-indices-in-fa-table (effective-fat fat32$c)
                                        d-e-cc
                                        (make-list-ac (len d-e-cc) 0 nil)))
+             (set-indices-in-fa-table (effective-fat fat32$c)
+                                      d-e-cc
+                                      (make-list-ac (len d-e-cc) 0 nil)))
             (+ -1
                (len (make-clusters (lofat-file->contents file)
                                    (cluster-size fat32$c)))))))
@@ -917,8 +901,7 @@
                         (d-e-set-first-cluster-file-size
                          d-e
                          (nth 0
-                              (find-n-free-clusters (effective-fat fat32$c)
-                                                    1))
+                              (stobj-find-n-free-clusters fat32$c 1))
                          (len (explode (lofat-file->contents file))))))
            (cluster-size fat32$c)))
          (+ (count-free-clusters (effective-fat fat32$c))
@@ -930,22 +913,19 @@
           1
           (len
            (find-n-free-clusters
-            (if (< (nth 0
-                        (find-n-free-clusters (effective-fat fat32$c)
-                                              1))
-                   (+ (count-of-clusters fat32$c) 2))
-                (update-nth
-                 (nth 0
-                      (find-n-free-clusters (effective-fat fat32$c)
-                                            1))
-                 (fat32-update-lower-28
-                  (fati (nth 0
-                             (find-n-free-clusters (effective-fat fat32$c)
-                                                   1))
-                        fat32$c)
-                  268435455)
-                 (effective-fat fat32$c))
-              (effective-fat fat32$c))
+            (if
+             (< (nth 0
+                     (stobj-find-n-free-clusters fat32$c 1))
+                (+ (count-of-clusters fat32$c) 2))
+             (update-nth (nth 0
+                              (stobj-find-n-free-clusters fat32$c 1))
+                         (fat32-update-lower-28
+                          (fati (nth 0
+                                     (stobj-find-n-free-clusters fat32$c 1))
+                                fat32$c)
+                          268435455)
+                         (effective-fat fat32$c))
+             (effective-fat fat32$c))
             (+ -1
                (len (make-clusters (lofat-file->contents file)
                                    (cluster-size fat32$c)))))))
@@ -970,8 +950,7 @@
                         (d-e-set-first-cluster-file-size
                          d-e
                          (nth 0
-                              (find-n-free-clusters (effective-fat fat32$c)
-                                                    1))
+                              (stobj-find-n-free-clusters fat32$c 1))
                          0)))
            (cluster-size fat32$c)))
          (+ -1
@@ -1006,8 +985,7 @@
                         (d-e-set-first-cluster-file-size
                          d-e
                          (nth 0
-                              (find-n-free-clusters (effective-fat fat32$c)
-                                                    1))
+                              (stobj-find-n-free-clusters fat32$c 1))
                          0)))
            (cluster-size fat32$c)))))
        28)
@@ -1074,8 +1052,7 @@
                         (d-e-set-first-cluster-file-size
                          d-e
                          (nth 0
-                              (find-n-free-clusters (effective-fat fat32$c)
-                                                    1))
+                              (stobj-find-n-free-clusters fat32$c 1))
                          0)))
            (cluster-size fat32$c)))))
        28)
@@ -1094,8 +1071,7 @@
                         (d-e-set-first-cluster-file-size
                          d-e
                          (nth 0
-                              (find-n-free-clusters (effective-fat fat32$c)
-                                                    1))
+                              (stobj-find-n-free-clusters fat32$c 1))
                          0)))
            (cluster-size fat32$c)))
          (+ -1
@@ -1114,12 +1090,13 @@
             (string=>nats root-d-e-cc-contents)
             (d-e-set-first-cluster-file-size
              d-e
-             (nth 0
-                  (find-n-free-clusters
-                   (set-indices-in-fa-table (effective-fat fat32$c)
-                                            d-e-cc
-                                            (make-list-ac (len d-e-cc) 0 nil))
-                   1))
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table (effective-fat fat32$c)
+                                        d-e-cc
+                                        (make-list-ac (len d-e-cc) 0 nil))
+               1))
              0)))
           (cluster-size fat32$c))))
        28)
