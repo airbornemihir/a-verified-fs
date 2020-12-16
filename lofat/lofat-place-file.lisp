@@ -374,9 +374,6 @@
    (m1-directory-file-p (m1-file-fix file))))
  :hints (("goal" :in-theory (enable hifat-place-file))))
 
-;; Move later.
-(defcong nat-equiv equal (find-n-free-clusters fa-table n) 2)
-
 (skip-proofs
  (defund lofat-place-file-helper
    (fat32$c root-d-e path file)
@@ -927,11 +924,6 @@
            (equal (fati i fat32$c)
                   (fati 0 fat32$c)))
   :hints (("goal" :in-theory (enable fati nth))))
-
-;; Move later.
-(defthm integer-listp-of-d-e-cc
-  (integer-listp (mv-nth 0 (d-e-cc fat32$c d-e)))
-  :hints (("goal" :in-theory (enable d-e-cc))))
 
 (defthm
   lofat-place-file-guard-lemma-7
