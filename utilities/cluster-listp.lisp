@@ -168,4 +168,5 @@
   (implies (and (atom text) (not (stringp text)))
            (equal (make-clusters text cluster-size)
                   nil))
-  :hints (("goal" :in-theory (enable make-clusters))))
+  :hints (("goal" :in-theory (enable make-clusters)))
+  :rule-classes :type-prescription)
