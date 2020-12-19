@@ -2246,7 +2246,6 @@
     (e/d (lofat-to-hifat-helper useful-d-e-list-p)
          (member-intersectp-is-commutative
           (:rewrite nth-of-effective-fat)
-          (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-6)
           (:rewrite take-of-len-free)
           (:rewrite lofat-place-file-correctness-lemma-83)
           (:rewrite subsetp-append1)
@@ -2830,14 +2829,11 @@
             (:rewrite remove-assoc-when-absent-1)
             (:rewrite str::explode-when-not-stringp)
             (:definition non-free-index-list-listp)
-            (:rewrite lofat-place-file-correctness-lemma-133
-                      . 1)
             (:rewrite lofat-place-file-correctness-lemma-5)
             (:rewrite put-assoc-equal-without-change . 1)
             (:definition unsigned-byte-p)
             (:type-prescription hifat-bounded-file-alist-p)
             (:definition integer-range-p)
-            (:linear d-e-cc-contents-of-lofat-place-file-coincident-lemma-4)
             (:linear length-of-d-e-cc-contents . 1)
             (:linear len-when-hifat-bounded-file-alist-p . 2)
             (:linear len-when-hifat-bounded-file-alist-p . 1)

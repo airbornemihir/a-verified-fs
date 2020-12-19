@@ -1137,10 +1137,6 @@
                   tail-cc-list)
           error-code))))
 
-(defthm lofat-to-hifat-helper-correctness-1-lemma-1
-  (equal (rationalp (nth n (d-e-fix x)))
-         (< (nfix n) *ms-d-e-length*)))
-
 (defthm
   lofat-to-hifat-helper-correctness-1
   (b* (((mv m1-file-alist entry-count
