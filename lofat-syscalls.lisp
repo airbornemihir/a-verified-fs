@@ -1574,14 +1574,40 @@
                               (stringp buf)
                               (natp offset)
                               (fd-table-p fd-table)
-                              (file-table-p file-table))))
+                              (file-table-p file-table))
+                  :guard-debug t
+                  :guard-hints (("Goal" :do-not-induct t
+                                 :in-theory (enable len-of-insert-text)))))
   (b*
-      (((mv fs error-code) (lofat-to-hifat fat32$c))
-       ((unless (equal error-code 0)) (mv fat32$c -1 *eio*))
-       ((mv fs retval error-code)
-        (hifat-pwrite fd buf offset fs fd-table file-table))
-       ((mv fat32$c &) (hifat-to-lofat fat32$c fs)))
-    (mv fat32$c retval error-code)))
+      ((fd-table-entry (assoc-equal fd fd-table))
+       ((unless (consp fd-table-entry))
+        (mv fat32$c -1 *ebadf*))
+       (file-table-entry (assoc-equal (cdr fd-table-entry)
+                                      file-table))
+       ((unless (consp file-table-entry))
+        (mv fat32$c -1 *ebadf*))
+       (path (file-table-element->fid (cdr file-table-entry)))
+       ((mv root-d-e-list &)
+        (root-d-e-list fat32$c))
+       ((mv file error-code)
+        (lofat-find-file fat32$c root-d-e-list path))
+       ((mv oldtext d-e)
+        (if (and (equal error-code 0)
+                 (lofat-regular-file-p file))
+            (mv (coerce (lofat-file->contents file) 'list)
+                (lofat-file->d-e file))
+          (mv nil (d-e-fix nil))))
+       ((unless (unsigned-byte-p 32 (+ offset (length buf))))
+        (mv fat32$c -1 *enospc*))
+       (file
+        (make-lofat-file
+         :d-e d-e
+         :contents (coerce (insert-text oldtext offset buf)
+                           'string)))
+       ((mv fat32$c error-code)
+        (lofat-place-file fat32$c (pseudo-root-d-e fat32$c) path file)))
+    (mv fat32$c (if (equal error-code 0) 0 -1)
+        error-code)))
 
 (defthm integerp-of-lofat-pwrite
   (integerp (mv-nth 1 (lofat-pwrite fd buf offset fat32$c fd-table
