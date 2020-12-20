@@ -1535,11 +1535,33 @@
                               (fat32-filename-list-p path)
                               (natp size))))
   (b*
-      (((mv fs error-code) (lofat-to-hifat fat32$c))
-       ((unless (equal error-code 0)) (mv fat32$c -1 *eio*))
-       ((mv fs retval error-code) (hifat-truncate fs path size))
-       ((mv fat32$c &) (hifat-to-lofat fat32$c fs)))
-    (mv fat32$c retval error-code)))
+      (((unless (unsigned-byte-p 32 size))
+        (mv fat32$c -1 *enospc*))
+       ((mv root-d-e-list &)
+        (root-d-e-list fat32$c))
+       ((mv file error-code)
+        (lofat-find-file fat32$c root-d-e-list path))
+       ((when (and (equal error-code 0)
+                   (lofat-directory-file-p file)))
+        ;; Can't truncate a directory file.
+        (mv fat32$c -1 *eisdir*))
+       ((mv oldtext d-e)
+        (if (equal error-code 0)
+            ;; Regular file
+            (mv (coerce (lofat-file->contents file) 'list)
+                (lofat-file->d-e file))
+          ;; Nonexistent file
+          (mv nil (d-e-fix nil))))
+       (file
+        (make-lofat-file
+         :d-e d-e
+         :contents (coerce (make-character-list
+                            (take size oldtext))
+                           'string)))
+       ((mv fat32$c error-code)
+        (lofat-place-file fat32$c (pseudo-root-d-e fat32$c) path file)))
+    (mv fat32$c (if (equal error-code 0) 0 -1)
+        error-code)))
 
 (defthm lofat-fs-p-of-lofat-truncate
   (implies
@@ -1626,18 +1648,6 @@
   (declare (xargs :guard (and (fd-table-p fd-table)
                               (file-table-p file-table))))
   (hifat-close fd fd-table file-table))
-
-(defund lofat-truncate (fat32$c path size)
-  (declare (xargs :stobjs fat32$c
-                  :guard (and (lofat-fs-p fat32$c)
-                              (fat32-filename-list-p path)
-                              (natp size))))
-  (b*
-      (((mv fs error-code) (lofat-to-hifat fat32$c))
-       ((unless (equal error-code 0)) (mv fat32$c -1 *eio*))
-       ((mv fs retval error-code) (hifat-truncate fs path size))
-       ((mv fat32$c &) (hifat-to-lofat fat32$c fs)))
-    (mv fat32$c retval error-code)))
 
 (defund lofat-mkdir (fat32$c path)
   (declare (xargs :stobjs fat32$c
