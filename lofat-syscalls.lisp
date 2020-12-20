@@ -1617,22 +1617,44 @@
   (declare (xargs :stobjs fat32$c
                   :guard (and (lofat-fs-p fat32$c)
                               (fat32-filename-list-p path))))
-  (b*
-      (((mv fs error-code) (lofat-to-hifat fat32$c))
-       ((unless (equal error-code 0)) (mv fat32$c -1 *eio*))
-       ((mv fs retval error-code) (hifat-mkdir fs path))
-       ((mv fat32$c &) (hifat-to-lofat fat32$c fs)))
-    (mv fat32$c retval error-code)))
+  (b* ((dirname (dirname path))
+       ;; Never pass relative paths to syscalls - make them always begin
+       ;; with "/".
+       ((mv root-d-e-list &) (root-d-e-list fat32$c))
+       ((mv parent-dir errno)
+        (lofat-find-file fat32$c root-d-e-list dirname))
+       ((unless (or (atom dirname)
+                    (and (equal errno 0)
+                         (m1-directory-file-p parent-dir))))
+        (mv fat32$c -1 *enoent*))
+       ((when (equal errno 0))
+        (mv fat32$c -1 *eexist*))
+       (basename (basename path))
+       ((unless (equal (length basename) 11))
+        (mv fat32$c -1 *enametoolong*))
+       (d-e
+        (d-e-install-directory-bit
+         (d-e-fix nil)
+         t))
+       (file (make-lofat-file :d-e d-e
+                              :contents nil))
+       ((mv fat32$c error-code)
+        (lofat-place-file fat32$c
+                          (pseudo-root-d-e fat32$c)
+                          path file))
+       ((unless (equal error-code 0))
+        (mv fat32$c -1 error-code)))
+    (mv fat32$c 0 0)))
 
 (defthm integerp-of-lofat-mkdir
   (integerp (mv-nth 1 (lofat-mkdir fat32$c path)))
   :hints (("Goal" :in-theory (enable lofat-mkdir)) ))
 
 (defthm lofat-fs-p-of-lofat-mkdir
-  (implies
-   (lofat-fs-p fat32$c)
-   (lofat-fs-p (mv-nth 0 (lofat-mkdir fat32$c path))))
-  :hints (("Goal" :in-theory (enable lofat-mkdir)) ))
+  (implies (lofat-fs-p fat32$c)
+           (lofat-fs-p (mv-nth 0 (lofat-mkdir fat32$c path))))
+  :hints (("goal" :in-theory (e/d (lofat-mkdir)
+                                  (nth make-list-ac-removal)))))
 
 ;; Semantics under consideration: each directory stream is a list of directory
 ;; entries, and each readdir operation removes a directory entry from the front
