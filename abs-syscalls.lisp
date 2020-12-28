@@ -1773,28 +1773,6 @@
                         (dirname path))))))
 
 (defthm
-  abs-mkdir-correctness-lemma-54
-  (implies
-   (and
-    (not
-     (equal
-      0
-      (abs-find-file-src (partial-collapse frame (dirname path))
-                         (dirname path))))
-    (mv-nth 1 (collapse frame))
-    (consp (assoc-equal 0 frame)))
-   (< '0
-      (1st-complete (frame->frame frame))))
-  :hints (("goal" :in-theory (enable collapse)
-           :do-not-induct t))
-  :rule-classes
-  ((:forward-chaining
-    :trigger-terms
-    ((abs-find-file-src (partial-collapse frame (dirname path))
-                        (dirname path))))
-   :linear))
-
-(defthm
   abs-mkdir-correctness-lemma-55
   (implies
    (not
