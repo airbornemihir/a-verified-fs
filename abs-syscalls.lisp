@@ -112,7 +112,6 @@
     (:rewrite
      1st-complete-under-path-of-frame->frame-of-partial-collapse-lemma-57)
     (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-1)
-    (:rewrite partial-collapse-correctness-lemma-33)
     (:rewrite abs-find-file-correctness-lemma-40)
     (:definition binary-append)
     (:rewrite abs-addrs-of-ctx-app-1-lemma-4)
