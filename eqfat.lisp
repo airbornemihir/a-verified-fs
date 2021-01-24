@@ -3,6 +3,8 @@
 (include-book "utilities/flatten-equiv")
 (include-book "hifat-to-lofat-inversion")
 (include-book "lofat-to-string-inversion")
+(local (include-book "std/lists/prefixp" :dir :system))
+(local (include-book "std/lists/intersectp" :dir :system))
 
 ;  eqfat.lisp                                           Mihir Mehta
 
@@ -4352,8 +4354,6 @@ channel state))
 (encapsulate
   ()
 
-  (local (include-book "std/lists/prefixp" :dir :system))
-
   (local
    (defthm
      lemma-1
@@ -8223,29 +8223,6 @@ channel state))
       (t
        (mv d-e-list entry-limit fat32$c x)))))
 
-  (local (include-book "std/lists/intersectp" :dir :system))
-
-  ;; this is derived from a subgoal of lofat-place-file-correctness-1-lemma-1, by
-  ;; means of the following proof-builder instructions.
-  ;; ((:in-theory (enable fat32-filename-list-p))
-  ;;  (:claim
-  ;;   (and
-  ;;    (equal
-  ;;     (make-d-e-list
-  ;;      (mv-nth
-  ;;       0
-  ;;       (d-e-cc-contents fat32$c root-d-e)))
-  ;;     d-e-list)
-  ;;    (equal path (list filename)))
-  ;;   :hints :none)
-  ;;  (:=
-  ;;   (make-d-e-list
-  ;;    (mv-nth 0
-  ;;            (d-e-cc-contents fat32$c root-d-e)))
-  ;;   d-e-list)
-  ;;  (:= path (list filename))
-  ;;  :drop :bash)
-  ;; the hypotheses have been minimised.
   (defthm
     lofat-place-file-correctness-lemma-30
     (implies
@@ -11697,185 +11674,241 @@ channel state))
                     (fat32$c fat32$c))))
   :rule-classes :linear)
 
-(encapsulate
-  ()
-
-  (local (include-book "std/lists/intersectp" :dir :system))
-  (local (include-book "std/lists/prefixp" :dir :system))
-
-  (defthm
-    lofat-place-file-correctness-lemma-69
-    (implies
-     (and
-      (lofat-fs-p fat32$c)
-      (d-e-p d-e)
-      (d-e-directory-p d-e)
-      (equal (mv-nth 1 (d-e-cc-contents fat32$c d-e))
-             0)
-      (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c d-e)))
-      (not (intersectp-equal x (mv-nth 0 (d-e-cc fat32$c d-e))))
-      (< 0 (cluster-size fat32$c))
-      (stringp dir-contents)
-      (consp
-       (cdr (mv-nth 0
-                    (fat32-build-index-list (effective-fat fat32$c)
-                                            (d-e-first-cluster d-e)
-                                            2097152 (cluster-size fat32$c))))))
-     (not
-      (intersectp-equal
-       x
-       (mv-nth
-        0
-        (d-e-cc
-         (stobj-set-indices-in-fa-table
-          (mv-nth
-           0
-           (place-contents
-            (update-fati
-             (d-e-first-cluster d-e)
-             (fat32-update-lower-28 (fati (d-e-first-cluster d-e) fat32$c)
-                                    268435455)
-             (mv-nth 0
-                     (clear-cc fat32$c (d-e-first-cluster d-e)
-                               2097152)))
-            '(0 0 0 0 0 0 0 0 0 0 0 0
-                0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-            dir-contents 0 (d-e-first-cluster d-e)))
-          (mv-nth 0
-                  (fat32-build-index-list (effective-fat fat32$c)
-                                          (d-e-first-cluster d-e)
-                                          2097152 (cluster-size fat32$c)))
-          (append
-           (cdr
-            (mv-nth 0
-                    (fat32-build-index-list (effective-fat fat32$c)
-                                            (d-e-first-cluster d-e)
-                                            2097152 (cluster-size fat32$c))))
-           (list
-            (fat32-entry-mask
-             (fati
-              (car
-               (last
-                (cdr
-                 (mv-nth
-                  0
+(defthm
+  lofat-place-file-correctness-lemma-69
+  (implies
+   (and
+    (lofat-fs-p fat32$c)
+    (d-e-p d-e)
+    (d-e-directory-p d-e)
+    (equal (mv-nth 1 (d-e-cc-contents fat32$c d-e))
+           0)
+    (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c d-e)))
+    (not (intersectp-equal x (mv-nth 0 (d-e-cc fat32$c d-e))))
+    (< 0 (cluster-size fat32$c))
+    (stringp dir-contents)
+    (consp
+     (cdr (mv-nth 0
                   (fat32-build-index-list (effective-fat fat32$c)
                                           (d-e-first-cluster d-e)
                                           2097152 (cluster-size fat32$c))))))
-              fat32$c)))))
-         d-e)))))
-    :hints (("goal" :do-not-induct t
-             :in-theory (enable d-e-cc))))
-
-  (defthm
-    lofat-place-file-correctness-lemma-131
-    (implies
-     (and
-      (lofat-fs-p fat32$c)
-      (d-e-directory-p d-e)
-      (equal (mv-nth 1 (d-e-cc-contents fat32$c d-e))
-             0)
-      (not
-       (intersectp-equal
-        x
+   (not
+    (intersectp-equal
+     x
+     (mv-nth
+      0
+      (d-e-cc
+       (stobj-set-indices-in-fa-table
+        (mv-nth
+         0
+         (place-contents
+          (update-fati
+           (d-e-first-cluster d-e)
+           (fat32-update-lower-28 (fati (d-e-first-cluster d-e) fat32$c)
+                                  268435455)
+           (mv-nth 0
+                   (clear-cc fat32$c (d-e-first-cluster d-e)
+                             2097152)))
+          '(0 0 0 0 0 0 0 0 0 0 0 0
+              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+          dir-contents 0 (d-e-first-cluster d-e)))
         (mv-nth 0
                 (fat32-build-index-list (effective-fat fat32$c)
                                         (d-e-first-cluster d-e)
-                                        2097152 (cluster-size fat32$c)))))
-      (not
-       (consp
+                                        2097152 (cluster-size fat32$c)))
+        (append
+         (cdr
+          (mv-nth 0
+                  (fat32-build-index-list (effective-fat fat32$c)
+                                          (d-e-first-cluster d-e)
+                                          2097152 (cluster-size fat32$c))))
+         (list
+          (fat32-entry-mask
+           (fati
+            (car
+             (last
+              (cdr
+               (mv-nth
+                0
+                (fat32-build-index-list (effective-fat fat32$c)
+                                        (d-e-first-cluster d-e)
+                                        2097152 (cluster-size fat32$c))))))
+            fat32$c)))))
+       d-e)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable d-e-cc))))
+
+(defthm
+  lofat-place-file-correctness-lemma-109
+  (implies
+   (and
+    (lofat-fs-p fat32$c)
+    (d-e-directory-p d-e)
+    (equal (mv-nth 1 (d-e-cc-contents fat32$c d-e))
+           0)
+    (not
+     (intersectp-equal
+      x
+      (mv-nth 0
+              (fat32-build-index-list (effective-fat fat32$c)
+                                      (d-e-first-cluster d-e)
+                                      2097152 (cluster-size fat32$c)))))
+    (not
+     (consp
+      (cdr (mv-nth 0
+                   (fat32-build-index-list (effective-fat fat32$c)
+                                           (d-e-first-cluster d-e)
+                                           2097152 (cluster-size fat32$c)))))))
+   (not
+    (intersectp-equal
+     x
+     (mv-nth
+      0
+      (fat32-build-index-list
+       (set-indices-in-fa-table
+        (effective-fat
+         (mv-nth
+          0
+          (place-contents
+           (update-fati
+            (d-e-first-cluster d-e)
+            (fat32-update-lower-28 (fati (d-e-first-cluster d-e) fat32$c)
+                                   268435455)
+            (mv-nth 0
+                    (clear-cc fat32$c (d-e-first-cluster d-e)
+                              2097152)))
+           '(0 0 0 0 0 0 0 0 0 0 0 0
+               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+           dir-contents
+           0 (d-e-first-cluster d-e))))
+        (mv-nth 0
+                (fat32-build-index-list (effective-fat fat32$c)
+                                        (d-e-first-cluster d-e)
+                                        2097152 (cluster-size fat32$c)))
+        (list (fat32-entry-mask (fati (d-e-first-cluster d-e)
+                                      fat32$c))))
+       (d-e-first-cluster d-e)
+       2097152 (cluster-size fat32$c))))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (enable d-e-cc fat32-build-index-list
+                       d-e-cc-contents get-cc-contents)
+    :expand (fat32-build-index-list (effective-fat fat32$c)
+                                    (d-e-first-cluster d-e)
+                                    2097152 (cluster-size fat32$c)))))
+
+(defthm
+  lofat-place-file-correctness-lemma-111
+  (implies
+   (and
+    (lofat-fs-p fat32$c)
+    (d-e-directory-p d-e)
+    (equal (mv-nth 1 (d-e-cc-contents fat32$c d-e))
+           0)
+    (not (intersectp-equal x (mv-nth 0 (d-e-cc fat32$c d-e))))
+    (< 0 (cluster-size fat32$c))
+    (stringp dir-contents)
+    (not
+     (consp
+      (cdr
+       (mv-nth 0
+               (fat32-build-index-list (effective-fat fat32$c)
+                                       (d-e-first-cluster d-e)
+                                       2097152 (cluster-size fat32$c)))))))
+   (not
+    (intersectp-equal
+     x
+     (mv-nth
+      0
+      (d-e-cc
+       (stobj-set-indices-in-fa-table
+        (mv-nth
+         0
+         (place-contents
+          (update-fati
+           (d-e-first-cluster d-e)
+           (fat32-update-lower-28 (fati (d-e-first-cluster d-e) fat32$c)
+                                  268435455)
+           (mv-nth 0
+                   (clear-cc fat32$c (d-e-first-cluster d-e)
+                             2097152)))
+          '(0 0 0 0 0 0 0 0 0 0 0 0
+              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+          dir-contents 0 (d-e-first-cluster d-e)))
+        (mv-nth 0
+                (fat32-build-index-list (effective-fat fat32$c)
+                                        (d-e-first-cluster d-e)
+                                        2097152 (cluster-size fat32$c)))
+        (list (fat32-entry-mask (fati (d-e-first-cluster d-e)
+                                      fat32$c))))
+       d-e)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable d-e-cc fat32-build-index-list))))
+
+(defthmd
+  lofat-place-file-correctness-lemma-15
+  (implies
+   (and (lofat-fs-p fat32$c)
+        (non-free-index-listp x (effective-fat fat32$c))
+        (d-e-p d-e)
+        (d-e-directory-p d-e)
+        (equal (mv-nth 1 (d-e-cc-contents fat32$c d-e))
+               0)
+        (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c d-e)))
+        (not (intersectp-equal (mv-nth 0 (d-e-cc fat32$c d-e))
+                               x))
+        (<= (length dir-contents) 2097152)
+        (stringp dir-contents))
+   (not
+    (intersectp-equal
+     (mv-nth
+      0
+      (d-e-cc (mv-nth 0
+                      (update-dir-contents fat32$c (d-e-first-cluster d-e)
+                                           dir-contents))
+              d-e))
+     x)))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (enable update-dir-contents)
+    :expand
+    (:with
+     stobj-set-indices-in-fa-table-correctness-1
+     (effective-fat
+      (stobj-set-indices-in-fa-table
+       (update-fati
+        (d-e-first-cluster d-e)
+        (fat32-update-lower-28 (fati (d-e-first-cluster d-e) fat32$c)
+                               268435455)
+        (mv-nth 0
+                (clear-cc fat32$c (d-e-first-cluster d-e)
+                          2097152)))
+       (mv-nth 0
+               (fat32-build-index-list (effective-fat fat32$c)
+                                       (d-e-first-cluster d-e)
+                                       2097152 (cluster-size fat32$c)))
+       (binary-append
         (cdr (mv-nth 0
                      (fat32-build-index-list (effective-fat fat32$c)
                                              (d-e-first-cluster d-e)
-                                             2097152 (cluster-size fat32$c)))))))
-     (not
-      (intersectp-equal
-       x
-       (mv-nth
-        0
-        (fat32-build-index-list
-         (set-indices-in-fa-table
-          (effective-fat
-           (mv-nth
-            0
-            (place-contents
-             (update-fati
-              (d-e-first-cluster d-e)
-              (fat32-update-lower-28 (fati (d-e-first-cluster d-e) fat32$c)
-                                     268435455)
-              (mv-nth 0
-                      (clear-cc fat32$c (d-e-first-cluster d-e)
-                                2097152)))
-             '(0 0 0 0 0 0 0 0 0 0 0 0
-                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-             dir-contents
-             0 (d-e-first-cluster d-e))))
-          (mv-nth 0
-                  (fat32-build-index-list (effective-fat fat32$c)
-                                          (d-e-first-cluster d-e)
-                                          2097152 (cluster-size fat32$c)))
-          (list (fat32-entry-mask (fati (d-e-first-cluster d-e)
-                                        fat32$c))))
-         (d-e-first-cluster d-e)
-         2097152 (cluster-size fat32$c))))))
-    :hints
-    (("goal" :do-not-induct t
-      :in-theory (enable d-e-cc fat32-build-index-list
-                         d-e-cc-contents get-cc-contents)
-      :expand (fat32-build-index-list (effective-fat fat32$c)
-                                      (d-e-first-cluster d-e)
-                                      2097152 (cluster-size fat32$c)))))
-
-  (defthm
-    lofat-place-file-correctness-lemma-132
-    (implies
-     (and
-      (lofat-fs-p fat32$c)
-      (d-e-directory-p d-e)
-      (equal (mv-nth 1 (d-e-cc-contents fat32$c d-e))
-             0)
-      (not (intersectp-equal x (mv-nth 0 (d-e-cc fat32$c d-e))))
-      (< 0 (cluster-size fat32$c))
-      (stringp dir-contents)
-      (not
-       (consp
-        (cdr
-         (mv-nth 0
-                 (fat32-build-index-list (effective-fat fat32$c)
-                                         (d-e-first-cluster d-e)
-                                         2097152 (cluster-size fat32$c)))))))
-     (not
-      (intersectp-equal
-       x
-       (mv-nth
-        0
-        (d-e-cc
-         (stobj-set-indices-in-fa-table
-          (mv-nth
-           0
-           (place-contents
-            (update-fati
-             (d-e-first-cluster d-e)
-             (fat32-update-lower-28 (fati (d-e-first-cluster d-e) fat32$c)
-                                    268435455)
-             (mv-nth 0
-                     (clear-cc fat32$c (d-e-first-cluster d-e)
-                               2097152)))
-            '(0 0 0 0 0 0 0 0 0 0 0 0
-                0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-            dir-contents 0 (d-e-first-cluster d-e)))
-          (mv-nth 0
-                  (fat32-build-index-list (effective-fat fat32$c)
-                                          (d-e-first-cluster d-e)
-                                          2097152 (cluster-size fat32$c)))
-          (list (fat32-entry-mask (fati (d-e-first-cluster d-e)
-                                        fat32$c))))
-         d-e)))))
-    :hints (("goal" :do-not-induct t
-             :in-theory (enable d-e-cc fat32-build-index-list))))
-
-  (defthmd
-    lofat-place-file-correctness-lemma-15
+                                             2097152 (cluster-size fat32$c))))
+        (list
+         (fat32-entry-mask
+          (fati
+           (car
+            (last
+             (cdr
+              (mv-nth
+               0
+               (fat32-build-index-list (effective-fat fat32$c)
+                                       (d-e-first-cluster d-e)
+                                       2097152 (cluster-size fat32$c))))))
+           fat32$c)))))))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
     (implies
      (and (lofat-fs-p fat32$c)
           (non-free-index-listp x (effective-fat fat32$c))
@@ -11890,78 +11923,16 @@ channel state))
           (stringp dir-contents))
      (not
       (intersectp-equal
+       x
        (mv-nth
         0
         (d-e-cc (mv-nth 0
                         (update-dir-contents fat32$c (d-e-first-cluster d-e)
                                              dir-contents))
-                d-e))
-       x)))
-    :hints
-    (("goal"
-      :do-not-induct t
-      :in-theory (enable update-dir-contents)
-      :expand
-      (:with
-       stobj-set-indices-in-fa-table-correctness-1
-       (effective-fat
-        (stobj-set-indices-in-fa-table
-         (update-fati
-          (d-e-first-cluster d-e)
-          (fat32-update-lower-28 (fati (d-e-first-cluster d-e) fat32$c)
-                                 268435455)
-          (mv-nth 0
-                  (clear-cc fat32$c (d-e-first-cluster d-e)
-                            2097152)))
-         (mv-nth 0
-                 (fat32-build-index-list (effective-fat fat32$c)
-                                         (d-e-first-cluster d-e)
-                                         2097152 (cluster-size fat32$c)))
-         (binary-append
-          (cdr (mv-nth 0
-                       (fat32-build-index-list (effective-fat fat32$c)
-                                               (d-e-first-cluster d-e)
-                                               2097152 (cluster-size fat32$c))))
-          (list
-           (fat32-entry-mask
-            (fati
-             (car
-              (last
-               (cdr
-                (mv-nth
-                 0
-                 (fat32-build-index-list (effective-fat fat32$c)
-                                         (d-e-first-cluster d-e)
-                                         2097152 (cluster-size fat32$c))))))
-             fat32$c)))))))))
-    :rule-classes
-    (:rewrite
-     (:rewrite
-      :corollary
-      (implies
-       (and (lofat-fs-p fat32$c)
-            (non-free-index-listp x (effective-fat fat32$c))
-            (d-e-p d-e)
-            (d-e-directory-p d-e)
-            (equal (mv-nth 1 (d-e-cc-contents fat32$c d-e))
-                   0)
-            (no-duplicatesp-equal (mv-nth 0 (d-e-cc fat32$c d-e)))
-            (not (intersectp-equal (mv-nth 0 (d-e-cc fat32$c d-e))
-                                   x))
-            (<= (length dir-contents) 2097152)
-            (stringp dir-contents))
-       (not
-        (intersectp-equal
-         x
-         (mv-nth
-          0
-          (d-e-cc (mv-nth 0
-                          (update-dir-contents fat32$c (d-e-first-cluster d-e)
-                                               dir-contents))
-                  d-e)))))))))
+                d-e))))))))
 
 (defthm
-  lofat-place-file-correctness-lemma-134
+  lofat-place-file-correctness-lemma-112
   (implies
    (and (lofat-fs-p fat32$c)
         (non-free-index-list-listp l (effective-fat fat32$c))

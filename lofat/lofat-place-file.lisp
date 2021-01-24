@@ -1,6 +1,7 @@
 (in-package "ACL2")
 
 (include-book "../eqfat")
+(local (include-book "std/lists/intersectp" :dir :system))
 
 ;  lofat-place-file.lisp                                Mihir Mehta
 
@@ -3891,8 +3892,6 @@
 (encapsulate
   ()
 
-  (local (include-book "std/lists/intersectp" :dir :system))
-
   (local
    (in-theory (e/d (lofat-place-file)
                    ((:rewrite intersectp-when-subsetp)
@@ -7675,9 +7674,7 @@
       (t
        (mv d-e-list entry-limit fat32$c x)))))
 
-  (local (include-book "std/lists/intersectp" :dir :system))
-
-  (defthm lofat-place-file-correctness-lemma-205
+  (defthm lofat-place-file-correctness-lemma-114
     (implies
      (and
       (stobj-disjoins-list
@@ -15053,8 +15050,6 @@
                      (:DEFINITION NFIX)
                      (:DEFINITION LENGTH)
                      (:DEFINITION MIN))))
-
-  (local (include-book "std/lists/intersectp" :dir :system))
 
   ;; This was a counterexample, but now it's fixed. Both hifat-place-file and
   ;; lofat-place-file needed to return *enoent*, while they were respectively

@@ -1,6 +1,7 @@
 (in-package "ACL2")
 
 (include-book "../eqfat")
+(local (include-book "std/lists/intersectp" :dir :system))
 
 ;  lofat-remove-file.lisp                               Mihir Mehta
 
@@ -618,10 +619,8 @@
             lofat-to-hifat-inversion-lemma-15
             lofat-remove-file-helper)))
 
-  (local (include-book "std/lists/intersectp" :dir :system))
-
   (defthm
-    lofat-remove-file-correctness-lemma-65
+    lofat-remove-file-correctness-lemma-35
     (implies
      (and
       (good-root-d-e-p root-d-e fat32$c)
@@ -2936,10 +2935,8 @@
     :hints (("goal" :do-not-induct t
              :in-theory (enable lofat-remove-file-helper))))
 
-  (local (include-book "std/lists/intersectp" :dir :system))
-
   (defthm
-    lofat-remove-file-correctness-lemma-45
+    lofat-remove-file-correctness-lemma-27
     (implies
      (and
       (stobj-disjoins-list
