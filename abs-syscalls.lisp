@@ -1901,6 +1901,32 @@
 (defthm
   abs-mkdir-correctness-lemma-69
   (implies
+   (and (absfat-subsetp fs1 fs2)
+        (absfat-subsetp fs2 fs1)
+        (abs-fs-p fs1)
+        (abs-fs-p fs2))
+   (absfat-subsetp
+    (abs-fs-fix
+     (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
+                                           fs1))))
+    (abs-fs-fix
+     (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
+                                           fs2))))))
+  :hints
+  (("goal" :in-theory (e/d (absfat-equiv absfat-subsetp abs-fs-fix
+                                         abs-file-p-alt m1-regular-file-p)
+                           ((:rewrite absfat-subsetp-guard-lemma-1)))
+    :do-not-induct t
+    :use ((:instance (:rewrite absfat-subsetp-guard-lemma-1)
+                     (abs-file-alist fs1)
+                     (name (fat32-filename-fix (car path))))
+          (:instance (:rewrite absfat-subsetp-guard-lemma-1)
+                     (abs-file-alist fs2)
+                     (name (fat32-filename-fix (car path))))))))
+
+(defthm
+  abs-mkdir-correctness-lemma-79
+  (implies
    (and (absfat-equiv fs1 fs2)
         (syntaxp (not (term-order fs1 fs2)))
         (abs-fs-p fs1)
@@ -1921,14 +1947,7 @@
       (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car path))
                                               fs1)))
       (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car path))
-                                              fs2))))))
-   ("subgoal 2" :use ((:instance (:rewrite absfat-subsetp-guard-lemma-1)
-                                 (abs-file-alist fs1)
-                                 (name (fat32-filename-fix (car path))))
-                      (:instance (:rewrite absfat-subsetp-guard-lemma-1)
-                                 (abs-file-alist fs2)
-                                 (name (fat32-filename-fix (car path)))))))
-  :otf-flg t)
+                                              fs2))))))))
 
 (encapsulate
   ()
@@ -1953,30 +1972,17 @@
              (:rewrite hifat-find-file-correctness-1-lemma-1)
              (:definition abs-complete)
              (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
-             abs-mkdir-correctness-lemma-69))
+             abs-mkdir-correctness-lemma-79))
        :induct (mv (abs-place-file-helper fs1 path file)
                    (abs-place-file-helper fs2 path file)))
-      ("subgoal *1/5"
-       :use
-       (abs-mkdir-correctness-lemma-69
-        (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
-                   (abs-file-alist2 fs1)
-                   (abs-file-alist1 fs2)
-                   (x (fat32-filename-fix (car path))))))
-      ("subgoal *1/4"
-       :use
-       (abs-mkdir-correctness-lemma-69
-        (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
-                   (abs-file-alist2 fs1)
-                   (abs-file-alist1 fs2)
-                   (x (fat32-filename-fix (car path))))))
-      ("subgoal *1/1"
-       :use
-       (abs-mkdir-correctness-lemma-69
-        (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
-                   (abs-file-alist2 fs1)
-                   (abs-file-alist1 fs2)
-                   (x (fat32-filename-fix (car path)))))))))
+      (if (not stable-under-simplificationp)
+          nil
+        '(:use
+          (abs-mkdir-correctness-lemma-79
+           (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
+                      (abs-file-alist2 fs1)
+                      (abs-file-alist1 fs2)
+                      (x (fat32-filename-fix (car path))))))))))
 
   (defthm abs-mkdir-correctness-lemma-68
     (implies (and (equal (mv-nth 1 (abs-place-file-helper fs2 path file))
@@ -2010,12 +2016,12 @@
              (:rewrite hifat-find-file-correctness-1-lemma-1)
              (:definition abs-complete)
              (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
-             abs-mkdir-correctness-lemma-69))
+             abs-mkdir-correctness-lemma-79))
        :induct (mv (abs-place-file-helper fs1 path file)
                    (abs-place-file-helper fs2 path file)))
       ("subgoal *1/5"
        :use
-       (abs-mkdir-correctness-lemma-69
+       (abs-mkdir-correctness-lemma-79
         (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
                    (abs-file-alist2 fs1)
                    (abs-file-alist1 fs2)
@@ -2056,12 +2062,12 @@
              (:rewrite hifat-find-file-correctness-1-lemma-1)
              (:definition abs-complete)
              (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
-             abs-mkdir-correctness-lemma-69))
+             abs-mkdir-correctness-lemma-79))
        :induct (mv (abs-place-file-helper fs1 path file)
                    (abs-place-file-helper fs2 path file)))
       ("subgoal *1/5"
        :use
-       (abs-mkdir-correctness-lemma-69
+       (abs-mkdir-correctness-lemma-79
         (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
                    (abs-file-alist2 fs1)
                    (abs-file-alist1 fs2)
@@ -2102,19 +2108,19 @@
              (:rewrite hifat-find-file-correctness-1-lemma-1)
              (:definition abs-complete)
              (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
-             abs-mkdir-correctness-lemma-69))
+             abs-mkdir-correctness-lemma-79))
        :induct (mv (abs-place-file-helper fs1 path file)
                    (abs-place-file-helper fs2 path file)))
       ("subgoal *1/5"
        :use
-       (abs-mkdir-correctness-lemma-69
+       (abs-mkdir-correctness-lemma-79
         (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
                    (abs-file-alist2 fs1)
                    (abs-file-alist1 fs2)
                    (x (fat32-filename-fix (car path))))))
       ("subgoal *1/1"
        :use
-       (abs-mkdir-correctness-lemma-69
+       (abs-mkdir-correctness-lemma-79
         (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
                    (abs-file-alist2 fs1)
                    (abs-file-alist1 fs2)
@@ -2155,19 +2161,19 @@
              (:rewrite hifat-find-file-correctness-1-lemma-1)
              (:definition abs-complete)
              (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
-             abs-mkdir-correctness-lemma-69))
+             abs-mkdir-correctness-lemma-79))
        :induct (mv (abs-place-file-helper fs1 path file)
                    (abs-place-file-helper fs2 path file)))
       ("subgoal *1/5"
        :use
-       (abs-mkdir-correctness-lemma-69
+       (abs-mkdir-correctness-lemma-79
         (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
                    (abs-file-alist2 fs1)
                    (abs-file-alist1 fs2)
                    (x (fat32-filename-fix (car path))))))
       ("subgoal *1/2"
        :use
-       (abs-mkdir-correctness-lemma-69
+       (abs-mkdir-correctness-lemma-79
         (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
                    (abs-file-alist2 fs1)
                    (abs-file-alist1 fs2)
