@@ -93,7 +93,7 @@
                  fat32$c fd-table file-table)
     (and (stringp buf)
          (integerp ret)
-         (integerp error-code)
+         (natp error-code)
          (implies (>= ret 0)
                   (equal (length buf) ret))))
   :hints (("goal" :in-theory (enable lofat-pread)))
@@ -133,7 +133,7 @@
                    fat32$c fd-table file-table))))
    (:type-prescription
     :corollary
-    (integerp
+    (natp
      (mv-nth 2
              (lofat-pread fd count offset fat32$c
                           fd-table file-table))))))
@@ -1614,6 +1614,6 @@
         (find-new-index (strip-cars dirstream-table))))
     (mv
      (cons (cons dirstream-table-index (lofat-file->contents file))
-      dirstream-table-index)
+      dirstream-table)
      dirstream-table-index
      0)))
