@@ -532,27 +532,6 @@ channel state))
                                   (lofat-find-file fat32$c d-e-list path)))))
   :hints (("goal" :in-theory (enable lofat-find-file))))
 
-(local
- (defthm
-   lofat-find-file-correctness-1-lemma-2
-   (implies
-    (and
-     (useful-d-e-list-p d-e-list)
-     (equal (mv-nth 3
-                    (lofat-to-hifat-helper fat32$c
-                                           d-e-list entry-limit))
-            0))
-    (equal
-     (m1-file->d-e
-      (cdr
-       (assoc-equal
-        name
-        (mv-nth 0
-                (lofat-to-hifat-helper fat32$c
-                                       d-e-list entry-limit)))))
-     (mv-nth 0 (find-d-e d-e-list name))))
-   :hints (("goal" :in-theory (enable lofat-to-hifat-helper)))))
-
 (defthm
   lofat-find-file-correctness-lemma-1
   (implies
