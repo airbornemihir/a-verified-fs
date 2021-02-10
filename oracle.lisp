@@ -96,17 +96,38 @@
 
 (defthm lofat-lstat-correctness-1
   (and
+   (struct-stat-p (mv-nth 0 (lofat-lstat fat32$c path)))
    (integerp (mv-nth 1 (lofat-lstat fat32$c path)))
    (natp (mv-nth 2 (lofat-lstat fat32$c path))))
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-lstat)))
   :rule-classes
-  ((:type-prescription
+  ((:rewrite
+    :corollary
+    (struct-stat-p (mv-nth 0 (lofat-lstat fat32$c path))))
+   (:type-prescription
     :corollary
     (integerp (mv-nth 1 (lofat-lstat fat32$c path))))
    (:type-prescription
     :corollary
     (natp (mv-nth 2 (lofat-lstat fat32$c path))))))
+
+(defthm lofat-open-correctness-1
+  (and
+   (natp (mv-nth 2
+                 (lofat-open path fd-table file-table)))
+   (integerp (mv-nth 3
+                     (lofat-open path fd-table file-table))))
+  :hints (("goal" :in-theory (enable lofat-open hifat-open)))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (natp (mv-nth 2
+                  (lofat-open path fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (integerp (mv-nth 3
+                      (lofat-open path fd-table file-table))))))
 
 ;; We aren't going to put statfs in this. It'll just make things pointlessly
 ;; complicated.
