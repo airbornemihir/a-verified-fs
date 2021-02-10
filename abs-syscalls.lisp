@@ -585,6 +585,25 @@
          (abs-place-file-helper fs path file))
   :hints (("goal" :in-theory (enable abs-place-file-helper))))
 
+(defthm
+  abs-mkdir-correctness-lemma-36
+  (implies (and (equal (hifat-file-alist-fix fs) fs)
+                (d-e-p d-e))
+           (equal (list (cons 'd-e d-e)
+                        (cons 'contents fs))
+                  (m1-file-hifat-file-alist-fix d-e fs)))
+  :hints
+  (("goal"
+    :in-theory (e/d (m1-file-hifat-file-alist-fix m1-file->d-e
+                                                  m1-file->contents m1-file-p)
+                    (m1-file-hifat-file-alist-fix-normalisation)))))
+
+(defthm abs-mkdir-correctness-lemma-43
+  (implies (and (m1-file-alist-p fs)
+                (consp (assoc-equal name fs)))
+           (d-e-p (cdr (cadr (assoc-equal name fs)))))
+  :hints (("goal" :in-theory (enable m1-file-alist-p assoc-equal))))
+
 (encapsulate
   ()
 
@@ -3174,7 +3193,7 @@
             (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs2 path))))
            (equal (mv-nth 1 (abs-find-file-helper fs1 path))
                   (mv-nth 1 (abs-find-file-helper fs2 path)))))
-     :hints (("goal" :in-theory (enable abs-find-file-helper)))))
+     :hints (("goal" :in-theory (e/d (abs-find-file-helper))))))
 
   (defthm
     abs-mkdir-correctness-lemma-128
@@ -3287,6 +3306,17 @@
   (implies (not (consp (abs-addrs (abs-fs-fix fs))))
            (not (consp (abs-addrs (mv-nth 0 (abs-alloc fs path new-index))))))
   :hints (("goal" :in-theory (enable abs-alloc))))
+
+(defthm
+  abs-pwrite-correctness-lemma-13
+  (implies (equal (hifat-file-alist-fix (m1-file->contents x))
+                  (m1-file->contents x))
+           (equal (m1-file-hifat-file-alist-fix (m1-file->d-e x)
+                                                (m1-file->contents x))
+                  (m1-file-fix x)))
+  :hints
+  (("goal" :in-theory (e/d (m1-file-hifat-file-alist-fix)
+                           (m1-file-hifat-file-alist-fix-normalisation)))))
 
 (defthmd
   abs-pwrite-correctness-lemma-1

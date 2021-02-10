@@ -7253,6 +7253,28 @@
     :use (:instance (:rewrite free-index-listp-correctness-1)
                     (x (find-n-free-clusters fa-table n))))))
 
+(defthm
+  hifat-to-lofat-inversion-lemma-6
+  (implies
+   (and (m1-directory-file-p (cdr head))
+        (m1-file-alist-p (cons head tail))
+        (hifat-no-dups-p (cons head tail))
+        (hifat-no-dups-p contents)
+        (hifat-equiv (m1-file->contents (cdr head))
+                     contents)
+        (m1-file-alist-p contents))
+   (hifat-equiv (cons (cons (car head)
+                            (m1-file-hifat-file-alist-fix d-e contents))
+                      tail)
+                (cons head tail)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (m1-file-hifat-file-alist-fix)
+     (hifat-equiv-of-cons-lemma-3 m1-file-hifat-file-alist-fix-normalisation))
+    :use hifat-equiv-of-cons-lemma-3)))
+
 (encapsulate
   ()
 
