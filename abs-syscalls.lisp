@@ -11029,3 +11029,9 @@
   :hints (("goal" :do-not-induct t
            :in-theory (e/d (abs-pread hifat-pread good-frame-p)
                            nil))))
+
+(defund abs-open (path fd-table file-table)
+  (declare (xargs :guard (and (fat32-filename-list-p path)
+                              (fd-table-p fd-table)
+                              (file-table-p file-table))))
+  (hifat-open path fd-table file-table))
