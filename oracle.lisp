@@ -21,7 +21,7 @@
                ;; assumed to be a natural number.
                (fd-table fd-table-p)
                (file-table file-table-p)
-               (dirstream-table dirstream-table-p)))
+               (dir-stream-table dir-stream-table-p)))
 
 ;; We aren't going to put statfs in this. It'll just make things pointlessly
 ;; complicated.
@@ -107,14 +107,14 @@
                st :retval retval :errno errno))))
        ((when (eq syscall-sym :opendir))
         (b*
-            (((mv dirstream-table dirp retval)
+            (((mv dir-stream-table dirp retval)
               (lofat-opendir
                fat32$c
-               (lofat-st->dirstream-table st)
+               (lofat-st->dir-stream-table st)
                (lofat-st->path st))))
           (mv fat32$c
               (change-lofat-st
-               st :dirstream-table dirstream-table :dirp dirp
+               st :dir-stream-table dir-stream-table :dirp dirp
                :retval retval :errno 0)))))
     (mv fat32$c st)))
 
@@ -154,27 +154,97 @@
 
 (defthm abs-opendir-correctness-3
   (and
-   (integerp (mv-nth 2
+   (integerp (mv-nth 0
                      (abs-opendir frame path dir-stream-table)))
-   (dirstream-table-p (mv-nth 1
-                              (abs-opendir frame path dir-stream-table))))
+   (dir-stream-table-p (mv-nth 1
+                              (abs-opendir frame path dir-stream-table)))
+   (integerp (mv-nth 2
+                     (abs-opendir frame path dir-stream-table))))
   :hints (("goal" :in-theory (enable abs-opendir)))
   :rule-classes
   ((:type-prescription
     :corollary
-    (integerp (mv-nth 2
+    (integerp (mv-nth 0
                       (abs-opendir frame path dir-stream-table))))
    (:rewrite
     :corollary
-    (dirstream-table-p (mv-nth 1
-                               (abs-opendir frame path dir-stream-table))))))
+    (dir-stream-table-p (mv-nth 1
+                                (abs-opendir frame path dir-stream-table))))
+   (:type-prescription
+    :corollary
+    (integerp (mv-nth 2
+                      (abs-opendir frame path dir-stream-table))))))
+
+(defthm abs-pread-correctness-1
+  (and
+   (stringp (mv-nth 0
+                    (abs-pread fd count
+                               offset frame fd-table file-table)))
+   (integerp (mv-nth 1
+                     (abs-pread fd count
+                                offset frame fd-table file-table)))
+   (natp (mv-nth 2
+                     (abs-pread fd count
+                                offset frame fd-table file-table))))
+  :hints (("goal" :in-theory (enable abs-pread)))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (stringp (mv-nth 0
+                     (abs-pread fd count
+                                offset frame fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (integerp (mv-nth 1
+                      (abs-pread fd count
+                                 offset frame fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 2
+                      (abs-pread fd count
+                                 offset frame fd-table file-table))))))
+
+(defthm abs-mkdir-correctness-1
+  (and
+   (integerp (mv-nth 1 (abs-mkdir frame path)))
+   (natp (mv-nth 2 (abs-mkdir frame path))))
+  :hints (("goal" :in-theory (enable abs-mkdir)))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (integerp (mv-nth 1 (abs-mkdir frame path))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 2 (abs-mkdir frame path))))))
+
+(defthm abs-open-correctness-1
+  (and
+   (fd-table-p (mv-nth 0 (abs-open path fd-table file-table)))
+   (file-table-p (mv-nth 1 (abs-open path fd-table file-table)))
+   (natp (mv-nth 2 (abs-open path fd-table file-table)))
+   (integerp (mv-nth 3 (abs-open path fd-table file-table))))
+  :hints (("goal" :in-theory (enable abs-open hifat-open)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (fd-table-p (mv-nth 0 (abs-open path fd-table file-table))))
+   (:rewrite
+    :corollary
+    (file-table-p (mv-nth 1 (abs-open path fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 2 (abs-open path fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (integerp (mv-nth 3 (abs-open path fd-table file-table))))))
 
 ;; We aren't going to put statfs in this. It'll just make things pointlessly
 ;; complicated.
 (defund absfat-oracle-single-step (frame syscall-sym st)
   (declare (xargs :guard (and (frame-p frame)
                               (lofat-st-p st)
-                              (consp (assoc-equal 0 frame)))
+                              (consp (assoc-equal 0 frame))
+                              (no-duplicatesp-equal (strip-cars frame)))
                   :guard-debug t))
   (b*
       ((st (mbe :logic (lofat-st-fix st) :exec st))
@@ -255,13 +325,13 @@
        ;; the state of the filesystem but does change the frame.
        ((when (eq syscall-sym :opendir))
         (b*
-            (((mv dirp dirstream-table retval frame)
+            (((mv dirp dir-stream-table retval frame)
               (abs-opendir
                frame
-               (lofat-st->dirstream-table st)
-               (lofat-st->path st))))
+               (lofat-st->path st)
+               (lofat-st->dir-stream-table st))))
           (mv frame
               (change-lofat-st
-               st :dirstream-table dirstream-table :dirp dirp
+               st :dir-stream-table dir-stream-table :dirp dirp
                :retval retval :errno 0)))))
     (mv frame st)))
