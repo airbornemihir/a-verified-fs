@@ -856,6 +856,19 @@
         0 0)))
 
 (defthm
+  abs-lstat-correctness-1
+  (and (struct-stat-p (mv-nth 0 (abs-lstat frame path)))
+       (integerp (mv-nth 1 (abs-lstat frame path)))
+       (natp (mv-nth 2 (abs-lstat frame path))))
+  :hints (("goal" :in-theory (enable abs-lstat)))
+  :rule-classes
+  ((:rewrite :corollary (struct-stat-p (mv-nth 0 (abs-lstat frame path))))
+   (:type-prescription
+    :corollary (integerp (mv-nth 1 (abs-lstat frame path))))
+   (:type-prescription
+    :corollary (natp (mv-nth 2 (abs-lstat frame path))))))
+
+(defthm
   abs-lstat-refinement-lemma-1
   (implies (stringp (m1-file->contents (mv-nth 0 (hifat-find-file fs path))))
            (m1-regular-file-p (mv-nth '0 (hifat-find-file fs path)))))
@@ -1064,6 +1077,19 @@
          ("PDF-DOCS   " (D-E 0 0 0 0 0 0 0 0 0 0 0 16
                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
           (CONTENTS))))))))))
+
+(defthm abs-mkdir-correctness-1
+  (and
+   (integerp (mv-nth 1 (abs-mkdir frame path)))
+   (natp (mv-nth 2 (abs-mkdir frame path))))
+  :hints (("goal" :in-theory (enable abs-mkdir)))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (integerp (mv-nth 1 (abs-mkdir frame path))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 2 (abs-mkdir frame path))))))
 
 (defthm
   abs-mkdir-correctness-lemma-8
@@ -4408,6 +4434,27 @@
                                      (frame->frame frame)))))
     (mv frame 0 0)))
 
+(defthm abs-pwrite-correctness-2
+  (and
+   (integerp (mv-nth 1
+                     (abs-pwrite fd
+                                 buf offset frame fd-table file-table)))
+   (natp (mv-nth 2
+                 (abs-pwrite fd
+                             buf offset frame fd-table file-table))))
+  :hints (("goal" :in-theory (enable abs-pwrite)))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (integerp (mv-nth 1
+                      (abs-pwrite fd
+                                  buf offset frame fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 2
+                  (abs-pwrite fd
+                              buf offset frame fd-table file-table))))))
+
 (defthmd
   abs-mkdir-correctness-lemma-72
   (implies
@@ -4608,6 +4655,29 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable good-frame-p
                               abs-opendir collapse-equiv))))
+
+(defthm abs-opendir-correctness-3
+  (and
+   (integerp (mv-nth 0
+                     (abs-opendir frame path dir-stream-table)))
+   (dir-stream-table-p (mv-nth 1
+                               (abs-opendir frame path dir-stream-table)))
+   (integerp (mv-nth 2
+                     (abs-opendir frame path dir-stream-table))))
+  :hints (("goal" :in-theory (enable abs-opendir)))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (integerp (mv-nth 0
+                      (abs-opendir frame path dir-stream-table))))
+   (:rewrite
+    :corollary
+    (dir-stream-table-p (mv-nth 1
+                                (abs-opendir frame path dir-stream-table))))
+   (:type-prescription
+    :corollary
+    (integerp (mv-nth 2
+                      (abs-opendir frame path dir-stream-table))))))
 
 (defthm
   abs-opendir-correctness-lemma-1
@@ -10984,6 +11054,27 @@
                               (file-table-p file-table))))
   (hifat-open path fd-table file-table))
 
+(defthm abs-open-correctness-1
+  (and
+   (fd-table-p (mv-nth 0 (abs-open path fd-table file-table)))
+   (file-table-p (mv-nth 1 (abs-open path fd-table file-table)))
+   (natp (mv-nth 2 (abs-open path fd-table file-table)))
+   (integerp (mv-nth 3 (abs-open path fd-table file-table))))
+  :hints (("goal" :in-theory (enable abs-open)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (fd-table-p (mv-nth 0 (abs-open path fd-table file-table))))
+   (:rewrite
+    :corollary
+    (file-table-p (mv-nth 1 (abs-open path fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 2 (abs-open path fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (integerp (mv-nth 3 (abs-open path fd-table file-table))))))
+
 (defund
   abs-pread
   (fd count offset frame fd-table file-table)
@@ -11018,6 +11109,35 @@
                          (length (m1-file->contents file)))
                     new-offset)))
     (mv buf (length buf) 0)))
+
+(defthm abs-pread-correctness-1
+  (and
+   (stringp (mv-nth 0
+                    (abs-pread fd count
+                               offset frame fd-table file-table)))
+   (integerp (mv-nth 1
+                     (abs-pread fd count
+                                offset frame fd-table file-table)))
+   (natp (mv-nth 2
+                 (abs-pread fd count
+                            offset frame fd-table file-table))))
+  :hints (("goal" :in-theory (enable abs-pread)))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (stringp (mv-nth 0
+                     (abs-pread fd count
+                                offset frame fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (integerp (mv-nth 1
+                      (abs-pread fd count
+                                 offset frame fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 2
+                  (abs-pread fd count
+                             offset frame fd-table file-table))))))
 
 (defthm abs-pread-refinement
   (implies (good-frame-p frame)
