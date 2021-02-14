@@ -118,14 +118,64 @@
                :retval retval :errno 0)))))
     (mv fat32$c st)))
 
+(defthm
+  abs-lstat-correctness-1
+  (and (struct-stat-p (mv-nth 0 (abs-lstat frame path)))
+       (integerp (mv-nth 1 (abs-lstat frame path)))
+       (natp (mv-nth 2 (abs-lstat frame path))))
+  :hints (("goal" :in-theory (enable abs-lstat)))
+  :rule-classes
+  ((:rewrite :corollary (struct-stat-p (mv-nth 0 (abs-lstat frame path))))
+   (:type-prescription
+    :corollary (integerp (mv-nth 1 (abs-lstat frame path))))
+   (:type-prescription
+    :corollary (natp (mv-nth 2 (abs-lstat frame path))))))
+
+(defthm abs-pwrite-correctness-2
+  (and
+   (integerp (mv-nth 1
+                     (abs-pwrite fd
+                                 buf offset frame fd-table file-table)))
+   (natp (mv-nth 2
+                 (abs-pwrite fd
+                             buf offset frame fd-table file-table))))
+  :hints (("goal" :in-theory (enable abs-pwrite)))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (integerp (mv-nth 1
+                      (abs-pwrite fd
+                                  buf offset frame fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 2
+                  (abs-pwrite fd
+                              buf offset frame fd-table file-table))))))
+
+(defthm abs-opendir-correctness-3
+  (and
+   (integerp (mv-nth 2
+                     (abs-opendir frame path dir-stream-table)))
+   (dirstream-table-p (mv-nth 1
+                              (abs-opendir frame path dir-stream-table))))
+  :hints (("goal" :in-theory (enable abs-opendir)))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (integerp (mv-nth 2
+                      (abs-opendir frame path dir-stream-table))))
+   (:rewrite
+    :corollary
+    (dirstream-table-p (mv-nth 1
+                               (abs-opendir frame path dir-stream-table))))))
+
 ;; We aren't going to put statfs in this. It'll just make things pointlessly
 ;; complicated.
 (defund absfat-oracle-single-step (frame syscall-sym st)
   (declare (xargs :guard (and (frame-p frame)
                               (lofat-st-p st)
                               (consp (assoc-equal 0 frame)))
-                  :guard-debug t
-                  :verify-guards nil))
+                  :guard-debug t))
   (b*
       ((st (mbe :logic (lofat-st-fix st) :exec st))
        ((when (eq syscall-sym :pwrite))
@@ -205,7 +255,7 @@
        ;; the state of the filesystem but does change the frame.
        ((when (eq syscall-sym :opendir))
         (b*
-            (((mv dirstream-table dirp retval frame)
+            (((mv dirp dirstream-table retval frame)
               (abs-opendir
                frame
                (lofat-st->dirstream-table st)
