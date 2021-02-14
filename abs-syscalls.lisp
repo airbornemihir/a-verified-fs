@@ -5462,36 +5462,6 @@
                               (:rewrite hifat-find-file-correctness-lemma-6)))))
 
 (defthm
-  hifat-place-file-when-hifat-equiv-3
-  (implies
-   (and (equal (m1-file->contents file1)
-               (m1-file->contents file2))
-        (syntaxp (not (term-order file1 file2)))
-        (m1-regular-file-p (m1-file-fix file1))
-        (m1-regular-file-p (m1-file-fix file2)))
-   (hifat-equiv (mv-nth 0 (hifat-place-file fs path file1))
-                (mv-nth 0 (hifat-place-file fs path file2))))
-  :hints
-  (("goal"
-    :in-theory (enable hifat-place-file)
-    :restrict
-    ((put-assoc-under-hifat-equiv-3 ((file2 file2)))))))
-
-(defthm
-  abs-pwrite-correctness-lemma-15
-  (implies (fat32-filename-list-prefixp x y)
-           (fat32-filename-list-equiv (append x (nthcdr (len x) y))
-                                      y))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory
-    (e/d (fat32-filename-list-prefixp-alt fat32-filename-list-equiv)
-         (append-when-prefixp))
-    :use (:instance append-when-prefixp
-                    (x (fat32-filename-list-fix x))
-                    (y (fat32-filename-list-fix y))))))
-
-(defthm
   abs-pwrite-correctness-lemma-64
   (implies
    (and
@@ -10823,7 +10793,6 @@
           (:rewrite abs-addrs-of-put-assoc-lemma-1)
           (:rewrite hifat-subsetp-reflexive-lemma-3)
           (:rewrite abs-pwrite-correctness-lemma-97)
-          (:rewrite abs-pwrite-correctness-lemma-47)
           path-clear-partial-collapse-when-zp-src-lemma-17
           (:rewrite abs-addrs-of-ctx-app-2)
           (:rewrite abs-addrs-of-remove-assoc-lemma-2)
