@@ -305,15 +305,26 @@
          (no-duplicatesp-equal (strip-cars frame))
          (atom (frame-val->path (cdr (assoc-equal 0 frame)))))))
 
+(thm (implies (good-frame-p frame)
+              (frame-reps-fs frame (mv-nth 0 (collapse frame))))
+     :hints (("goal" :in-theory (enable good-frame-p frame-reps-fs))))
+
+(thm (implies (and (frame-reps-fs frame (mv-nth 0 (collapse frame)))
+                   (consp (assoc-equal 0 frame))
+                   (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+                          0))
+              (good-frame-p frame))
+     :hints (("goal" :in-theory (enable good-frame-p frame-reps-fs)
+              :do-not-induct t)))
+
 (defcong absfat-equiv equal (frame-reps-fs frame fs) 2
   :hints (("Goal" :in-theory (enable frame-reps-fs))))
 
 (defcong collapse-equiv equal (frame-reps-fs frame fs) 1
-  :hints (("Goal" :in-theory (enable frame-reps-fs collapse-equiv good-frame-p))))
-
-(thm (implies (good-frame-p frame)
-              (frame-reps-fs frame (mv-nth 0 (collapse frame))))
-     :hints (("goal" :in-theory (enable good-frame-p frame-reps-fs))))
+  :hints (("Goal" :in-theory (enable frame-reps-fs collapse-equiv
+                                     good-frame-p)
+           :do-not-induct t))
+  :otf-flg t)
 
 (defund
   abs-place-file (frame path file)
