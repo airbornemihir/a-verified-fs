@@ -7167,7 +7167,9 @@
           (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:type-prescription assoc-when-zp-len)
           (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
-          (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-2))))))
+          (:rewrite
+           collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-2)
+          hifat-equiv-when-absfat-equiv)))))
 
 (defthm
   1st-complete-under-path-of-frame->frame-of-partial-collapse
@@ -7523,7 +7525,8 @@
                            (:definition no-duplicatesp-equal)
                            (:rewrite subsetp-when-prefixp)
                            (:rewrite valid-seqp-when-prefixp)
-                           (:rewrite true-listp-when-abs-file-alist-p)))
+                           (:rewrite true-listp-when-abs-file-alist-p)
+                           hifat-equiv-when-absfat-equiv))
       :induct (induction-scheme dir frame seq x)
       :expand
       (collapse-seq
@@ -7622,8 +7625,7 @@
                   (frame-val->src (cdr (assoc-equal x frame))))
        frame))
      (root root))))
-  :rule-classes :congruence
-  :otf-flg t)
+  :rule-classes :congruence)
 
 (defthm
   partial-collapse-correctness-lemma-1
