@@ -8339,19 +8339,31 @@
                                  (frame-addrs-root (frame->frame frame))))
              (hifat-equiv (mv-nth 0
                                   (collapse (partial-collapse frame path)))
-                          (mv-nth 0 (collapse frame)))))
-   (:rewrite
-    :corollary
-    (implies (and (frame-p frame)
-                  (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                  (abs-separate frame)
-                  (mv-nth 1 (collapse frame))
-                  (atom (frame-val->path$inline (cdr (assoc-equal 0 frame))))
-                  (subsetp-equal (abs-addrs (frame->root frame))
-                                 (frame-addrs-root (frame->frame frame))))
-             (collapse-equiv (partial-collapse frame path)
-                             frame))
-    :hints (("goal" :in-theory (enable collapse-equiv))))))
+                          (mv-nth 0 (collapse frame)))))))
+
+(defthm partial-collapse-correctness-lemma-12
+  (implies (consp (assoc-equal 0 frame))
+           (consp (assoc-equal 0 (partial-collapse frame path))))
+  :hints (("goal" :in-theory (enable partial-collapse)))
+  :rule-classes :type-prescription)
+
+(defthm
+  partial-collapse-correctness-lemma-15
+  (implies
+   (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+          0)
+   (equal (frame-val->src (cdr (assoc-equal 0 (partial-collapse frame path))))
+          0))
+  :hints (("goal" :in-theory (enable partial-collapse
+                                     collapse-this frame-with-root)))
+  :rule-classes :type-prescription)
+
+(defthm partial-collapse-correctness-2
+  (implies (good-frame-p frame)
+           (collapse-equiv (partial-collapse frame path)
+                           frame))
+  :hints (("goal" :in-theory (enable collapse-equiv good-frame-p)
+           :do-not-induct t)))
 
 (defund
   seq-this-under-path

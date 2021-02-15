@@ -6333,8 +6333,7 @@
   (b*
       (((mv & result) (collapse frame)))
     (and result
-         (equal (frame-val->path (cdr (assoc-equal 0 frame)))
-                nil)
+         (atom (frame-val->path (cdr (assoc-equal 0 frame))))
          (consp (assoc-equal 0 frame))
          (equal (frame-val->src (cdr (assoc-equal 0 frame)))
                 0)

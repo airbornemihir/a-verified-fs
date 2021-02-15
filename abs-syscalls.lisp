@@ -4312,7 +4312,11 @@
   (("goal"
     :in-theory (enable collapse-equiv abs-mkdir abs-lstat abs-alloc abs-fs-fix
                        abs-find-file-helper abs-find-file good-frame-p) :expand
-                       (:free (root) (collapse (frame-with-root root nil))))))
+    (:free (root) (collapse (frame-with-root root nil))))
+   (if (not stable-under-simplificationp)
+       nil
+     '(:in-theory (enable collapse-equiv abs-mkdir abs-lstat abs-alloc abs-fs-fix
+                          abs-find-file-helper abs-find-file good-frame-p frame-with-root)))))
 
 (defund abs-mknod (frame path)
   (declare (xargs :guard (and (frame-p frame)
