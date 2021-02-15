@@ -285,21 +285,6 @@
                        (abs-place-file-helper fs path file)))))
   :hints (("goal" :in-theory (enable abs-place-file-helper))))
 
-(defund good-frame-p (frame)
-  (b*
-      (((mv & result) (collapse frame)))
-    (and result
-         (equal (frame-val->path (cdr (assoc-equal 0 frame)))
-                nil)
-         (consp (assoc-equal 0 frame))
-         (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-                0)
-         (frame-p frame)
-         (no-duplicatesp-equal (strip-cars frame))
-         (abs-separate frame)
-         (subsetp-equal (abs-addrs (frame->root frame))
-                        (frame-addrs-root (frame->frame frame))))))
-
 ;; I guess I should say that this function can only really do so much, and if
 ;; we try to use this in our proofs we'll kinda be back to representing
 ;; filesystem trees as... filesystem trees. When I say it can only do so much,

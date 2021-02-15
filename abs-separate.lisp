@@ -6329,12 +6329,29 @@
            :induct (frame-addrs-before frame x n)
            :expand (collapse-iter frame 1))))
 
+(defund good-frame-p (frame)
+  (b*
+      (((mv & result) (collapse frame)))
+    (and result
+         (equal (frame-val->path (cdr (assoc-equal 0 frame)))
+                nil)
+         (consp (assoc-equal 0 frame))
+         (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+                0)
+         (frame-p frame)
+         (no-duplicatesp-equal (strip-cars frame))
+         (abs-separate frame)
+         (subsetp-equal (abs-addrs (frame->root frame))
+                        (frame-addrs-root (frame->frame frame))))))
+
 (defund collapse-equiv (frame1 frame2)
-  (b* (((mv root1 result1) (collapse frame1))
-       ((mv root2 result2) (collapse frame2)))
-    (or (not (or result1 result2))
-        (and result1
-             result2 (absfat-equiv root1 root2)))))
+  (b* ((good-frame-p1 (good-frame-p frame1))
+       (good-frame-p2 (good-frame-p frame2))
+       ((mv fs1 &) (collapse frame1))
+       ((mv fs2 &) (collapse frame2)))
+    (or (not (or good-frame-p1 good-frame-p2))
+        (and good-frame-p1
+             good-frame-p2 (absfat-equiv fs1 fs2)))))
 
 (defequiv collapse-equiv
   :hints (("goal" :in-theory (enable collapse-equiv))))
@@ -6364,12 +6381,4 @@
     :do-not-induct t
     :expand ((collapse frame)
              (collapse (frame-with-root (frame->root frame)
-                                        (frame->frame frame))))))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (collapse-equiv (frame-with-root (frame->root frame)
-                                     (frame->frame frame))
-                    frame)
-    :hints (("Goal" :in-theory (enable collapse-equiv))))))
+                                        (frame->frame frame)))))))

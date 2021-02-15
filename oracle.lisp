@@ -215,3 +215,22 @@
                st :dir-stream-table dir-stream-table :dirp dirp
                :retval retval :errno 0)))))
     (mv frame st)))
+
+(defcong collapse-equiv equal (frame-reps-fs frame fs) 1
+  :hints (("Goal" :in-theory (enable frame-reps-fs))))
+
+;; How do we prove this? The best way seems to be to open up the definitions of
+;; the single-step functions and proceed from there.
+(defthm absfat-oracle-single-step-refinement
+  (implies
+   (frame-reps-fs
+    frame
+    (lofat-to-hifat fat32$c))
+   (frame-reps-fs
+    (mv-nth 0 (absfat-oracle-single-step frame syscall-sym st))
+    (lofat-to-hifat (mv-nth 0 (lofat-oracle-single-step fat32$c syscall-sym
+                                                        st)))))
+  :hints (("Goal" :do-not-induct t
+           :in-theory (enable absfat-oracle-single-step
+                              lofat-oracle-single-step)))
+  :otf-flg t)
