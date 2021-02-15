@@ -216,8 +216,11 @@
                :retval retval :errno 0)))))
     (mv frame st)))
 
-(defcong collapse-equiv equal (frame-reps-fs frame fs) 1
-  :hints (("Goal" :in-theory (enable frame-reps-fs))))
+(defthm good-frame-p-when-frame-reps-fs
+  (implies (frame-reps-fs frame fs)
+           (good-frame-p frame))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable good-frame-p frame-reps-fs))))
 
 ;; How do we prove this? The best way seems to be to open up the definitions of
 ;; the single-step functions and proceed from there.
