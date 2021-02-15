@@ -296,7 +296,7 @@
   (b*
       (((mv fs-equiv result) (collapse frame)))
     (and result
-         (absfat-equiv fs-equiv fs)
+         (hifat-equiv fs-equiv fs)
          (frame-p frame)
          (abs-separate frame)
          (subsetp-equal
@@ -308,16 +308,18 @@
          (equal (frame-val->src (cdr (assoc-equal 0 frame)))
                 0))))
 
-(thm (implies (good-frame-p frame)
-              (frame-reps-fs frame (mv-nth 0 (collapse frame))))
-     :hints (("goal" :in-theory (enable good-frame-p frame-reps-fs))))
+(defthm frame-reps-fs-of-collapse-1
+  (implies (good-frame-p frame)
+           (frame-reps-fs frame (mv-nth 0 (collapse frame))))
+  :hints (("goal" :in-theory (enable good-frame-p frame-reps-fs))))
 
-(thm (implies (frame-reps-fs frame (mv-nth 0 (collapse frame)))
-              (good-frame-p frame))
-     :hints (("goal" :in-theory (enable good-frame-p frame-reps-fs)
-              :do-not-induct t)))
+(defthm good-frame-p-when-frame-reps-fs
+  (implies (frame-reps-fs frame fs)
+           (good-frame-p frame))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable good-frame-p frame-reps-fs))))
 
-(defcong absfat-equiv equal (frame-reps-fs frame fs) 2
+(defcong hifat-equiv equal (frame-reps-fs frame fs) 2
   :hints (("Goal" :in-theory (enable frame-reps-fs))))
 
 (defcong collapse-equiv equal (frame-reps-fs frame fs) 1
@@ -883,13 +885,6 @@
        (frame-reps-fs frame fs)
        (abs-fs-p fs)
        (m1-file-alist-p fs)
-       (consp (assoc-equal 0 frame))
-       (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-       (frame-p frame)
-       (no-duplicatesp-equal (strip-cars frame))
-       (subsetp-equal (abs-addrs (frame->root frame))
-                      (frame-addrs-root (frame->frame frame)))
-       (abs-separate frame)
        (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))
       (equal (abs-lstat frame path)
              (hifat-lstat fs path)))
@@ -900,13 +895,10 @@
     abs-lstat-refinement
     (implies
      (and
-      (consp (assoc-equal 0 frame))
-      (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-      (frame-p frame)
-      (no-duplicatesp-equal (strip-cars frame))
       (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame path))))
       (frame-reps-fs frame fs)
-      (abs-fs-p fs))
+      (abs-fs-p fs)
+      (m1-file-alist-p fs))
      (equal (abs-lstat frame path)
             (hifat-lstat fs path)))
     :hints (("goal" :do-not-induct t

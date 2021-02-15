@@ -216,11 +216,21 @@
                :retval retval :errno 0)))))
     (mv frame st)))
 
-(defthm good-frame-p-when-frame-reps-fs
-  (implies (frame-reps-fs frame fs)
-           (good-frame-p frame))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable good-frame-p frame-reps-fs))))
+(thm
+ (implies
+  (frame-reps-fs frame (lofat-to-hifat fat32$c))
+  (frame-reps-fs
+   (mv-nth 0 (abs-mkdir frame (lofat-st->path st)))
+   (lofat-to-hifat (mv-nth 0
+                           (lofat-mkdir fat32$c (lofat-st->path st))))))
+ :hints (("goal" :do-not-induct t :in-theory (disable
+                                              abs-mkdir-correctness-2
+                                              ;; COnsider disabling later.
+                                              hifat-mkdir)
+          :use
+          (:instance
+           abs-mkdir-correctness-2 (path (lofat-st->path st)))))
+ :otf-flg t)
 
 ;; How do we prove this? The best way seems to be to open up the definitions of
 ;; the single-step functions and proceed from there.
