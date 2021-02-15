@@ -3916,19 +3916,75 @@
   (implies (m1-file-alist-p fs) (abs-complete fs))
   :hints (("goal" :in-theory (enable abs-complete))))
 
+(defthmd abs-separate-of-frame->frame-of-collapse-this-lemma-10
+  (implies (not (consp (abs-addrs fs)))
+           (abs-complete fs))
+  :hints (("goal" :in-theory (enable abs-complete))))
+
+(defthm
+  collapse-congruence-lemma-4
+  (implies (and (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (m1-file-alist-p (abs-fs-fix abs-file-alist1)))
+           (and
+            (equal (abs-addrs
+                    (abs-fs-fix abs-file-alist2))
+                   nil)
+            (abs-complete (abs-fs-fix abs-file-alist2))))
+  :hints
+  (("goal"
+    :in-theory (e/d (absfat-equiv
+                     abs-separate-of-frame->frame-of-collapse-this-lemma-10)
+                    (abs-addrs-when-absfat-equiv-lemma-1))
+    :use ((:instance abs-addrs-when-absfat-equiv-lemma-1
+                     (abs-file-alist1 (abs-fs-fix abs-file-alist1))
+                     (abs-file-alist2 (abs-fs-fix abs-file-alist2)))
+          (:instance abs-addrs-when-absfat-equiv-lemma-1
+                     (abs-file-alist1 (abs-fs-fix abs-file-alist2))
+                     (abs-file-alist2 (abs-fs-fix abs-file-alist1))))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (absfat-equiv abs-file-alist1 abs-file-alist2)
+                  (m1-file-alist-p (abs-fs-fix abs-file-alist1))
+                  (abs-fs-p abs-file-alist2))
+             (and
+              (equal (abs-addrs abs-file-alist2) nil)
+              (abs-complete abs-file-alist2))))))
+
 ;; Probably tricky to get a refinement relationship (in the defrefinement
 ;; sense) between literally absfat-equiv and hifat-equiv. But we can still have
 ;; some kind of substitute...
 (defthm
   hifat-equiv-when-absfat-equiv
-  (implies (and (m1-file-alist-p (abs-fs-fix abs-file-alist1))
-                (m1-file-alist-p (abs-fs-fix abs-file-alist2)))
+  (implies (m1-file-alist-p (abs-fs-fix abs-file-alist1))
            (equal (absfat-equiv abs-file-alist1 abs-file-alist2)
-                  (hifat-equiv (abs-fs-fix abs-file-alist1)
-                               (abs-fs-fix abs-file-alist2))))
+                  (and (hifat-equiv (abs-fs-fix abs-file-alist1)
+                                    (abs-fs-fix abs-file-alist2))
+                       (m1-file-alist-p (abs-fs-fix abs-file-alist2)))))
   :hints
-  (("goal" :in-theory (enable absfat-equiv hifat-equiv abs-fs-p
-                              absfat-subsetp-correctness-1 abs-fs-fix))))
+  (("goal"
+    :in-theory (e/d (absfat-equiv hifat-equiv abs-fs-p
+                                  absfat-subsetp-correctness-1 abs-fs-fix)
+                    (collapse-congruence-lemma-4))
+    :use collapse-congruence-lemma-4
+    :do-not-induct t))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (m1-file-alist-p (abs-fs-fix abs-file-alist1))
+             (equal (absfat-equiv abs-file-alist2 abs-file-alist1)
+                    (and (hifat-equiv (abs-fs-fix abs-file-alist2)
+                                      (abs-fs-fix abs-file-alist1))
+                         (m1-file-alist-p (abs-fs-fix abs-file-alist2)))))
+    :hints
+    (("goal"
+      :in-theory (e/d (absfat-equiv hifat-equiv abs-fs-p
+                                    absfat-subsetp-correctness-1 abs-fs-fix)
+                      (collapse-congruence-lemma-4))
+      :use collapse-congruence-lemma-4
+      :do-not-induct t)))))
 
 (defund
   names-at (fs relpath)
@@ -4776,11 +4832,6 @@
     (abs-complete (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                                     frame))))))
   :hints (("goal" :in-theory (enable 1st-complete abs-complete))))
-
-(defthmd abs-separate-of-frame->frame-of-collapse-this-lemma-10
-  (implies (not (consp (abs-addrs fs)))
-           (abs-complete fs))
-  :hints (("goal" :in-theory (enable abs-complete))))
 
 (defthm
   abs-separate-of-frame->frame-of-collapse-this-lemma-11

@@ -1129,37 +1129,6 @@
               (collapse (frame-with-root root2 frame))))))))
 
 (defthm
-  collapse-congruence-lemma-4
-  (implies (and (absfat-equiv abs-file-alist1 abs-file-alist2)
-                (m1-file-alist-p (abs-fs-fix abs-file-alist1)))
-           (and
-            (equal (abs-addrs
-                    (abs-fs-fix abs-file-alist2))
-                   nil)
-            (abs-complete (abs-fs-fix abs-file-alist2))))
-  :hints
-  (("goal"
-    :in-theory (e/d (absfat-equiv
-                     abs-separate-of-frame->frame-of-collapse-this-lemma-10)
-                    (abs-addrs-when-absfat-equiv-lemma-1))
-    :use ((:instance abs-addrs-when-absfat-equiv-lemma-1
-                     (abs-file-alist1 (abs-fs-fix abs-file-alist1))
-                     (abs-file-alist2 (abs-fs-fix abs-file-alist2)))
-          (:instance abs-addrs-when-absfat-equiv-lemma-1
-                     (abs-file-alist1 (abs-fs-fix abs-file-alist2))
-                     (abs-file-alist2 (abs-fs-fix abs-file-alist1))))))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies (and (absfat-equiv abs-file-alist1 abs-file-alist2)
-                  (m1-file-alist-p (abs-fs-fix abs-file-alist1))
-                  (abs-fs-p abs-file-alist2))
-             (and
-              (equal (abs-addrs abs-file-alist2) nil)
-              (abs-complete abs-file-alist2))))))
-
-(defthm
   collapse-congruence-lemma-5
   (implies (and (consp (assoc-equal x frame))
                 (absfat-equiv (frame-val->dir (cdr (assoc-equal x frame)))
@@ -5530,9 +5499,14 @@
     (("goal"
       :in-theory
       (e/d
-       (absfat-equiv-upto-n (:rewrite 1st-complete-under-path-of-frame->frame-of-partial-collapse-lemma-24)
-                            (:rewrite 1st-complete-under-path-of-frame->frame-of-partial-collapse-lemma-23)))
-      :induct (dec-induct n)))))
+       (absfat-equiv-upto-n
+        (:rewrite
+         1st-complete-under-path-of-frame->frame-of-partial-collapse-lemma-24)
+        (:rewrite
+         1st-complete-under-path-of-frame->frame-of-partial-collapse-lemma-23))
+       (hifat-equiv-when-absfat-equiv))
+      :induct (dec-induct n)
+      :do-not-induct t))))
 
 (defthm
   1st-complete-under-path-of-frame->frame-of-partial-collapse-lemma-28

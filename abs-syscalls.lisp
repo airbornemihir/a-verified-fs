@@ -308,6 +308,9 @@
 (defcong absfat-equiv equal (frame-reps-fs frame fs) 2
   :hints (("Goal" :in-theory (enable frame-reps-fs))))
 
+(defcong collapse-equiv equal (frame-reps-fs frame fs) 1
+  :hints (("Goal" :in-theory (enable frame-reps-fs collapse-equiv good-frame-p))))
+
 (thm (implies (good-frame-p frame)
               (frame-reps-fs frame (mv-nth 0 (collapse frame))))
      :hints (("goal" :in-theory (enable good-frame-p frame-reps-fs))))
@@ -1564,7 +1567,7 @@
     (e/d (abs-place-file-helper ctx-app ctx-app-ok addrs-at names-at
                                 (:definition binary-append))
          ((:rewrite abs-file-alist-p-correctness-1)
-          (:rewrite hifat-equiv-when-absfat-equiv)
+          hifat-equiv-when-absfat-equiv
           (:definition no-duplicatesp-equal)
           (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
           (:rewrite abs-addrs-when-m1-file-alist-p)
@@ -3120,16 +3123,9 @@
     :use ((:instance (:rewrite partial-collapse-correctness-1 . 1)
                      (path (dirname path))
                      (frame frame)))
-    :expand
-    (:with
-     (:rewrite hifat-equiv-when-absfat-equiv)
-     (absfat-equiv
-      (mv-nth 0
-              (collapse (partial-collapse frame (dirname path))))
-      fs))
     :do-not-induct t)))
 
-(defthm abs-mkdir-correctness-lemma-71
+(defthm abs-mkdir-correctness-lemma-44
   (equal (nthcdr (+ -1 (len path))
                  (dirname path))
          nil)
