@@ -3916,13 +3916,13 @@
   (implies (m1-file-alist-p fs) (abs-complete fs))
   :hints (("goal" :in-theory (enable abs-complete))))
 
-(defthmd abs-separate-of-frame->frame-of-collapse-this-lemma-10
+(defthmd hifat-equiv-when-absfat-equiv-lemma-2
   (implies (not (consp (abs-addrs fs)))
            (abs-complete fs))
   :hints (("goal" :in-theory (enable abs-complete))))
 
 (defthm
-  collapse-congruence-lemma-4
+  hifat-equiv-when-absfat-equiv-lemma-3
   (implies (and (absfat-equiv abs-file-alist1 abs-file-alist2)
                 (m1-file-alist-p (abs-fs-fix abs-file-alist1)))
            (and
@@ -3933,7 +3933,7 @@
   :hints
   (("goal"
     :in-theory (e/d (absfat-equiv
-                     abs-separate-of-frame->frame-of-collapse-this-lemma-10)
+                     hifat-equiv-when-absfat-equiv-lemma-2)
                     (abs-addrs-when-absfat-equiv-lemma-1))
     :use ((:instance abs-addrs-when-absfat-equiv-lemma-1
                      (abs-file-alist1 (abs-fs-fix abs-file-alist1))
@@ -3966,8 +3966,8 @@
   (("goal"
     :in-theory (e/d (absfat-equiv hifat-equiv abs-fs-p
                                   absfat-subsetp-correctness-1 abs-fs-fix)
-                    (collapse-congruence-lemma-4))
-    :use collapse-congruence-lemma-4
+                    (hifat-equiv-when-absfat-equiv-lemma-3))
+    :use hifat-equiv-when-absfat-equiv-lemma-3
     :do-not-induct t))
   :rule-classes
   (:rewrite
@@ -3982,8 +3982,8 @@
     (("goal"
       :in-theory (e/d (absfat-equiv hifat-equiv abs-fs-p
                                     absfat-subsetp-correctness-1 abs-fs-fix)
-                      (collapse-congruence-lemma-4))
-      :use collapse-congruence-lemma-4
+                      (hifat-equiv-when-absfat-equiv-lemma-3))
+      :use hifat-equiv-when-absfat-equiv-lemma-3
       :do-not-induct t)))))
 
 (defund
@@ -4834,7 +4834,7 @@
   :hints (("goal" :in-theory (enable 1st-complete abs-complete))))
 
 (defthm
-  abs-separate-of-frame->frame-of-collapse-this-lemma-11
+  abs-separate-of-frame->frame-of-collapse-this-lemma-10
   (implies (and (mv-nth 1 (collapse frame))
                 (consp (assoc-equal y (frame->frame frame))))
            (< '0
@@ -5913,7 +5913,7 @@
                            (hifat-no-dups-p fs)))))
   :hints
   (("goal" :in-theory (enable collapse intersectp-equal
-                              abs-separate-of-frame->frame-of-collapse-this-lemma-10)
+                              hifat-equiv-when-absfat-equiv-lemma-2)
     :induct (collapse frame))))
 
 (defthm dist-names-of-append

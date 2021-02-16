@@ -1129,7 +1129,7 @@
               (collapse (frame-with-root root2 frame))))))))
 
 (defthm
-  collapse-congruence-lemma-5
+  collapse-congruence-lemma-2
   (implies (and (consp (assoc-equal x frame))
                 (absfat-equiv (frame-val->dir (cdr (assoc-equal x frame)))
                               (frame-val->dir val)))
@@ -6507,9 +6507,9 @@
       :do-not-induct t
       :in-theory
       (e/d (intersectp-equal
-            abs-separate-of-frame->frame-of-collapse-this-lemma-10)
+            hifat-equiv-when-absfat-equiv-lemma-2)
            (lemma-1 1st-complete-correctness-2
-                                                   subsetp-member))
+                    subsetp-member))
       :use (lemma-1
             (:instance 1st-complete-correctness-2
                        (frame (frame->frame (collapse-seq frame seq)))

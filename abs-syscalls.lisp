@@ -113,8 +113,6 @@
     abs-addrs-of-ctx-app-1-lemma-6
     abs-addrs-of-ctx-app-lemma-4
     (:rewrite abs-addrs-of-ctx-app)
-    (:linear
-     abs-separate-of-frame->frame-of-collapse-this-lemma-11)
     (:rewrite path-clear-partial-collapse-when-zp-src-lemma-17)
     (:rewrite
      abs-separate-of-collapse-this-lemma-7)
@@ -3423,8 +3421,6 @@
           (:rewrite 1st-complete-correctness-1)
           (:rewrite abs-addrs-when-m1-file-contents-p)
           (:rewrite
-           abs-separate-of-frame->frame-of-collapse-this-lemma-11)
-          (:rewrite
            absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
           (:rewrite
            abs-fs-fix-of-put-assoc-equal-lemma-2)
@@ -3538,8 +3534,6 @@
           (:rewrite abs-mkdir-correctness-lemma-59)
           (:rewrite m1-file-alist-p-of-cons)
           (:rewrite abs-mkdir-correctness-lemma-102)
-          (:linear
-           abs-separate-of-frame->frame-of-collapse-this-lemma-11)
           (:rewrite abs-find-file-correctness-lemma-14)
           (:rewrite subsetp-trans)
           prefixp-when-not-consp-right
@@ -3577,7 +3571,6 @@
           (:rewrite list-fix-when-len-zero)
           (:rewrite len-of-nthcdr)
           (:rewrite list-fix-when-not-consp)
-          (:rewrite collapse-congruence-lemma-5)
           (:rewrite len-of-append)
           (:rewrite
            fat32-filename-list-p-when-subsetp-equal)
