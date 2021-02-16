@@ -7526,7 +7526,8 @@
                            (:rewrite subsetp-when-prefixp)
                            (:rewrite valid-seqp-when-prefixp)
                            (:rewrite true-listp-when-abs-file-alist-p)
-                           hifat-equiv-when-absfat-equiv))
+                           hifat-equiv-when-absfat-equiv
+                           absfat-equiv-implies-equal-m1-file-alist-p-of-abs-fs-fix-1))
       :induct (induction-scheme dir frame seq x)
       :expand
       (collapse-seq
