@@ -1609,6 +1609,8 @@
                     (and (equal errno 0)
                          (m1-directory-file-p parent-dir))))
         (mv fat32$c -1 *enoent*))
+       ((mv & errno)
+        (lofat-find-file fat32$c root-d-e-list path))
        ((when (equal errno 0))
         (mv fat32$c -1 *eexist*))
        (basename (basename path))
