@@ -1048,7 +1048,16 @@
                                       (contents))))
           28))
         (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
-           (max-entry-count fat32$c)))
+           (max-entry-count fat32$c))
+        (not
+         (equal
+          (mv-nth 1
+                  (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+                                    path
+                                    '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
+                                           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                      (contents))))
+          28)))
    (and
     (equal
      (mv-nth
