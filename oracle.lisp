@@ -848,68 +848,178 @@
                        (m1-file-hifat-file-alist-fix-normalisation
                         (:rewrite abs-mkdir-correctness-lemma-36)))))))
 
-;; Counterexample?
 (thm
  (implies
   (and
-   (lofat-fs-p fat32$c)
+   (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                    fat32$c)
    (fat32-filename-list-p path)
    (equal (mv-nth 1 (lofat-to-hifat fat32$c))
           0)
-   (consp (cdr path))
-   (equal
-    (mv-nth 1
-            (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
-                              path
-                              '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
-                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                (contents))))
-    0)
-   (equal (mv-nth 1
-                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c)))
-          0)
-   (no-duplicatesp-equal (mv-nth 0
-                                 (d-e-cc fat32$c (pseudo-root-d-e fat32$c))))
-   (<= 1
-       (count-free-clusters (effective-fat fat32$c)))
+   (lofat-file-p file)
+   (or (and (lofat-regular-file-p file)
+            (<= (len (make-clusters (lofat-file->contents file)
+                                    (cluster-size fat32$c)))
+                (count-free-clusters (effective-fat fat32$c))))
+       (and (equal (lofat-file->contents file) nil)
+            (<= 1
+                (count-free-clusters (effective-fat fat32$c)))))
+   (not (equal (mv-nth 1
+                       (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+                                         path file))
+               28))
    (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
       (max-entry-count fat32$c))
-   (not (m1-directory-file-p
-         (mv-nth 0
-                 (lofat-find-file fat32$c
-                                  (mv-nth 0 (root-d-e-list fat32$c))
-                                  (dirname path)))))
-   (lofat-directory-file-p
-    (mv-nth 0
-            (lofat-find-file fat32$c
-                             (mv-nth 0 (root-d-e-list fat32$c))
-                             (dirname path))))
-   (equal (mv-nth 1
-                  (lofat-find-file fat32$c
-                                   (mv-nth 0 (root-d-e-list fat32$c))
-                                   (dirname path)))
-          0)
-   (not (equal (mv-nth 1
-                       (lofat-find-file fat32$c
-                                        (mv-nth 0 (root-d-e-list fat32$c))
-                                        path))
-               0)))
-  (and (equal (mv-nth 1 (lofat-mkdir fat32$c path))
-              -1)
-       (equal (mv-nth 1
-                      (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
-                                   path))
-              0)))
- :hints
- (("goal" :do-not-induct t
-   :in-theory
-   (e/d (lofat-mkdir)
-        ((:rewrite d-e-cc-of-update-dir-contents-coincident)
-         make-list-ac-removal
-         (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)))
-   :expand ((:free (fs) (hifat-find-file fs nil))
-            (:free (fs file)
-                   (hifat-place-file fs nil file))))))
+   (consp (cdr path)))
+  (not-intersectp-list
+   (mv-nth
+    0
+    (d-e-cc (mv-nth 0
+                    (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+                                      path file))
+            (pseudo-root-d-e fat32$c)))
+   (mv-nth
+    2
+    (lofat-to-hifat-helper
+     (mv-nth 0
+             (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+                               path file))
+     (make-d-e-list
+      (mv-nth
+       0
+       (d-e-cc-contents
+        (mv-nth 0
+                (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+                                  path file))
+        (pseudo-root-d-e fat32$c))))
+     (max-entry-count fat32$c)))))
+ :hints (("goal" :do-not-induct t
+          :in-theory (e/d (lofat-to-hifat root-d-e-list
+                                          d-e-cc-of-lofat-place-file-coincident-1)
+                          ()))))
+
+(defthm
+  lofat-mkdir-refinement-lemma-6
+  (implies
+   (and
+    (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                     fat32$c)
+    (fat32-filename-list-p path)
+    (equal (mv-nth 1 (lofat-to-hifat fat32$c))
+           0)
+    (lofat-file-p file)
+    (or (and (lofat-regular-file-p file)
+             (<= (len (make-clusters (lofat-file->contents file)
+                                     (cluster-size fat32$c)))
+                 (count-free-clusters (effective-fat fat32$c))))
+        (and (equal (lofat-file->contents file) nil)
+             (<= 1
+                 (count-free-clusters (effective-fat fat32$c)))))
+    (not (equal (mv-nth 1
+                        (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+                                          path file))
+                28))
+    (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
+       (max-entry-count fat32$c))
+    (consp (cdr path)))
+   (and
+    (equal
+     (mv-nth 1
+             (lofat-to-hifat
+              (mv-nth 0
+                      (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+                                        path file))))
+     0)
+    (hifat-equiv
+     (mv-nth 0
+             (lofat-to-hifat
+              (mv-nth 0
+                      (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+                                        path file))))
+     (mv-nth 0
+             (hifat-place-file (mv-nth 0 (lofat-to-hifat fat32$c))
+                               path
+                               (m1-file d-e (lofat-file->contents file)))))
+    (equal
+     (mv-nth 1
+             (hifat-place-file (mv-nth 0 (lofat-to-hifat fat32$c))
+                               path
+                               (m1-file d-e (lofat-file->contents file))))
+     (mv-nth 1
+             (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+                               path file)))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (lofat-to-hifat root-d-e-list
+                                    d-e-cc-of-lofat-place-file-coincident-1)
+                    (lofat-place-file-correctness-1))
+    :use (:instance lofat-place-file-correctness-1
+                    (root-d-e (pseudo-root-d-e fat32$c))
+                    (entry-limit (max-entry-count fat32$c))))))
+
+;; This was a counterexample.
+;; (thm
+;;  (implies
+;;   (and
+;;    (lofat-fs-p fat32$c)
+;;    (fat32-filename-list-p path)
+;;    (equal (mv-nth 1 (lofat-to-hifat fat32$c))
+;;           0)
+;;    (consp (cdr path))
+;;    (equal
+;;     (mv-nth 1
+;;             (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+;;                               path
+;;                               '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
+;;                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+;;                                 (contents))))
+;;     0)
+;;    (equal (mv-nth 1
+;;                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c)))
+;;           0)
+;;    (no-duplicatesp-equal (mv-nth 0
+;;                                  (d-e-cc fat32$c (pseudo-root-d-e fat32$c))))
+;;    (<= 1
+;;        (count-free-clusters (effective-fat fat32$c)))
+;;    (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
+;;       (max-entry-count fat32$c))
+;;    (not (m1-directory-file-p
+;;          (mv-nth 0
+;;                  (lofat-find-file fat32$c
+;;                                   (mv-nth 0 (root-d-e-list fat32$c))
+;;                                   (dirname path)))))
+;;    (lofat-directory-file-p
+;;     (mv-nth 0
+;;             (lofat-find-file fat32$c
+;;                              (mv-nth 0 (root-d-e-list fat32$c))
+;;                              (dirname path))))
+;;    (equal (mv-nth 1
+;;                   (lofat-find-file fat32$c
+;;                                    (mv-nth 0 (root-d-e-list fat32$c))
+;;                                    (dirname path)))
+;;           0)
+;;    (not (equal (mv-nth 1
+;;                        (lofat-find-file fat32$c
+;;                                         (mv-nth 0 (root-d-e-list fat32$c))
+;;                                         path))
+;;                0)))
+;;   (and (equal (mv-nth 1 (lofat-mkdir fat32$c path))
+;;               -1)
+;;        (equal (mv-nth 1
+;;                       (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
+;;                                    path))
+;;               0)))
+;;  :hints
+;;  (("goal" :do-not-induct t
+;;    :in-theory
+;;    (e/d (lofat-mkdir)
+;;         ((:rewrite d-e-cc-of-update-dir-contents-coincident)
+;;          make-list-ac-removal
+;;          (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)))
+;;    :expand ((:free (fs) (hifat-find-file fs nil))
+;;             (:free (fs file)
+;;                    (hifat-place-file fs nil file))))))
 
 (defthm
   lofat-mkdir-refinement
@@ -945,7 +1055,7 @@
       1
       (lofat-to-hifat (mv-nth 0 (lofat-mkdir fat32$c path))))
      0)
-    (equal
+    (hifat-equiv
      (mv-nth
       0
       (lofat-to-hifat (mv-nth 0 (lofat-mkdir fat32$c path))))
@@ -967,8 +1077,7 @@
           (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)))
     :expand
     ((:free (fs) (hifat-find-file fs nil))
-     (:free (fs file) (hifat-place-file fs nil file)))))
-  :otf-flg t)
+     (:free (fs file) (hifat-place-file fs nil file))))))
 
 (thm
  (implies

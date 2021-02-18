@@ -1607,7 +1607,7 @@
         (lofat-find-file fat32$c root-d-e-list dirname))
        ((unless (or (atom dirname)
                     (and (equal errno 0)
-                         (m1-directory-file-p parent-dir))))
+                         (lofat-directory-file-p parent-dir))))
         (mv fat32$c -1 *enoent*))
        ((mv & errno)
         (lofat-find-file fat32$c root-d-e-list path))
