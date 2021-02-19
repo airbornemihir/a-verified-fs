@@ -760,23 +760,31 @@
 
 (defthm
   lofat-mkdir-refinement-lemma-6
-  (implies (and (equal (mv-nth 1
-                               (lofat-place-file fat32$c root-d-e path file1))
-                       0)
-                (equal (lofat-file->contents file1)
+  (implies (and (equal (lofat-file->contents file1)
                        (lofat-file->contents file2))
                 (lofat-file-p file1)
                 (lofat-file-p file2))
            (equal (mv-nth 1
                           (lofat-place-file fat32$c root-d-e path file2))
-                  0))
-  :hints (("goal" :in-theory (enable lofat-place-file
-                                     lofat-place-file-helper))
-          (if (not stable-under-simplificationp)
-              nil
-              '(:in-theory (enable lofat-place-file lofat-place-file-helper
-                                   lofat-regular-file-p
-                                   lofat-directory-file-p)))))
+                  (mv-nth 1
+                          (lofat-place-file fat32$c root-d-e path file1))))
+  :hints (("goal" :in-theory (enable lofat-place-file lofat-place-file-helper
+                                     lofat-regular-file-p
+                                     lofat-directory-file-p)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (equal (mv-nth 1
+                                 (lofat-place-file fat32$c root-d-e path file1))
+                         0)
+                  (equal (lofat-file->contents file1)
+                         (lofat-file->contents file2))
+                  (lofat-file-p file1)
+                  (lofat-file-p file2))
+             (equal (mv-nth 1
+                            (lofat-place-file fat32$c root-d-e path file2))
+                    0)))))
 
 (defthm
   lofat-mkdir-refinement-lemma-10
@@ -2012,6 +2020,31 @@
                     (hifat-place-file fs nil file))
              (:free (fat32$c file root-d-e)
                     (lofat-place-file fat32$c root-d-e nil file))))))
+
+(thm
+ (implies (and (lofat-file-p (list (cons 'd-e d-e1)
+                                   (cons 'contents contents)))
+               (lofat-file-p (list (cons 'd-e d-e2)
+                                   (cons 'contents contents))))
+          (equal (mv-nth 1
+                         (lofat-place-file fat32$c root-d-e path (list (cons 'd-e d-e1)
+                                                                       (cons 'contents
+                                                                             (lofat-file-contents-fix contents)))))
+                 (mv-nth 1
+                         (lofat-place-file fat32$c root-d-e path (list (cons 'd-e d-e2)
+                                                                       (cons 'contents
+                                                                             (lofat-file-contents-fix contents)))))))
+ :hints (("goal" :in-theory (enable lofat-place-file
+                                    lofat-place-file-helper))
+         (if (not stable-under-simplificationp)
+             nil
+           '(:in-theory (e/d (lofat-place-file lofat-place-file-helper
+                                               lofat-regular-file-p
+                                               lofat-directory-file-p
+                                               lofat-file-p
+                                               lofat-file->contents m1-file-hifat-file-alist-fix m1-file)
+                             (m1-file-hifat-file-alist-fix-normalisation
+                              abs-mkdir-correctness-lemma-36))))))
 
 (thm
  (implies
