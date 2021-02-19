@@ -2227,32 +2227,52 @@
                    (m1-file-hifat-file-alist-fix-normalisation
                     abs-mkdir-correctness-lemma-36)))))
 
-(thm
- (implies
-  (and t)
-  (equal
-   (mv-nth
-    1
-    (lofat-place-file
-     fat32$c root-d-e path
-     (list (cons 'd-e d-e1)
-           (cons 'contents contents))))
-   (mv-nth
-    1
-    (lofat-place-file
-     fat32$c root-d-e path
-     (list (cons 'd-e d-e2)
-           (cons 'contents contents))))))
- :hints
- (("goal" :in-theory
-   (e/d
-    (lofat-place-file lofat-place-file-helper
-                      lofat-regular-file-p
-                      lofat-directory-file-p
-                      lofat-file-p lofat-file->contents
-                      m1-file-hifat-file-alist-fix m1-file)
-    (m1-file-hifat-file-alist-fix-normalisation
-     abs-mkdir-correctness-lemma-36)))))
+(defthm
+  lofat-mkdir-refinement-lemma-14
+  (equal (mv-nth 1
+                 (lofat-place-file fat32$c root-d-e path
+                                   (list (cons 'd-e d-e1)
+                                         (cons 'contents contents))))
+         (mv-nth 1
+                 (lofat-place-file fat32$c root-d-e path
+                                   (list (cons 'd-e d-e2)
+                                         (cons 'contents contents)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (lofat-place-file lofat-place-file-helper
+                       lofat-regular-file-p
+                       lofat-directory-file-p
+                       lofat-file-p lofat-file->contents
+                       m1-file-hifat-file-alist-fix m1-file)
+     (m1-file-hifat-file-alist-fix-normalisation
+      abs-mkdir-correctness-lemma-36
+      (:rewrite lofat-file-contents-fix-when-lofat-file-contents-p)
+      (:rewrite d-e-cc-contents-of-lofat-place-file-coincident-lemma-4)
+      (:rewrite fat32-filename-p-correctness-1)
+      (:rewrite lofat-file-contents-p-when-stringp)
+      (:linear nth-when-d-e-p)
+      (:linear len-of-explode-when-m1-file-contents-p-1)
+      (:rewrite lofat-file-fix-when-lofat-file-p)
+      (:rewrite lofat-file-contents-p-when-d-e-listp)
+      (:rewrite nth-of-nats=>chars)
+      (:rewrite m1-file-contents-p-when-stringp)
+      (:type-prescription hifat-bounded-file-alist-p)
+      (:rewrite stringp-when-nonempty-stringp)))))
+  :rule-classes
+  ((:congruence
+    :corollary
+    (implies
+     (true-equiv d-e1 d-e2)
+     (equal (mv-nth 1
+                    (lofat-place-file fat32$c root-d-e path
+                                      (list (cons 'd-e d-e1)
+                                            (cons 'contents contents))))
+            (mv-nth 1
+                    (lofat-place-file fat32$c root-d-e path
+                                      (list (cons 'd-e d-e2)
+                                            (cons 'contents contents)))))))))
 
 (thm
  (implies
