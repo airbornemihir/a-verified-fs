@@ -2161,6 +2161,10 @@
         (equal (mv-nth 1 (lofat-mkdir fat32$c path))
                (mv-nth 1
                        (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
+                                    path)))
+        (equal (mv-nth 2 (lofat-mkdir fat32$c path))
+               (mv-nth 2
+                       (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
                                     path)))))
   :hints
   (("goal" :do-not-induct t
