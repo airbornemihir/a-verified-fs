@@ -2385,24 +2385,8 @@
 ;;                    (m1-file-hifat-file-alist-fix-normalisation
 ;;                     abs-mkdir-correctness-lemma-36)))))
 
-;; Move later.
 (defthm
-  hifat-mkdir-correctness-1
-  (implies (hifat-equiv fs1 fs2)
-           (hifat-equiv (mv-nth 0 (hifat-mkdir fs1 path))
-                        (mv-nth 0 (hifat-mkdir fs2 path))))
-  :rule-classes
-  :congruence)
-
-;; Move later.
-(defthm frame-reps-fs-correctness-1
-  (implies (frame-reps-fs frame fs)
-           (hifat-equiv (mv-nth 0 (collapse frame))
-                        fs))
-  :hints (("goal" :in-theory (enable frame-reps-fs))))
-
-(defthm
-  absfat-oracle-single-step-refinement-lemma-3
+  absfat-oracle-single-step-refinement-lemma-1
   (implies
    (frame-reps-fs frame
                   (mv-nth 0 (lofat-to-hifat fat32$c)))
@@ -2415,64 +2399,33 @@
            :use (:instance abs-mkdir-correctness-2
                            (path (lofat-st->path st))))))
 
-;; Move later.
 (defthm
-  hifat-place-file-when-hifat-equiv-3-corollary
+  absfat-oracle-single-step-refinement-lemma-2
   (implies
-   (and (equal (m1-file->contents file1)
-               (m1-file->contents file2))
-        (m1-regular-file-p (m1-file-fix file1))
-        (m1-regular-file-p (m1-file-fix file2)))
-   (equal
-    (hifat-equiv (mv-nth 0 (hifat-place-file fs path file1))
-                 (mv-nth 0 (hifat-place-file fs path file2)))
-    t))
-  :hints
-  (("goal"
-    :in-theory (disable
-                hifat-place-file-when-hifat-equiv-3)
-    :use
-    hifat-place-file-when-hifat-equiv-3)))
-
-;; Move later.
-(defthm hifat-pwrite-correctness-1
- (implies
-  (hifat-equiv fs1 fs2)
-  (hifat-equiv
-   (mv-nth 0
-           (hifat-pwrite fd buf offset fs1 fd-table file-table))
-   (mv-nth 0
-           (hifat-pwrite fd buf offset fs2 fd-table file-table))))
- :hints (("Goal" :do-not-induct t
-          :in-theory (enable hifat-no-dups-p)))
- :rule-classes :congruence)
-
-(thm
- (implies
-  (frame-reps-fs frame
-                 (mv-nth 0 (lofat-to-hifat fat32$c)))
-  (frame-reps-fs (mv-nth 0
-                         (abs-pwrite (lofat-st->fd st)
-                                     (lofat-st->buf st)
-                                     (lofat-st->offset st)
-                                     frame
-                                     (lofat-st->fd-table st)
-                                     (lofat-st->file-table st)))
-                 (mv-nth 0
-                         (hifat-pwrite (lofat-st->fd st)
-                                       (lofat-st->buf st)
-                                       (lofat-st->offset st)
-                                       (mv-nth 0 (lofat-to-hifat fat32$c))
-                                       (lofat-st->fd-table st)
-                                       (lofat-st->file-table st)))))
- :hints (("goal" :do-not-induct t
-          :in-theory (disable abs-pwrite-correctness-1 hifat-pwrite)
-          :use (:instance abs-pwrite-correctness-1
-                          (fd (lofat-st->fd st))
-                          (buf (lofat-st->buf st))
-                          (offset (lofat-st->offset st))
-                          (fd-table (lofat-st->fd-table st))
-                          (file-table (lofat-st->file-table st))))))
+   (frame-reps-fs frame
+                  (mv-nth 0 (lofat-to-hifat fat32$c)))
+   (frame-reps-fs (mv-nth 0
+                          (abs-pwrite (lofat-st->fd st)
+                                      (lofat-st->buf st)
+                                      (lofat-st->offset st)
+                                      frame
+                                      (lofat-st->fd-table st)
+                                      (lofat-st->file-table st)))
+                  (mv-nth 0
+                          (hifat-pwrite (lofat-st->fd st)
+                                        (lofat-st->buf st)
+                                        (lofat-st->offset st)
+                                        (mv-nth 0 (lofat-to-hifat fat32$c))
+                                        (lofat-st->fd-table st)
+                                        (lofat-st->file-table st)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable abs-pwrite-correctness-1 hifat-pwrite)
+           :use (:instance abs-pwrite-correctness-1
+                           (fd (lofat-st->fd st))
+                           (buf (lofat-st->buf st))
+                           (offset (lofat-st->offset st))
+                           (fd-table (lofat-st->fd-table st))
+                           (file-table (lofat-st->file-table st))))))
 
 ;; How do we prove this? The best way seems to be to open up the definitions of
 ;; the single-step functions and proceed from there.
