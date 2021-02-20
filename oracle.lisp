@@ -220,14 +220,13 @@
 
 (defthm
   lofat-mkdir-refinement-lemma-14
-  (equal (mv-nth 1
-                 (lofat-place-file fat32$c root-d-e path
-                                   (list (cons 'd-e d-e1)
-                                         (cons 'contents contents))))
-         (mv-nth 1
-                 (lofat-place-file fat32$c root-d-e path
-                                   (list (cons 'd-e d-e2)
-                                         (cons 'contents contents)))))
+  (equal
+   (lofat-place-file fat32$c root-d-e path
+                     (list (cons 'd-e d-e1)
+                           (cons 'contents contents)))
+   (lofat-place-file fat32$c root-d-e path
+                     (list (cons 'd-e d-e2)
+                           (cons 'contents contents))))
   :hints
   (("goal"
     :in-theory
@@ -256,14 +255,13 @@
     :corollary
     (implies
      (true-equiv d-e1 d-e2)
-     (equal (mv-nth 1
-                    (lofat-place-file fat32$c root-d-e path
-                                      (list (cons 'd-e d-e1)
-                                            (cons 'contents contents))))
-            (mv-nth 1
-                    (lofat-place-file fat32$c root-d-e path
-                                      (list (cons 'd-e d-e2)
-                                            (cons 'contents contents)))))))))
+     (equal
+      (lofat-place-file fat32$c root-d-e path
+                        (list (cons 'd-e d-e1)
+                              (cons 'contents contents)))
+      (lofat-place-file fat32$c root-d-e path
+                        (list (cons 'd-e d-e2)
+                              (cons 'contents contents))))))))
 
 (defthm
   lofat-mkdir-refinement-lemma-1
@@ -1652,26 +1650,12 @@
 ;;                    (hifat-place-file fs nil file))))))
 
 (defthm
-  lofat-mkdir-refinement-lemma-15
-  (implies
-   (not (equal d-e (d-e-fix nil)))
-   (equal
-    (mv-nth 1
-            (lofat-place-file fat32$c root-d-e path
-                              (list (cons 'd-e d-e)
-                                    (cons 'contents contents))))
-    (mv-nth 1
-            (lofat-place-file fat32$c root-d-e path
-                              (list (cons 'd-e (d-e-fix nil))
-                                    (cons 'contents contents))))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable lofat-mkdir-refinement-lemma-14)
-           :use (:instance lofat-mkdir-refinement-lemma-14
-                           (d-e1 d-e)
-                           (d-e2 (d-e-fix nil))))))
+  lofat-mkdir-refinement-lemma-12
+  (true-equiv (true-fix x) x)
+  :rule-classes :rewrite-quoted-constant)
 
 (defthm
-  lofat-mkdir-refinement-lemma-24
+  lofat-mkdir-refinement-lemma-13
   (implies
    (and (lofat-fs-p fat32$c)
         (equal (mv-nth 1 (lofat-to-hifat fat32$c))
