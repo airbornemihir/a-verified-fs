@@ -251,7 +251,8 @@
       (:type-prescription hifat-bounded-file-alist-p)
       (:rewrite stringp-when-nonempty-stringp)))))
   :rule-classes
-  ((:congruence
+  (:rewrite
+   (:congruence
     :corollary
     (implies
      (true-equiv d-e1 d-e2)
@@ -262,6 +263,9 @@
       (lofat-place-file fat32$c root-d-e path
                         (list (cons 'd-e d-e2)
                               (cons 'contents contents))))))))
+
+(in-theory (disable (:r
+                     lofat-mkdir-refinement-lemma-14)))
 
 (defthm
   lofat-mkdir-refinement-lemma-1
@@ -1649,6 +1653,25 @@
 ;;             (:free (fs file)
 ;;                    (hifat-place-file fs nil file))))))
 
+(defthmd
+  lofat-mkdir-refinement-lemma-15
+  (implies
+   (not (equal d-e (d-e-fix nil)))
+   (equal
+    (mv-nth 1
+            (lofat-place-file fat32$c root-d-e path
+                              (list (cons 'd-e d-e)
+                                    (cons 'contents contents))))
+    (mv-nth 1
+            (lofat-place-file fat32$c root-d-e path
+                              (list (cons 'd-e (d-e-fix nil))
+                                    (cons 'contents contents))))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable lofat-mkdir-refinement-lemma-14)
+           :use (:instance lofat-mkdir-refinement-lemma-14
+                           (d-e1 d-e)
+                           (d-e2 (d-e-fix nil))))))
+
 (defthm
   lofat-mkdir-refinement-lemma-12
   (true-equiv (true-fix x) x)
@@ -2103,6 +2126,125 @@
              (:free (fat32$c file root-d-e)
                     (lofat-place-file fat32$c root-d-e nil file))))))
 
+(encapsulate
+  ()
+
+  (local
+   ;; The following event raises a question as to whether congruential
+   ;; rewriting of quoted constants is happening as expected. It should go
+   ;; through without any hints or instructions, I think, but the reader can
+   ;; check that it doesn't by submitting it without instructions. The
+   ;; instructions, very simply, illustrate the rewrite I expect to happen
+   ;; automatically - the rewriter should use the rule
+   ;; (:congruence lofat-mkdir-refinement-lemma-14),
+   ;; which is identical (except for a vacuous hypothesis) to the rule
+   ;; (:rewrite lofat-mkdir-refinement-lemma-14)
+   ;; used in these instructions, to descend to the subexpression
+   ;; '(0 0 0 0 0 0 0 0 0 0 0 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0),
+   ;; a constant, and rewrite it with the expression
+   ;; (true-fix '(0 0 0 0 0 0 0 0 0 0 0 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0))
+   ;; as dictated by the rule
+   ;; (:rewrite-quoted-constant lofat-mkdir-refinement-lemma-12).
+   ;; That should allow an equality substitution by making use of the
+   ;; hypothesis which completes the proof. Is there a simple explanation I'm
+   ;; missing as to why this doesn't happen?
+   (defthm
+     lemma
+     (implies
+      (equal
+       (mv-nth
+        1
+        (lofat-to-hifat
+         (mv-nth
+          0
+          (lofat-place-file
+           fat32$c (pseudo-root-d-e fat32$c)
+           path
+           (cons (cons 'd-e
+                       (true-fix '(0 0 0 0 0 0 0 0 0 0 0 16 0
+                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
+                 '((contents)))))))
+       0)
+      (equal
+       (mv-nth
+        1
+        (lofat-to-hifat
+         (mv-nth
+          0
+          (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
+                            path
+                            '((d-e 0 0 0 0 0 0 0 0 0 0 0 16
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                              (contents))))))
+       0))
+     :instructions
+     (:promote
+      (:dive 1 2 1 2)
+      (:rewrite lofat-mkdir-refinement-lemma-14
+                ((d-e2 (true-fix '(0 0 0 0 0 0 0 0 0 0 0 16 0 0
+                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))))
+      :top (:dive 1)
+      :=))))
+
+;; (defthm
+;;   lofat-mkdir-refinement
+;;   (implies
+;;    (and
+;;     (lofat-fs-p fat32$c)
+;;     (fat32-filename-list-p path)
+;;     (equal (mv-nth 1 (lofat-to-hifat fat32$c))
+;;            0)
+;;     ;; Let's discuss this hypothesis.
+;;     ;;
+;;     ;; This is something that we actually should
+;;     ;; be able to derive from the structure of lofat-to-hifat-helper. That is,
+;;     ;; we should be able to say that if we're able to do lofat-to-hifat-helper
+;;     ;; with the max-entry-count parameter after the lofat-place-file operation,
+;;     ;; then obviously we must have the capacity for that number of entries. And
+;;     ;; if we don't have the capacity for that number of entries, then we must
+;;     ;; be contradicting the hypothesis about the error code of lofat-place-file
+;;     ;; being other than EIO. That is, this hypothesis should be implied by
+;;     ;; that one, because in the case where that one holds, we must have gotten
+;;     ;; away without an error while creating the new entry, and that means we
+;;     ;; couldn't have exceeded the max entry count!
+;;     ;;
+;;     ;; That kind of reasoning, however, is exactly the kind of thing we gave up
+;;     ;; on a while earlier. Now is not a great time to start either.
+;;     (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
+;;        (max-entry-count fat32$c))
+;;     (not
+;;      (equal
+;;       (mv-nth 2 (lofat-mkdir fat32$c path))
+;;       *enospc*)))
+;;    (and (equal (mv-nth 1
+;;                        (lofat-to-hifat (mv-nth 0 (lofat-mkdir fat32$c path))))
+;;                0)
+;;         (hifat-equiv
+;;          (mv-nth 0
+;;                  (lofat-to-hifat (mv-nth 0 (lofat-mkdir fat32$c path))))
+;;          (mv-nth 0
+;;                  (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
+;;                               path)))
+;;         (equal (mv-nth 1 (lofat-mkdir fat32$c path))
+;;                (mv-nth 1
+;;                        (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
+;;                                     path)))
+;;         (equal (mv-nth 2 (lofat-mkdir fat32$c path))
+;;                (mv-nth 2
+;;                        (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
+;;                                     path)))))
+;;   :hints
+;;   (("goal" :do-not-induct t
+;;     :in-theory
+;;     (e/d (lofat-mkdir)
+;;          ((:rewrite d-e-cc-of-update-dir-contents-coincident)
+;;           (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
+;;           lofat-place-file))
+;;     :expand ((:free (fs) (hifat-find-file fs nil))
+;;              (:free (fs file)
+;;                     (hifat-place-file fs nil file))
+;;              (:free (fat32$c file root-d-e)
+;;                     (lofat-place-file fat32$c root-d-e nil file))))))
 (defthm
   lofat-mkdir-refinement
   (implies
@@ -2153,10 +2295,11 @@
   :hints
   (("goal" :do-not-induct t
     :in-theory
-    (e/d (lofat-mkdir)
+    (e/d (lofat-mkdir lofat-mkdir-refinement-lemma-15)
          ((:rewrite d-e-cc-of-update-dir-contents-coincident)
           (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
-          lofat-place-file))
+          lofat-place-file
+          lofat-mkdir-refinement-lemma-12))
     :expand ((:free (fs) (hifat-find-file fs nil))
              (:free (fs file)
                     (hifat-place-file fs nil file))
