@@ -2385,34 +2385,120 @@
 ;;                    (m1-file-hifat-file-alist-fix-normalisation
 ;;                     abs-mkdir-correctness-lemma-36)))))
 
+(defthm
+  absfat-oracle-single-step-refinement-lemma-1
+  (implies (hifat-equiv fs1 fs2)
+           (hifat-equiv (mv-nth 0 (hifat-mkdir fs1 path))
+                        (mv-nth 0 (hifat-mkdir fs2 path))))
+  :rule-classes
+  :congruence)
+
+(defthm absfat-oracle-single-step-refinement-lemma-2
+  (implies (frame-reps-fs frame fs)
+           (hifat-equiv (mv-nth 0 (collapse frame))
+                        fs))
+  :hints (("goal" :in-theory (enable frame-reps-fs))))
+
+(defthm
+  absfat-oracle-single-step-refinement-lemma-3
+  (implies
+   (frame-reps-fs frame
+                  (mv-nth 0 (lofat-to-hifat fat32$c)))
+   (frame-reps-fs (mv-nth 0 (abs-mkdir frame (lofat-st->path st)))
+                  (mv-nth 0
+                          (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
+                                       (lofat-st->path st)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable abs-mkdir-correctness-2 hifat-mkdir)
+           :use (:instance abs-mkdir-correctness-2
+                           (path (lofat-st->path st))))))
+
+;; Move later.
+(defthm
+  hifat-place-file-when-hifat-equiv-3-corollary
+  (implies
+   (and (equal (m1-file->contents file1)
+               (m1-file->contents file2))
+        (m1-regular-file-p (m1-file-fix file1))
+        (m1-regular-file-p (m1-file-fix file2)))
+   (equal
+    (hifat-equiv (mv-nth 0 (hifat-place-file fs path file1))
+                 (mv-nth 0 (hifat-place-file fs path file2)))
+    t))
+  :hints
+  (("goal"
+    :in-theory (disable
+                hifat-place-file-when-hifat-equiv-3)
+    :use
+    hifat-place-file-when-hifat-equiv-3)))
+
 (thm
  (implies
-  (frame-reps-fs frame (lofat-to-hifat fat32$c))
-  (frame-reps-fs
-   (mv-nth 0 (abs-mkdir frame (lofat-st->path st)))
-   (lofat-to-hifat (mv-nth 0
-                           (lofat-mkdir fat32$c (lofat-st->path st))))))
- :hints (("goal" :do-not-induct t :in-theory (disable
-                                              abs-mkdir-correctness-2
-                                              ;; Consider disabling later.
-                                              hifat-mkdir)
-          :use
-          (:instance
-           abs-mkdir-correctness-2 (path (lofat-st->path st)))))
- :otf-flg t)
+  (hifat-equiv fs1 fs2)
+  (hifat-equiv
+   (mv-nth 0
+           (hifat-pwrite fd buf offset fs1 fd-table file-table))
+   (mv-nth 0
+           (hifat-pwrite fd buf offset fs2 fd-table file-table))))
+ :hints (("Goal" :do-not-induct t)
+         (if (not stable-under-simplificationp)
+             nil
+           '(:in-theory (enable m1-file-contents-fix hifat-no-dups-p)))))
+
+(thm
+ (implies
+  (frame-reps-fs frame
+                 (mv-nth 0 (lofat-to-hifat fat32$c)))
+  (frame-reps-fs (mv-nth 0
+                         (abs-pwrite (lofat-st->fd st)
+                                     (lofat-st->buf st)
+                                     (lofat-st->offset st)
+                                     frame
+                                     (lofat-st->fd-table st)
+                                     (lofat-st->file-table st)))
+                 (mv-nth 0
+                         (hifat-pwrite (lofat-st->fd st)
+                                       (lofat-st->buf st)
+                                       (lofat-st->offset st)
+                                       (mv-nth 0 (lofat-to-hifat fat32$c))
+                                       (lofat-st->fd-table st)
+                                       (lofat-st->file-table st)))))
+ :hints (("goal" :do-not-induct t
+          :in-theory (disable abs-pwrite-correctness-1 hifat-pwrite)
+          :use (:instance abs-pwrite-correctness-1
+                          (fd (lofat-st->fd st))
+                          (buf (lofat-st->buf st))
+                          (offset (lofat-st->offset st))
+                          (fd-table (lofat-st->fd-table st))
+                          (file-table (lofat-st->file-table st))))))
 
 ;; How do we prove this? The best way seems to be to open up the definitions of
 ;; the single-step functions and proceed from there.
 (defthm absfat-oracle-single-step-refinement
   (implies
-   (frame-reps-fs
-    frame
-    (lofat-to-hifat fat32$c))
+   (and
+    (lofat-fs-p fat32$c)
+    (equal (mv-nth '1 (lofat-to-hifat fat32$c)) '0)
+    (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
+       (max-entry-count fat32$c))
+    (not (equal (lofat-st->errno
+                 (mv-nth 1
+                         (lofat-oracle-single-step fat32$c syscall-sym
+                                                   st)))
+                *enospc*))
+    (frame-reps-fs
+     frame
+     (mv-nth 0
+             (lofat-to-hifat fat32$c))))
    (frame-reps-fs
     (mv-nth 0 (absfat-oracle-single-step frame syscall-sym st))
-    (lofat-to-hifat (mv-nth 0 (lofat-oracle-single-step fat32$c syscall-sym
-                                                        st)))))
+    (mv-nth 0
+            (lofat-to-hifat (mv-nth 0 (lofat-oracle-single-step fat32$c syscall-sym
+                                                                st))))))
   :hints (("Goal" :do-not-induct t
-           :in-theory (enable absfat-oracle-single-step
-                              lofat-oracle-single-step)))
+           :in-theory
+           (e/d (absfat-oracle-single-step
+                 lofat-oracle-single-step)
+                (hifat-mkdir
+                 hifat-pwrite))))
   :otf-flg t)
