@@ -2385,15 +2385,17 @@
 ;;                    (m1-file-hifat-file-alist-fix-normalisation
 ;;                     abs-mkdir-correctness-lemma-36)))))
 
+;; Move later.
 (defthm
-  absfat-oracle-single-step-refinement-lemma-1
+  hifat-mkdir-correctness-1
   (implies (hifat-equiv fs1 fs2)
            (hifat-equiv (mv-nth 0 (hifat-mkdir fs1 path))
                         (mv-nth 0 (hifat-mkdir fs2 path))))
   :rule-classes
   :congruence)
 
-(defthm absfat-oracle-single-step-refinement-lemma-2
+;; Move later.
+(defthm frame-reps-fs-correctness-1
   (implies (frame-reps-fs frame fs)
            (hifat-equiv (mv-nth 0 (collapse frame))
                         fs))
@@ -2432,7 +2434,8 @@
     :use
     hifat-place-file-when-hifat-equiv-3)))
 
-(thm
+;; Move later.
+(defthm hifat-pwrite-correctness-1
  (implies
   (hifat-equiv fs1 fs2)
   (hifat-equiv
@@ -2440,10 +2443,9 @@
            (hifat-pwrite fd buf offset fs1 fd-table file-table))
    (mv-nth 0
            (hifat-pwrite fd buf offset fs2 fd-table file-table))))
- :hints (("Goal" :do-not-induct t)
-         (if (not stable-under-simplificationp)
-             nil
-           '(:in-theory (enable m1-file-contents-fix hifat-no-dups-p)))))
+ :hints (("Goal" :do-not-induct t
+          :in-theory (enable hifat-no-dups-p)))
+ :rule-classes :congruence)
 
 (thm
  (implies
