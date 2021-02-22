@@ -2115,7 +2115,8 @@
              (:free (fs file)
                     (hifat-place-file fs nil file))
              (:free (fat32$c file root-d-e)
-                    (lofat-place-file fat32$c root-d-e nil file))))))
+                    (lofat-place-file fat32$c root-d-e nil file)))))
+  :otf-flg t)
 
 (encapsulate
   ()
@@ -2800,19 +2801,12 @@
     (< (+ offset (len buf)) 4294967296))
    (hifat-equiv
     (put-assoc-equal
-     (car (file-table-element->fid
-           (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                             file-table))))
-     (m1-file
-      (d-e-set-first-cluster-file-size
-       (d-e-install-directory-bit
-        (make-d-e-with-filename
-         (car (file-table-element->fid
-               (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                 file-table)))))
-        nil)
-       0 0)
-      "")
+     name2
+     (m1-file (d-e-set-first-cluster-file-size
+               (d-e-install-directory-bit (make-d-e-with-filename name2)
+                                          nil)
+               0 0)
+              "")
      (mv-nth
       0
       (lofat-to-hifat-helper
@@ -2822,9 +2816,7 @@
                 (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
        (max-entry-count fat32$c))))
     (put-assoc-equal
-     (car (file-table-element->fid
-           (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                             file-table))))
+     name2
      (m1-file '(0 0 0 0 0 0 0 0 0 0 0 0
                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
               (implode (insert-text nil offset buf)))
@@ -2846,84 +2838,545 @@
                             (d-e-cc fat32$c
                                     (pseudo-root-d-e fat32$c))))))))))
 
-(thm
- (implies
-  (and
-   (lofat-fs-p fat32$c)
-   (equal (mv-nth 1 (lofat-to-hifat fat32$c))
-          0)
-   (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
-      (max-entry-count fat32$c))
-   (not
-    (lofat-regular-file-p
+(defthm
+  lofat-pwrite-refinement-lemma-7
+  (implies (and (not (stringp buf))
+                (< (+ offset (len buf)) 4294967296))
+           (lofat-file-contents-p (implode (insert-text nil offset buf))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d
+     (lofat-to-hifat root-d-e-list hifat-place-file
+                     lofat-file-contents-p insert-text)
+     (lofat-mkdir-refinement-lemma-10
+      (:rewrite lofat-place-file-correctness-lemma-27)
+      (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-3)
+      (:rewrite m1-file->contents-of-m1-file)
+      (:rewrite m1-file-contents-fix-when-m1-file-contents-p)
+      (:rewrite hifat-to-lofat-inversion-lemma-2)
+      (:rewrite member-of-nth-when-not-intersectp)
+      (:rewrite
+       lofat-to-hifat-helper-of-hifat-to-lofat-helper-disjoint-lemma-1)
+      (:definition non-free-index-listp)
+      (:definition member-equal)
+      (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident-lemma-8)
+      (:rewrite d-e-cc-of-place-contents-disjoint)
+      (:linear length-of-d-e-cc-contents . 1)
+      (:rewrite lofat-mkdir-refinement-lemma-31)
+      (:rewrite d-e-cc-contents-of-update-fati)
+      (:rewrite d-e-first-cluster-of-d-e-set-first-cluster-file-size)
+      (:rewrite fat32-masked-entry-fix-when-fat32-masked-entry-p)
+      (:rewrite fat32-masked-entry-p-of-nth-when-fat32-masked-entry-list-p)
+      (:rewrite d-e-cc-contents-of-place-contents-disjoint)))
+    :restrict ((not-intersectp-list-when-subsetp-1
+                ((y (mv-nth 0
+                            (d-e-cc fat32$c
+                                    (pseudo-root-d-e fat32$c))))))))))
+
+(defthm
+  lofat-pwrite-refinement-lemma-8
+  (implies
+   (and
+    (< (count-free-clusters (effective-fat fat32$c))
+       (len (make-clusters (implode (insert-text nil offset buf))
+                           (cluster-size fat32$c))))
+    (lofat-fs-p fat32$c)
+    (equal
      (mv-nth
-      0
-      (lofat-find-file fat32$c
-                       (mv-nth 0 (root-d-e-list fat32$c))
-                       (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))))
-   (equal
-    (mv-nth 1
-            (lofat-place-file
-             fat32$c (pseudo-root-d-e fat32$c)
-             (file-table-element->fid
-              (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                file-table)))
-             (lofat-file '(0 0 0 0 0 0 0 0 0 0 0 0
-                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                         (implode (insert-text nil offset buf)))))
-    0)
-   (consp (assoc-equal fd fd-table))
-   (consp (assoc-equal (cdr (assoc-equal fd fd-table))
-                       file-table))
-   (not (stringp buf))
-   (integerp (+ offset (len buf)))
-   (<= 0 (+ offset (len buf)))
-   (< (+ offset (len buf)) 4294967296))
-  (hifat-equiv
-   (mv-nth
-    0
-    (lofat-to-hifat
-     (mv-nth 0
+      3
+      (lofat-to-hifat-helper
+       fat32$c
+       (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+       (max-entry-count fat32$c)))
+     0)
+    (equal
+     (mv-nth 1
              (lofat-place-file
-              fat32$c (pseudo-root-d-e fat32$c)
-              (file-table-element->fid
-               (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                 file-table)))
+              fat32$c root-d-e path
               (lofat-file '(0 0 0 0 0 0 0 0 0 0 0 0
                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                          (implode (insert-text nil offset buf)))))))
-   (mv-nth
-    0
-    (hifat-place-file (mv-nth 0 (lofat-to-hifat fat32$c))
-                      (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table)))
-                      (m1-file '(0 0 0 0 0 0 0 0 0 0 0 0
-                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                               (implode (insert-text nil offset buf)))))))
- :hints
- (("goal"
-   :do-not-induct t
-   :in-theory (e/d (lofat-to-hifat root-d-e-list hifat-place-file)
-                   (lofat-mkdir-refinement-lemma-10)
-                   )
-   :restrict ((not-intersectp-list-when-subsetp-1
-               ((y (mv-nth 0
-                           (d-e-cc fat32$c
-                                   (pseudo-root-d-e fat32$c)))))))
-   :use
-   (:instance
-    lofat-mkdir-refinement-lemma-10
-    (path
-     (file-table-element->fid
-      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                        file-table))))
-    (file
-     (lofat-file '(0 0 0 0 0 0 0 0 0 0 0 0
-                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                 (implode (insert-text nil offset buf))))))))
+                          (implode (insert-text nil offset buf)))))
+     0)
+    (not (stringp buf))
+    (< (+ offset (len buf)) 4294967296)
+    (consp (cdr path)))
+   (m1-regular-file-p
+    (mv-nth
+     0
+     (hifat-find-file
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32$c
+        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+        (max-entry-count fat32$c)))
+      path))))
+ :hints (("goal" :in-theory (e/d (dirname lofat-place-file
+                                          hifat-find-file basename)
+                                 (abs-pwrite-correctness-lemma-37))))
+ :rule-classes
+ (:rewrite
+  (:linear
+   :corollary
+   (implies
+    (and
+     (not
+      (m1-regular-file-p
+       (mv-nth
+        0
+        (hifat-find-file
+         (mv-nth
+          0
+          (lofat-to-hifat-helper
+           fat32$c
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           (max-entry-count fat32$c)))
+         path))))
+     (lofat-fs-p fat32$c)
+     (equal
+      (mv-nth
+       3
+       (lofat-to-hifat-helper
+        fat32$c
+        (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+        (max-entry-count fat32$c)))
+      0)
+     (equal
+      (mv-nth 1
+              (lofat-place-file
+               fat32$c root-d-e path
+               (lofat-file '(0 0 0 0 0 0 0 0 0 0 0 0
+                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                           (implode (insert-text nil offset buf)))))
+      0)
+     (not (stringp buf))
+     (< (+ offset (len buf)) 4294967296)
+     (consp (cdr path)))
+    (>= (count-free-clusters (effective-fat fat32$c))
+        (len (make-clusters (implode (insert-text nil offset buf))
+                            (cluster-size fat32$c))))))))
+
+(defthm
+  lofat-pwrite-refinement-lemma-9
+  (implies (and (not (stringp buf))
+                (< (+ offset (len buf)) 4294967296))
+           (m1-file-contents-p (implode$inline (insert-text nil offset buf))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory
+    (e/d (lofat-pwrite m1-file-contents-p insert-text)
+         ((:rewrite d-e-cc-of-update-dir-contents-coincident)
+          (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
+          lofat-place-file))
+    :expand ((:free (fs) (hifat-find-file fs nil))
+             (:free (fs file)
+                    (hifat-place-file fs nil file))
+             (:free (fat32$c file root-d-e)
+                    (lofat-place-file fat32$c root-d-e nil file))))))
+
+(defthm lofat-pwrite-refinement-lemma-11
+  (implies (lofat-directory-file-p file)
+           (true-listp (lofat-file->contents file)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-directory-file-p)))
+  :rule-classes :type-prescription)
+
+;; Should we just rewrite the basename to the car under these hypotheses?
+(defthm
+  lofat-pwrite-refinement-lemma-12
+  (implies
+   (and
+    (fat32-filename-list-p path)
+    (equal
+     (mv-nth
+      1
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path)))
+     0)
+    (consp path)
+    (not (consp (cdr path))))
+   (equal
+    (mv-nth
+     1
+     (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (basename path)))
+    0))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable basename))))
+
+(defthm
+  lofat-pwrite-refinement-lemma-13
+  (implies
+   (and
+    (consp path)
+    (d-e-directory-p
+     (mv-nth
+      0
+      (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+                (car path))))
+    (fat32-filename-list-p path)
+    (not (consp (cdr path))))
+   (d-e-directory-p
+    (mv-nth
+     0
+     (find-d-e (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+               (basename path)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable basename))))
+
+(encapsulate
+  ()
+
+  (local
+   (in-theory
+    (e/d (hifat-place-file (:rewrite lofat-to-hifat-inversion-lemma-4)
+                           hifat-find-file
+                           subsetp-member)
+         ((:definition find-d-e)
+          (:definition place-d-e)
+          (:rewrite d-e-p-when-member-equal-of-d-e-list-p)
+          (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
+                    . 5))
+         ((:rewrite hifat-equiv-of-cons-lemma-4)
+          (:rewrite not-intersectp-list-of-cons-2))
+         ((:rewrite free-index-list-listp-of-update-nth-lemma-1)
+          (:rewrite free-index-list-listp-correctness-1)
+          (:rewrite non-free-index-list-listp-correctness-1)
+          (:rewrite count-free-clusters-of-set-indices-in-fa-table-2)
+          (:rewrite count-free-clusters-of-set-indices-in-fa-table-lemma-1)
+          (:rewrite non-free-index-listp-correctness-5)
+          (:rewrite free-index-listp-correctness-1)
+          (:rewrite consp-of-assoc-of-hifat-file-alist-fix)
+          (:linear hifat-entry-count-when-hifat-subsetp)
+          (:rewrite consp-of-assoc-when-hifat-equiv-lemma-1)
+          (:rewrite hifat-subsetp-preserves-assoc)
+          (:rewrite abs-find-file-correctness-1-lemma-40)
+          (:rewrite hifat-file-alist-fix-guard-lemma-1)
+          (:rewrite natp-of-caar-when-fd-table-p)
+          (:rewrite natp-of-caar-when-file-table-p)
+          (:rewrite fat32-filename-p-of-car-when-fat32-filename-list-p)
+          (:rewrite d-e-list-p-of-cdr-when-d-e-list-p)
+          (:rewrite fat32-masked-entry-list-p-when-bounded-nat-listp)
+          (:linear find-n-free-clusters-correctness-1)
+          (:rewrite fat32-masked-entry-list-p-when-not-consp)
+          (:rewrite bounded-nat-listp-correctness-1)
+          (:rewrite stringp-when-nonempty-stringp)
+          (:rewrite str::hex-digit-char-listp-of-cons)
+          (:definition logtail$inline)
+          (:definition loghead$inline)
+          (:rewrite nat-listp-when-unsigned-byte-listp)
+          (:rewrite take-of-too-many)
+          (:rewrite make-list-ac-removal)
+          (:rewrite true-list-listp-when-not-consp)
+          (:rewrite true-list-listp-of-cdr-when-true-list-listp)
+          (:rewrite rationalp-of-car-when-rational-listp)
+          (:rewrite integerp-of-car-when-integer-listp)
+          (:rewrite acl2-numberp-of-car-when-acl2-number-listp)
+          (:rewrite subsetp-implies-subsetp-cdr)
+          (:rewrite revappend-removal)
+          (:rewrite not-intersectp-list-of-set-difference$-lemma-2
+                    . 1)
+          (:rewrite member-intersectp-is-commutative-lemma-2)
+          (:rewrite intersectp-member-when-not-member-intersectp)
+          (:rewrite not-intersectp-list-when-subsetp-2)
+          (:rewrite no-duplicatesp-of-member)
+          (:rewrite then-subseq-same-2)
+          (:rewrite subseq-of-length-1)
+          (:rewrite nth-when->=-n-len-l)
+          (:rewrite car-of-nthcdr)
+          (:rewrite assoc-of-car-when-member)
+          (:rewrite true-listp-when-string-list)
+          intersect-with-subset
+          subsetp-member
+          (:rewrite consp-of-nthcdr)
+          (:induction integer-listp)
+          (:definition integer-listp)
+          (:definition rational-listp)
+          (:definition acl2-number-listp)
+          (:induction update-nth)
+          (:definition update-nth)
+          (:definition mod)
+          (:definition ceiling)
+          (:rewrite characterp-nth)
+          (:definition string-listp)
+          (:induction take)
+          (:definition take)
+          (:induction member-equal)
+          (:definition member-equal)
+          (:definition floor)
+          (:induction nth)
+          (:definition nth)
+          (:induction true-listp)
+          (:definition true-listp)
+          (:rewrite
+           not-intersectp-list-of-set-difference$-lemma-1)
+          make-list-ac last
+          (:rewrite lofat-find-file-correctness-lemma-2)
+          binary-append
+          (:rewrite
+           get-cc-contents-of-place-contents-coincident-lemma-3)
+          (:rewrite
+           lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-4)))))
+
+  (local
+   (defun-nx
+     induction-scheme
+     (entry-limit fat32$c
+                  file path root-d-e x)
+     (cond
+      ((and
+        (consp path)
+        (consp
+         (assoc-equal
+          (fat32-filename-fix (car path))
+          (hifat-file-alist-fix
+           (mv-nth
+            0
+            (lofat-to-hifat-helper
+             fat32$c
+             (make-d-e-list
+              (mv-nth 0
+                      (d-e-cc-contents
+                       fat32$c root-d-e)))
+             entry-limit)))))
+        (m1-directory-file-p
+         (cdr
+          (assoc-equal
+           (fat32-filename-fix (car path))
+           (hifat-file-alist-fix
+            (mv-nth
+             0
+             (lofat-to-hifat-helper
+              fat32$c
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents
+                        fat32$c root-d-e)))
+              entry-limit)))))))
+       (induction-scheme
+        entry-limit
+        fat32$c file (cdr path)
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents
+                    fat32$c root-d-e)))
+          (car path)))
+        (append
+         x
+         (flatten
+          (set-difference-equal
+           (mv-nth 2
+                   (lofat-to-hifat-helper
+                    fat32$c
+                    (make-d-e-list
+                     (mv-nth 0
+                             (d-e-cc-contents
+                              fat32$c root-d-e)))
+                    entry-limit))
+           (mv-nth 2
+                   (lofat-to-hifat-helper
+                    fat32$c
+                    (make-d-e-list
+                     (mv-nth 0
+                             (d-e-cc-contents
+                              fat32$c (mv-nth
+                                       0
+                                       (find-d-e
+                                        (make-d-e-list
+                                         (mv-nth 0
+                                                 (d-e-cc-contents
+                                                  fat32$c root-d-e)))
+                                        (car path))))))
+                    entry-limit)))))))
+      (t (mv entry-limit fat32$c
+             file path root-d-e x)))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-10
+    (implies
+     (and
+      (good-root-d-e-p root-d-e fat32$c)
+      (non-free-index-listp x (effective-fat fat32$c))
+      (fat32-filename-list-p path)
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         entry-limit))
+       0)
+      (not-intersectp-list
+       (mv-nth 0 (d-e-cc fat32$c root-d-e))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         entry-limit)))
+      (not-intersectp-list
+       x
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+         entry-limit)))
+      (lofat-file-p file)
+      (or (stringp (lofat-file->contents file))
+          (equal (lofat-file->contents file) nil))
+      (not (equal (mv-nth 1
+                          (lofat-place-file fat32$c root-d-e path file))
+                  *enospc*))
+      (integerp entry-limit)
+      (<
+       (hifat-entry-count
+        (mv-nth
+         0
+         (lofat-to-hifat-helper
+          fat32$c
+          (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+          entry-limit)))
+       entry-limit))
+     (and
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         (mv-nth 0
+                 (lofat-place-file fat32$c root-d-e path file))
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents
+                   (mv-nth 0
+                           (lofat-place-file fat32$c root-d-e path file))
+                   root-d-e)))
+         entry-limit))
+       0)
+      (not-intersectp-list
+       x
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         (mv-nth 0
+                 (lofat-place-file fat32$c root-d-e path file))
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents
+                   (mv-nth 0
+                           (lofat-place-file fat32$c root-d-e path file))
+                   root-d-e)))
+         entry-limit)))
+      (hifat-equiv
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         (mv-nth 0
+                 (lofat-place-file fat32$c root-d-e path file))
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents
+                   (mv-nth 0
+                           (lofat-place-file fat32$c root-d-e path file))
+                   root-d-e)))
+         entry-limit))
+       (mv-nth
+        0
+        (hifat-place-file
+         (mv-nth
+          0
+          (lofat-to-hifat-helper
+           fat32$c
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           entry-limit))
+         path
+         (m1-file d-e (lofat-file->contents file)))))
+      (equal
+       (mv-nth
+        1
+        (hifat-place-file
+         (mv-nth
+          0
+          (lofat-to-hifat-helper
+           fat32$c
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           entry-limit))
+         path
+         (m1-file d-e (lofat-file->contents file))))
+       (mv-nth 1
+               (lofat-place-file fat32$c root-d-e path file)))))
+    :hints
+    (("goal"
+      :induct (induction-scheme entry-limit
+                                fat32$c file path root-d-e x)
+      :expand ((lofat-place-file fat32$c root-d-e path file))))
+    :rule-classes
+    ((:rewrite
+      :corollary
+      (implies
+       (and
+        (good-root-d-e-p root-d-e fat32$c)
+        (non-free-index-listp x (effective-fat fat32$c))
+        (fat32-filename-list-p path)
+        (equal
+         (mv-nth
+          3
+          (lofat-to-hifat-helper
+           fat32$c
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           entry-limit))
+         0)
+        (not-intersectp-list
+         (mv-nth 0 (d-e-cc fat32$c root-d-e))
+         (mv-nth
+          2
+          (lofat-to-hifat-helper
+           fat32$c
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           entry-limit)))
+        (not-intersectp-list
+         x
+         (mv-nth
+          2
+          (lofat-to-hifat-helper
+           fat32$c
+           (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+           entry-limit)))
+        (lofat-file-p file)
+        (or (lofat-regular-file-p file)
+            (equal (lofat-file->contents file) nil))
+        (not (equal (mv-nth 1
+                            (lofat-place-file fat32$c root-d-e path file))
+                    *enospc*))
+        (integerp entry-limit)
+        (<
+         (hifat-entry-count
+          (mv-nth
+           0
+           (lofat-to-hifat-helper
+            fat32$c
+            (make-d-e-list (mv-nth 0 (d-e-cc-contents fat32$c root-d-e)))
+            entry-limit)))
+         entry-limit))
+       (not-intersectp-list
+        x
+        (mv-nth
+         2
+         (lofat-to-hifat-helper
+          (mv-nth 0
+                  (lofat-place-file fat32$c root-d-e path file))
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents
+                    (mv-nth 0
+                            (lofat-place-file fat32$c root-d-e path file))
+                    root-d-e)))
+          entry-limit))))))))
 
 (defthm
   lofat-pwrite-refinement
@@ -2976,7 +3429,8 @@
              (:free (fs file)
                     (hifat-place-file fs nil file))
              (:free (fat32$c file root-d-e)
-                    (lofat-place-file fat32$c root-d-e nil file))))))
+                    (lofat-place-file fat32$c root-d-e nil file)))))
+  :otf-flg t)
 
 ;; How do we prove this? The best way seems to be to open up the definitions of
 ;; the single-step functions and proceed from there.
