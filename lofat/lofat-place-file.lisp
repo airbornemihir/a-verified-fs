@@ -14495,7 +14495,7 @@
     :rule-classes (:linear :rewrite))
 
   (defthm
-    lofat-place-file-correctness-lemma-1161
+    lofat-place-file-correctness-lemma-117
     (implies
      (and
       (useful-d-e-list-p d-e-list)
