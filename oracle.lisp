@@ -5,7 +5,8 @@
 (include-book "lofat-syscalls")
 (include-book "abs-syscalls")
 
-(local (in-theory (disable nth make-list-ac-removal last)))
+(local (in-theory (disable nth make-list-ac-removal last
+                           make-list-ac)))
 
 (fty::defprod lofat-st
               ((fd natp)
@@ -691,7 +692,8 @@
   (local
    (in-theory
     (e/d (lofat-to-hifat root-d-e-list
-                         d-e-cc-of-lofat-place-file-coincident-1)
+                         d-e-cc-of-lofat-place-file-coincident-1
+                         hifat-place-file)
          (lofat-place-file-correctness-1
           (:rewrite d-e-cc-contents-of-lofat-remove-file-disjoint-lemma-7
                     . 5)))))
@@ -1094,6 +1096,4398 @@
                                       (pseudo-root-d-e fat32$c))))))))))
 
   (defthm
+    lofat-pwrite-refinement-lemma-31
+    (implies
+     (and
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (fat32-filename-list-p path)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (lofat-file-p file)
+      (not (lofat-directory-file-p file))
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (consp path)
+      (equal
+       (mv-nth
+        1
+        (find-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (car path)))
+       0)
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (<
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list
+              (mv-nth 0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+             (car path))))))))
+      (< 0
+         (len (explode (lofat-file->contents file)))))
+     (not-intersectp-list
+      (mv-nth 0
+              (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (update-dir-contents
+          (mv-nth
+           0
+           (place-contents
+            (update-fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (fat32-update-lower-28
+              (fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32$c)
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path)))))
+                  (make-list-ac
+                   (len
+                    (mv-nth
+                     0
+                     (d-e-cc
+                      fat32$c
+                      (mv-nth
+                       0
+                       (find-d-e
+                        (make-d-e-list
+                         (mv-nth 0
+                                 (d-e-cc-contents
+                                  fat32$c (pseudo-root-d-e fat32$c))))
+                        (car path))))))
+                   0 nil))
+                 1))
+               fat32$c)
+              268435455)
+             (mv-nth
+              0
+              (clear-cc
+               fat32$c
+               (d-e-first-cluster
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))
+               (d-e-file-size
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))))
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))
+            (lofat-file->contents file)
+            (len (explode (lofat-file->contents file)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list
+                      (mv-nth
+                       0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                     (car path))))))
+                0 nil))
+              1))))
+          (d-e-first-cluster (pseudo-root-d-e fat32$c))
+          (nats=>string
+           (insert-d-e
+            (string=>nats
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (d-e-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth 0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+               (car path)))
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (len (explode (lofat-file->contents file))))))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))
+          (len (explode (lofat-file->contents file)))))
+        (max-entry-count fat32$c)))))
+    :hints
+    (("goal"
+      :in-theory
+      (e/d (update-dir-contents-correctness-1 place-contents-correctness-1)
+           ((:rewrite place-contents-expansion-2)))
+      :use
+      (:instance
+       (:rewrite place-contents-expansion-2)
+       (first-cluster
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32$c)
+           (mv-nth
+            0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth 0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+               (car path)))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth 0
+                          (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path))))))
+            0 nil))
+          1)))
+       (file-length (len (explode (lofat-file->contents file))))
+       (contents (lofat-file->contents file))
+       (d-e
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (fat32$c
+        (update-fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))))
+             0 nil))
+           1))
+         (fat32-update-lower-28
+          (fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path))))))
+               0 nil))
+             1))
+           fat32$c)
+          268435455)
+         (mv-nth
+          0
+          (clear-cc
+           fat32$c
+           (d-e-first-cluster
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path))))
+           (d-e-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path))))))))))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-33
+    (implies
+     (and
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (fat32-filename-list-p path)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (lofat-file-p file)
+      (not (lofat-directory-file-p file))
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (consp path)
+      (equal
+       (mv-nth
+        1
+        (find-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (car path)))
+       0)
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (<
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list
+              (mv-nth 0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+             (car path))))))))
+      (< 0
+         (len (explode (lofat-file->contents file)))))
+     (equal
+      (mv-nth
+       3
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (update-dir-contents
+          (mv-nth
+           0
+           (place-contents
+            (update-fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (fat32-update-lower-28
+              (fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32$c)
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path)))))
+                  (make-list-ac
+                   (len
+                    (mv-nth
+                     0
+                     (d-e-cc
+                      fat32$c
+                      (mv-nth
+                       0
+                       (find-d-e
+                        (make-d-e-list
+                         (mv-nth 0
+                                 (d-e-cc-contents
+                                  fat32$c (pseudo-root-d-e fat32$c))))
+                        (car path))))))
+                   0 nil))
+                 1))
+               fat32$c)
+              268435455)
+             (mv-nth
+              0
+              (clear-cc
+               fat32$c
+               (d-e-first-cluster
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))
+               (d-e-file-size
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))))
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))
+            (lofat-file->contents file)
+            (len (explode (lofat-file->contents file)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list
+                      (mv-nth
+                       0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                     (car path))))))
+                0 nil))
+              1))))
+          (d-e-first-cluster (pseudo-root-d-e fat32$c))
+          (nats=>string
+           (insert-d-e
+            (string=>nats
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (d-e-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth 0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+               (car path)))
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (len (explode (lofat-file->contents file))))))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))
+          (len (explode (lofat-file->contents file)))))
+        (max-entry-count fat32$c)))
+      0))
+    :hints
+    (("goal"
+      :in-theory
+      (e/d (update-dir-contents-correctness-1 place-contents-correctness-1)
+           ((:rewrite place-contents-expansion-2)))
+      :use
+      (:instance
+       (:rewrite place-contents-expansion-2)
+       (first-cluster
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32$c)
+           (mv-nth
+            0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth 0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+               (car path)))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth 0
+                          (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path))))))
+            0 nil))
+          1)))
+       (file-length (len (explode (lofat-file->contents file))))
+       (contents (lofat-file->contents file))
+       (d-e
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (fat32$c
+        (update-fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))))
+             0 nil))
+           1))
+         (fat32-update-lower-28
+          (fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path))))))
+               0 nil))
+             1))
+           fat32$c)
+          268435455)
+         (mv-nth
+          0
+          (clear-cc
+           fat32$c
+           (d-e-first-cluster
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path))))
+           (d-e-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path))))))))))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-34
+    (implies
+     (and
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (fat32-filename-list-p path)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (lofat-file-p file)
+      (not (lofat-directory-file-p file))
+      (consp path)
+      (equal
+       (mv-nth
+        1
+        (find-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (car path)))
+       0)
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (<
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list
+              (mv-nth 0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+             (car path))))))))
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list
+            (mv-nth 0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+           (car path)))))))
+     (not-intersectp-list
+      (list (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (update-dir-contents
+          (mv-nth
+           0
+           (place-contents
+            (update-fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (fat32-update-lower-28
+              (fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32$c)
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path)))))
+                  (make-list-ac
+                   (len
+                    (mv-nth
+                     0
+                     (d-e-cc
+                      fat32$c
+                      (mv-nth
+                       0
+                       (find-d-e
+                        (make-d-e-list
+                         (mv-nth 0
+                                 (d-e-cc-contents
+                                  fat32$c (pseudo-root-d-e fat32$c))))
+                        (car path))))))
+                   0 nil))
+                 1))
+               fat32$c)
+              268435455)
+             (mv-nth
+              0
+              (clear-cc
+               fat32$c
+               (d-e-first-cluster
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))
+               (d-e-file-size
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))))
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))
+            (lofat-file->contents file)
+            (len (explode (lofat-file->contents file)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list
+                      (mv-nth
+                       0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                     (car path))))))
+                0 nil))
+              1))))
+          (d-e-first-cluster (pseudo-root-d-e fat32$c))
+          (nats=>string
+           (insert-d-e
+            (string=>nats
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (d-e-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth 0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+               (car path)))
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (len (explode (lofat-file->contents file))))))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))
+          (len (explode (lofat-file->contents file)))))
+        (max-entry-count fat32$c)))))
+    :hints
+    (("goal"
+      :in-theory
+      (e/d (update-dir-contents-correctness-1 place-contents-correctness-1)
+           ((:rewrite place-contents-expansion-2)))
+      :use
+      (:instance
+       (:rewrite place-contents-expansion-2)
+       (first-cluster
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32$c)
+           (mv-nth
+            0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth 0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+               (car path)))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth 0
+                          (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path))))))
+            0 nil))
+          1)))
+       (file-length (len (explode (lofat-file->contents file))))
+       (contents (lofat-file->contents file))
+       (d-e
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (fat32$c
+        (update-fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))))
+             0 nil))
+           1))
+         (fat32-update-lower-28
+          (fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path))))))
+               0 nil))
+             1))
+           fat32$c)
+          268435455)
+         (mv-nth
+          0
+          (clear-cc
+           fat32$c
+           (d-e-first-cluster
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path))))
+           (d-e-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))))))
+      :restrict ((not-intersectp-list-when-subsetp-1
+                  ((y (mv-nth 0
+                              (d-e-cc fat32$c
+                                      (pseudo-root-d-e fat32$c))))))))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-35
+    (implies
+     (and
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (fat32-filename-list-p path)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (lofat-file-p file)
+      (not (lofat-directory-file-p file))
+      (consp path)
+      (equal
+       (mv-nth
+        1
+        (find-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (car path)))
+       0)
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (<
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list
+              (mv-nth 0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+             (car path))))))))
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list
+            (mv-nth 0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+           (car path)))))))
+     (not-intersectp-list
+      (find-n-free-clusters
+       (update-nth
+        (d-e-first-cluster (pseudo-root-d-e fat32$c))
+        (fat32-update-lower-28
+         (fati
+          (d-e-first-cluster (pseudo-root-d-e fat32$c))
+          (mv-nth
+           0
+           (place-contents
+            (update-fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (fat32-update-lower-28
+              (fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32$c)
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path)))))
+                  (make-list-ac
+                   (len
+                    (mv-nth
+                     0
+                     (d-e-cc
+                      fat32$c
+                      (mv-nth
+                       0
+                       (find-d-e
+                        (make-d-e-list
+                         (mv-nth 0
+                                 (d-e-cc-contents
+                                  fat32$c (pseudo-root-d-e fat32$c))))
+                        (car path))))))
+                   0 nil))
+                 1))
+               fat32$c)
+              268435455)
+             (mv-nth
+              0
+              (clear-cc
+               fat32$c
+               (d-e-first-cluster
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))
+               (d-e-file-size
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))))
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))
+            (lofat-file->contents file)
+            (len (explode (lofat-file->contents file)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list
+                      (mv-nth
+                       0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                     (car path))))))
+                0 nil))
+              1)))))
+         268435455)
+        (set-indices-in-fa-table
+         (effective-fat
+          (mv-nth
+           0
+           (place-contents
+            (update-fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (fat32-update-lower-28
+              (fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32$c)
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path)))))
+                  (make-list-ac
+                   (len
+                    (mv-nth
+                     0
+                     (d-e-cc
+                      fat32$c
+                      (mv-nth
+                       0
+                       (find-d-e
+                        (make-d-e-list
+                         (mv-nth 0
+                                 (d-e-cc-contents
+                                  fat32$c (pseudo-root-d-e fat32$c))))
+                        (car path))))))
+                   0 nil))
+                 1))
+               fat32$c)
+              268435455)
+             (mv-nth
+              0
+              (clear-cc
+               fat32$c
+               (d-e-first-cluster
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))
+               (d-e-file-size
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))))
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))
+            (lofat-file->contents file)
+            (len (explode (lofat-file->contents file)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list
+                      (mv-nth
+                       0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                     (car path))))))
+                0 nil))
+              1)))))
+         (mv-nth 0
+                 (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+         (make-list-ac
+          (len (mv-nth 0
+                       (d-e-cc fat32$c (pseudo-root-d-e fat32$c))))
+          0 nil)))
+       (+
+        -1
+        (len
+         (make-clusters
+          (implode
+           (nats=>chars
+            (insert-d-e
+             (string=>nats
+              (mv-nth 0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+             (d-e-set-first-cluster-file-size
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path)))
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32$c)
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list
+                      (mv-nth
+                       0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                     (car path)))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (d-e-cc
+                     fat32$c
+                     (mv-nth
+                      0
+                      (find-d-e
+                       (make-d-e-list
+                        (mv-nth
+                         0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                       (car path))))))
+                  0 nil))
+                1))
+              (len (explode (lofat-file->contents file)))))))
+          (cluster-size fat32$c)))))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (update-dir-contents
+          (mv-nth
+           0
+           (place-contents
+            (update-fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (fat32-update-lower-28
+              (fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32$c)
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path)))))
+                  (make-list-ac
+                   (len
+                    (mv-nth
+                     0
+                     (d-e-cc
+                      fat32$c
+                      (mv-nth
+                       0
+                       (find-d-e
+                        (make-d-e-list
+                         (mv-nth 0
+                                 (d-e-cc-contents
+                                  fat32$c (pseudo-root-d-e fat32$c))))
+                        (car path))))))
+                   0 nil))
+                 1))
+               fat32$c)
+              268435455)
+             (mv-nth
+              0
+              (clear-cc
+               fat32$c
+               (d-e-first-cluster
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))
+               (d-e-file-size
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))))
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))
+            (lofat-file->contents file)
+            (len (explode (lofat-file->contents file)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list
+                      (mv-nth
+                       0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                     (car path))))))
+                0 nil))
+              1))))
+          (d-e-first-cluster (pseudo-root-d-e fat32$c))
+          (nats=>string
+           (insert-d-e
+            (string=>nats
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (d-e-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth 0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+               (car path)))
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (len (explode (lofat-file->contents file))))))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))
+          (len (explode (lofat-file->contents file)))))
+        (max-entry-count fat32$c)))))
+    :hints
+    (("goal"
+      :in-theory (disable (:rewrite place-contents-expansion-2))
+      :use
+      (:instance
+       (:rewrite place-contents-expansion-2)
+       (first-cluster
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32$c)
+           (mv-nth
+            0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth 0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+               (car path)))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth 0
+                          (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path))))))
+            0 nil))
+          1)))
+       (file-length (len (explode (lofat-file->contents file))))
+       (contents (lofat-file->contents file))
+       (d-e
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (fat32$c
+        (update-fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))))
+             0 nil))
+           1))
+         (fat32-update-lower-28
+          (fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path))))))
+               0 nil))
+             1))
+           fat32$c)
+          268435455)
+         (mv-nth
+          0
+          (clear-cc
+           fat32$c
+           (d-e-first-cluster
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path))))
+           (d-e-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path))))))))))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-37
+    (implies
+     (and
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (lofat-file-p file)
+      (not (lofat-directory-file-p file))
+      (equal
+       (mv-nth
+        1
+        (find-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (car path)))
+       0)
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (<
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (equal
+       (fat32-entry-mask
+        (fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))))
+             0 nil))
+           1))
+         fat32$c))
+       0)
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list
+              (mv-nth 0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+             (car path))))))))
+      (< 0
+         (len (explode (lofat-file->contents file)))))
+     (not-intersectp-list
+      (list (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (place-contents
+          (update-fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path))))))
+               0 nil))
+             1))
+           (fat32-update-lower-28
+            (fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             fat32$c)
+            268435455)
+           (mv-nth
+            0
+            (clear-cc
+             fat32$c
+             (d-e-first-cluster
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))
+             (d-e-file-size
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path)))))))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (lofat-file->contents file)
+          (len (explode (lofat-file->contents file)))
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))
+          (len (explode (lofat-file->contents file)))))
+        (max-entry-count fat32$c)))))
+    :hints
+    (("goal"
+      :restrict ((not-intersectp-list-when-subsetp-1
+                  ((y (mv-nth 0
+                              (d-e-cc fat32$c
+                                      (pseudo-root-d-e fat32$c))))))))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-38
+    (implies
+     (and
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (lofat-file-p file)
+      (not (lofat-directory-file-p file))
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (<= (+ -1
+             (len (make-clusters (lofat-file->contents file)
+                                 (cluster-size fat32$c))))
+          (+ -1
+             (count-free-clusters (effective-fat fat32$c)))))
+     (not-intersectp-list
+      (list (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (place-contents
+          (update-fati
+           (nth 0
+                (find-n-free-clusters (effective-fat fat32$c)
+                                      1))
+           (fat32-update-lower-28
+            (fati (nth 0
+                       (find-n-free-clusters (effective-fat fat32$c)
+                                             1))
+                  fat32$c)
+            268435455)
+           fat32$c)
+          (d-e-install-directory-bit (make-d-e-with-filename (car path))
+                                     nil)
+          (lofat-file->contents file)
+          (len (explode (lofat-file->contents file)))
+          (nth 0
+               (find-n-free-clusters (effective-fat fat32$c)
+                                     1))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (d-e-install-directory-bit (make-d-e-with-filename (car path))
+                                     nil)
+          (nth 0
+               (find-n-free-clusters (effective-fat fat32$c)
+                                     1))
+          (len (explode (lofat-file->contents file)))))
+        (max-entry-count fat32$c)))))
+    :hints
+    (("goal"
+      :restrict ((not-intersectp-list-when-subsetp-1
+                  ((y (mv-nth 0
+                              (d-e-cc fat32$c
+                                      (pseudo-root-d-e fat32$c))))))))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-39
+    (implies
+     (and
+      (not (consp (cdr path)))
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (fat32-filename-list-p path)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (lofat-file-p file)
+      (not (lofat-directory-file-p file))
+      (not
+       (d-e-directory-p
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (consp path)
+      (equal
+       (mv-nth
+        1
+        (find-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (car path)))
+       0)
+      (<=
+       2
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path)))))
+      (<
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<=
+       (+ -1
+          (len (make-clusters (lofat-file->contents file)
+                              (cluster-size fat32$c))))
+       (+
+        -1
+        (count-free-clusters (effective-fat fat32$c))
+        (len
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list
+              (mv-nth 0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+             (car path))))))))
+      (< 0
+         (len (explode (lofat-file->contents file))))
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list
+            (mv-nth 0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+           (car path)))))))
+     (hifat-equiv
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (update-dir-contents
+          (mv-nth
+           0
+           (place-contents
+            (update-fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (fat32-update-lower-28
+              (fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32$c)
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path)))))
+                  (make-list-ac
+                   (len
+                    (mv-nth
+                     0
+                     (d-e-cc
+                      fat32$c
+                      (mv-nth
+                       0
+                       (find-d-e
+                        (make-d-e-list
+                         (mv-nth 0
+                                 (d-e-cc-contents
+                                  fat32$c (pseudo-root-d-e fat32$c))))
+                        (car path))))))
+                   0 nil))
+                 1))
+               fat32$c)
+              268435455)
+             (mv-nth
+              0
+              (clear-cc
+               fat32$c
+               (d-e-first-cluster
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))
+               (d-e-file-size
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))))
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))
+            (lofat-file->contents file)
+            (len (explode (lofat-file->contents file)))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32$c)
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path)))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (d-e-cc
+                   fat32$c
+                   (mv-nth
+                    0
+                    (find-d-e
+                     (make-d-e-list
+                      (mv-nth
+                       0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                     (car path))))))
+                0 nil))
+              1))))
+          (d-e-first-cluster (pseudo-root-d-e fat32$c))
+          (nats=>string
+           (insert-d-e
+            (string=>nats
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (d-e-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth 0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+               (car path)))
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             (len (explode (lofat-file->contents file))))))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))
+          (len (explode (lofat-file->contents file)))))
+        (max-entry-count fat32$c)))
+      (mv-nth
+       0
+       (hifat-place-file
+        (mv-nth
+         0
+         (lofat-to-hifat-helper
+          fat32$c
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (max-entry-count fat32$c)))
+        path
+        (m1-file d-e (lofat-file->contents file))))))
+    :hints
+    (("goal"
+      :in-theory (e/d nil
+                      ((:rewrite place-contents-expansion-2)))
+      :use
+      (:instance
+       (:rewrite place-contents-expansion-2)
+       (first-cluster
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32$c)
+           (mv-nth
+            0
+            (d-e-cc
+             fat32$c
+             (mv-nth
+              0
+              (find-d-e
+               (make-d-e-list
+                (mv-nth 0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+               (car path)))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth 0
+                          (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path))))))
+            0 nil))
+          1)))
+       (file-length (len (explode (lofat-file->contents file))))
+       (contents (lofat-file->contents file))
+       (d-e
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (fat32$c
+        (update-fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))))
+             0 nil))
+           1))
+         (fat32-update-lower-28
+          (fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path))))))
+               0 nil))
+             1))
+           fat32$c)
+          268435455)
+         (mv-nth
+          0
+          (clear-cc
+           fat32$c
+           (d-e-first-cluster
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path))))
+           (d-e-file-size
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path))))))))))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-40
+    (implies
+     (and
+      (equal
+       (len
+        (mv-nth
+         0
+         (d-e-cc
+          fat32$c
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path))))))
+       1)
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (<=
+       1
+       (count-free-clusters
+        (set-indices-in-fa-table
+         (effective-fat fat32$c)
+         (mv-nth
+          0
+          (d-e-cc
+           fat32$c
+           (mv-nth
+            0
+            (find-d-e
+             (make-d-e-list
+              (mv-nth 0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+             (car path)))))
+         '(0))))
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (car path))))
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          '(0))
+         1))
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list
+            (mv-nth 0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+           (car path)))))))
+     (not-intersectp-list
+      (list (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (place-contents
+          (update-fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              '(0))
+             1))
+           (fat32-update-lower-28
+            (fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                '(0))
+               1))
+             fat32$c)
+            268435455)
+           (mv-nth
+            0
+            (clear-cc
+             fat32$c
+             (d-e-first-cluster
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))
+             2097152)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (make-empty-subdir-contents
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              '(0))
+             1))
+           (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+          0
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             '(0))
+            1))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             '(0))
+            1))
+          0))
+        (max-entry-count fat32$c)))))
+    :hints
+    (("goal"
+      :restrict ((not-intersectp-list-when-subsetp-1
+                  ((y (mv-nth 0
+                              (d-e-cc fat32$c
+                                      (pseudo-root-d-e fat32$c))))))))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-41
+    (implies
+     (and
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (car path))))
+      (<
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (+ 2 (count-of-clusters fat32$c)))
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (d-e-cc
+         fat32$c
+         (mv-nth
+          0
+          (find-d-e
+           (make-d-e-list
+            (mv-nth 0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+           (car path)))))))
+     (not-intersectp-list
+      (list (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (place-contents
+          (update-fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path))))))
+               0 nil))
+             1))
+           (fat32-update-lower-28
+            (fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             fat32$c)
+            268435455)
+           (mv-nth
+            0
+            (clear-cc
+             fat32$c
+             (d-e-first-cluster
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))
+             2097152)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (make-empty-subdir-contents
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path))))))
+               0 nil))
+             1))
+           (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+          0
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))
+          0))
+        (max-entry-count fat32$c)))))
+    :hints
+    (("goal"
+      :restrict ((not-intersectp-list-when-subsetp-1
+                  ((y (mv-nth 0
+                              (d-e-cc fat32$c
+                                      (pseudo-root-d-e fat32$c))))))))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-42
+    (implies
+     (and
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (d-e-directory-p
+       (mv-nth
+        0
+        (find-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (car path))))
+      (<
+       (d-e-first-cluster
+        (mv-nth
+         0
+         (find-d-e
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (car path))))
+       (+ 2 (count-of-clusters fat32$c)))
+      (<
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32$c)
+          (mv-nth
+           0
+           (d-e-cc
+            fat32$c
+            (mv-nth
+             0
+             (find-d-e
+              (make-d-e-list
+               (mv-nth 0
+                       (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+              (car path)))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))))
+           0 nil))
+         1))
+       (+ 2 (count-of-clusters fat32$c)))
+      (equal
+       (fat32-entry-mask
+        (fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32$c)
+            (mv-nth
+             0
+             (d-e-cc
+              fat32$c
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path)))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth 0
+                           (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path))))))
+             0 nil))
+           1))
+         fat32$c))
+       0))
+     (not-intersectp-list
+      (list (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (place-contents
+          (update-fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path))))))
+               0 nil))
+             1))
+           (fat32-update-lower-28
+            (fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32$c)
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path)))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (d-e-cc
+                    fat32$c
+                    (mv-nth
+                     0
+                     (find-d-e
+                      (make-d-e-list
+                       (mv-nth
+                        0
+                        (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                      (car path))))))
+                 0 nil))
+               1))
+             fat32$c)
+            268435455)
+           (mv-nth
+            0
+            (clear-cc
+             fat32$c
+             (d-e-first-cluster
+              (mv-nth
+               0
+               (find-d-e
+                (make-d-e-list
+                 (mv-nth 0
+                         (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                (car path))))
+             2097152)))
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (make-empty-subdir-contents
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32$c)
+              (mv-nth
+               0
+               (d-e-cc
+                fat32$c
+                (mv-nth
+                 0
+                 (find-d-e
+                  (make-d-e-list
+                   (mv-nth
+                    0
+                    (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                  (car path)))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (d-e-cc
+                  fat32$c
+                  (mv-nth
+                   0
+                   (find-d-e
+                    (make-d-e-list
+                     (mv-nth
+                      0
+                      (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                    (car path))))))
+               0 nil))
+             1))
+           (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+          0
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (mv-nth
+           0
+           (find-d-e
+            (make-d-e-list
+             (mv-nth 0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+            (car path)))
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32$c)
+             (mv-nth
+              0
+              (d-e-cc
+               fat32$c
+               (mv-nth
+                0
+                (find-d-e
+                 (make-d-e-list
+                  (mv-nth
+                   0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                 (car path)))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (d-e-cc
+                 fat32$c
+                 (mv-nth
+                  0
+                  (find-d-e
+                   (make-d-e-list
+                    (mv-nth
+                     0
+                     (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+                   (car path))))))
+              0 nil))
+            1))
+          0))
+        (max-entry-count fat32$c)))))
+    :hints
+    (("goal"
+      :restrict ((not-intersectp-list-when-subsetp-1
+                  ((y (mv-nth 0
+                              (d-e-cc fat32$c
+                                      (pseudo-root-d-e fat32$c))))))))))
+
+  (defthm
+    lofat-pwrite-refinement-lemma-43
+    (implies
+     (and
+      (good-root-d-e-p (pseudo-root-d-e fat32$c)
+                       fat32$c)
+      (fat32-filename-list-p path)
+      (not-intersectp-list
+       (mv-nth 0
+               (d-e-cc fat32$c (pseudo-root-d-e fat32$c)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32$c
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (max-entry-count fat32$c)))
+       0)
+      (<
+       (hifat-entry-count
+        (mv-nth
+         0
+         (lofat-to-hifat-helper
+          fat32$c
+          (make-d-e-list
+           (mv-nth 0
+                   (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+          (max-entry-count fat32$c))))
+       (max-entry-count fat32$c))
+      (consp path)
+      (<= 1
+          (count-free-clusters (effective-fat fat32$c))))
+     (not-intersectp-list
+      (list (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        (mv-nth
+         0
+         (place-contents
+          (update-fati
+           (nth 0
+                (find-n-free-clusters (effective-fat fat32$c)
+                                      1))
+           (fat32-update-lower-28
+            (fati (nth 0
+                       (find-n-free-clusters (effective-fat fat32$c)
+                                             1))
+                  fat32$c)
+            268435455)
+           fat32$c)
+          (d-e-install-directory-bit (make-d-e-with-filename (car path))
+                                     t)
+          (make-empty-subdir-contents
+           (nth 0
+                (find-n-free-clusters (effective-fat fat32$c)
+                                      1))
+           (d-e-first-cluster (pseudo-root-d-e fat32$c)))
+          0
+          (nth 0
+               (find-n-free-clusters (effective-fat fat32$c)
+                                     1))))
+        (place-d-e
+         (make-d-e-list
+          (mv-nth 0
+                  (d-e-cc-contents fat32$c (pseudo-root-d-e fat32$c))))
+         (d-e-set-first-cluster-file-size
+          (d-e-install-directory-bit (make-d-e-with-filename (car path))
+                                     t)
+          (nth 0
+               (find-n-free-clusters (effective-fat fat32$c)
+                                     1))
+          0))
+        (max-entry-count fat32$c)))))
+    :hints
+    (("goal"
+      :restrict ((not-intersectp-list-when-subsetp-1
+                  ((y (mv-nth 0
+                              (d-e-cc fat32$c
+                                      (pseudo-root-d-e fat32$c))))))))))
+
+  (defthm
     lofat-mkdir-refinement-lemma-10
     (implies
      (and
@@ -1147,7 +5541,7 @@
     (("goal"
       :do-not-induct t
       :cases ((atom (cdr path)))
-      :in-theory (disable lofat-place-file)
+      :in-theory (disable lofat-place-file hifat-place-file)
       :use (:instance lofat-place-file-correctness-1
                       (root-d-e (pseudo-root-d-e fat32$c))
                       (entry-limit (max-entry-count fat32$c)))
@@ -1155,7 +5549,7 @@
                      (lofat-place-file fat32$c root-d-e nil file)))
      (if (not stable-under-simplificationp)
          nil
-         '(:in-theory (enable lofat-place-file))))
+       '(:in-theory (enable lofat-place-file hifat-place-file))))
     :otf-flg t))
 
 (defthm
