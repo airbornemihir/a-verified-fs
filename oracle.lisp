@@ -8498,65 +8498,167 @@
                     (entry-limit (max-entry-count fat32$c))
                     (root-d-e (pseudo-root-d-e fat32$c))))))
 
-(thm
- (implies
-  (and
-   (good-root-d-e-p (pseudo-root-d-e fat32$c)
-                    fat32$c)
-   (fat32-filename-list-p path)
-   (equal (mv-nth 1 (lofat-to-hifat fat32$c))
-          0)
-   (lofat-file-p file)
-   (or (stringp (lofat-file->contents file))
-       (equal (lofat-file->contents file) nil))
-   (not (equal (mv-nth 1
-                       (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
-                                         path file))
-               28))
-   (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
-      (max-entry-count fat32$c))
-   (<=
+(defthm
+  lofat-pwrite-refinement-lemma-44
+  (implies
+   (and
+    (integerp offset)
+    (<= 0 offset)
+    (lofat-regular-file-p
+     (mv-nth
+      0
+      (lofat-find-file fat32$c
+                       (mv-nth 0 (root-d-e-list fat32$c))
+                       (file-table-element->fid
+                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                          file-table))))))
+    (stringp buf)
+    (< (+ offset (len (explode buf)))
+       4294967296))
+   (lofat-file-contents-p
+    (implode
+     (insert-text
+      (explode
+       (lofat-file->contents
+        (mv-nth 0
+                (lofat-find-file
+                 fat32$c
+                 (mv-nth 0 (root-d-e-list fat32$c))
+                 (file-table-element->fid
+                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                    file-table)))))))
+      offset buf))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-file-contents-p
+                              len-of-insert-text))))
+
+(defthm
+  lofat-pwrite-refinement-lemma-45
+  (implies
+   (and
+    (integerp offset)
+    (<= 0 offset)
+    (lofat-regular-file-p
+     (mv-nth
+      0
+      (lofat-find-file fat32$c
+                       (mv-nth 0 (root-d-e-list fat32$c))
+                       (file-table-element->fid
+                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                          file-table))))))
+    (stringp buf)
+    (< (+ offset (len (explode buf)))
+       4294967296))
+   (<
     (len
-     (mv-nth 0
-             (root-d-e-list
-              (mv-nth 0
-                      (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
-                                        path file)))))
-    65534))
-  (and
-   (equal
-    (mv-nth 1
-            (lofat-to-hifat
-             (mv-nth 0
-                     (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
-                                       path file))))
-    0)
-   (hifat-equiv
-    (mv-nth 0
-            (lofat-to-hifat
-             (mv-nth 0
-                     (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
-                                       path file))))
-    (mv-nth 0
-            (hifat-place-file (mv-nth 0 (lofat-to-hifat fat32$c))
-                              path
-                              (m1-file d-e (lofat-file->contents file)))))
-   (equal
-    (mv-nth 1
-            (hifat-place-file (mv-nth 0 (lofat-to-hifat fat32$c))
-                              path
-                              (m1-file d-e (lofat-file->contents file))))
-    (mv-nth 1
-            (lofat-place-file fat32$c (pseudo-root-d-e fat32$c)
-                              path file)))))
- :hints
- (("goal"
-   :do-not-induct t
-   :in-theory
-   (e/d (lofat-to-hifat)
-        (lofat-mkdir-refinement-lemma-10 lofat-place-file))
-   :use lofat-mkdir-refinement-lemma-10))
- :otf-flg t)
+     (insert-text
+      (explode$inline
+       (lofat-file->contents$inline
+        (mv-nth 0
+                (lofat-find-file
+                 fat32$c
+                 (mv-nth 0 (root-d-e-list fat32$c))
+                 (file-table-element->fid$inline
+                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                    file-table)))))))
+      offset buf))
+    4294967296))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory
+    (e/d (lofat-pwrite lofat-mkdir-refinement-lemma-12
+                       len-of-insert-text)
+         ((:rewrite d-e-cc-of-update-dir-contents-coincident)
+          (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
+          lofat-place-file
+          lofat-mkdir-refinement-lemma-15))
+    :expand ((:free (fs) (hifat-find-file fs nil))
+             (:free (fs file)
+                    (hifat-place-file fs nil file))
+             (:free (fat32$c file root-d-e)
+                    (lofat-place-file fat32$c root-d-e nil file)))))
+  :rule-classes :linear)
+
+(defthm
+  lofat-pwrite-refinement-lemma-48
+  (implies
+   (and
+    (<= 0 offset)
+    (lofat-regular-file-p
+     (mv-nth
+      0
+      (lofat-find-file fat32$c
+                       (mv-nth 0 (root-d-e-list fat32$c))
+                       path)))
+    (not (stringp buf))
+    (< (+ offset (len buf)) 4294967296))
+   (m1-file-contents-p
+    (implode$inline
+     (insert-text
+      (explode$inline
+       (lofat-file->contents$inline
+        (mv-nth 0
+                (lofat-find-file
+                 fat32$c
+                 (mv-nth 0 (root-d-e-list fat32$c))
+                 path))))
+      offset buf))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory
+    (enable m1-file-contents-p insert-text))))
+
+(defthm
+  lofat-pwrite-refinement-lemma-49
+  (implies
+   (and (integerp offset)
+        (<= 0 offset)
+        (lofat-regular-file-p
+         (mv-nth 0
+                 (lofat-find-file fat32$c
+                                  (mv-nth 0 (root-d-e-list fat32$c))
+                                  path)))
+        (not (stringp buf))
+        (< (+ offset (len buf)) 4294967296))
+   (lofat-file-contents-p
+    (implode
+     (insert-text
+      (explode
+       (lofat-file->contents
+        (mv-nth 0
+                (lofat-find-file fat32$c
+                                 (mv-nth 0 (root-d-e-list fat32$c))
+                                 path))))
+      offset buf))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-file-contents-p insert-text))))
+
+(defthm
+  lofat-pwrite-refinement-lemma-50
+  (implies
+   (and (integerp offset)
+        (<= 0 offset)
+        (lofat-regular-file-p
+         (mv-nth 0
+                 (lofat-find-file fat32$c
+                                  (mv-nth 0 (root-d-e-list fat32$c))
+                                  path)))
+        (not (stringp buf))
+        (< (+ offset (len buf)) 4294967296))
+   (<
+    (len
+     (insert-text
+      (explode$inline
+       (lofat-file->contents$inline
+        (mv-nth 0
+                (lofat-find-file fat32$c
+                                 (mv-nth 0 (root-d-e-list fat32$c))
+                                 path))))
+      offset buf))
+    4294967296))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable insert-text)))
+  :rule-classes :linear)
 
 (defthm
   lofat-pwrite-refinement
