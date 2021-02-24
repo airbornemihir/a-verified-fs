@@ -5,8 +5,9 @@
 ; Syscalls for LoFAT. These syscalls usually return, among other things, a
 ; return value (corresponding to the C return value) and an errno.
 
-(include-book "lofat")
-(include-book "hifat-syscalls")
+(include-book "lofat/lofat-pwrite")
+
+(local (in-theory (disable make-list-ac-removal)))
 
 (defund lofat-open (path fd-table file-table)
   (declare (xargs :guard (and (fat32-filename-list-p path)
@@ -154,32 +155,6 @@
      (mv-nth 2
              (lofat-pread fd count offset fat32$c
                           fd-table file-table))))))
-
-(defthm
-  lofat-pread-refinement-lemma-1
-  (implies
-   (and
-    (useful-d-e-list-p d-e-list)
-    (equal (mv-nth 3
-                   (lofat-to-hifat-helper fat32$c
-                                          d-e-list entry-limit))
-           0)
-    (<=
-     (+ 2 (count-of-clusters fat32$c))
-     (d-e-first-cluster (mv-nth 0
-                                    (find-d-e d-e-list filename)))))
-   (not (d-e-directory-p (mv-nth 0
-                                     (find-d-e d-e-list filename)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (lofat-to-hifat-helper find-d-e useful-d-e-list-p)
-         ((:definition no-duplicatesp-equal)
-          (:rewrite useful-d-e-list-p-of-cdr)
-          (:definition member-equal)
-          (:rewrite take-of-len-free)
-          (:definition take)
-          (:definition assoc-equal))))))
 
 (defthm
   lofat-pread-refinement-lemma-2
@@ -468,30 +443,6 @@
     :in-theory (enable hifat-find-file))))
 
 (defthm
-  lofat-unlink-refinement-lemma-4
-  (implies
-   (and (lofat-fs-p fat32$c)
-        (useful-d-e-list-p d-e-list)
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper fat32$c
-                                              d-e-list entry-limit))
-               0))
-   (equal
-    (lofat-regular-file-p
-     (mv-nth 0
-             (lofat-find-file fat32$c d-e-list path)))
-    (m1-regular-file-p
-     (mv-nth 0
-             (hifat-find-file
-              (mv-nth 0
-                      (lofat-to-hifat-helper fat32$c
-                                             d-e-list entry-limit))
-              path)))))
-  :hints
-  (("goal" :induct (lofat-find-file fat32$c d-e-list path)
-    :in-theory (enable lofat-find-file hifat-find-file))))
-
-(defthm
   lofat-unlink-refinement-lemma-5
   (implies
    (and
@@ -715,8 +666,7 @@
       :in-theory
       (e/d
        (lofat-remove-file lofat-remove-file-helper)
-       (make-list-ac-removal
-        (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident-lemma-6)))
+       ((:rewrite d-e-cc-contents-of-lofat-remove-file-coincident-lemma-6)))
       :use
       (:instance
        (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident-lemma-6)
@@ -866,8 +816,7 @@
                                           path))
         (pseudo-root-d-e fat32$c)))))
     :hints (("goal" :do-not-induct t
-             :in-theory (e/d (lofat-remove-file-helper)
-                             (make-list-ac-removal)))))
+             :in-theory (enable lofat-remove-file-helper))))
 
   (defthm
     lofat-unlink-refinement-lemma-16
@@ -930,8 +879,7 @@
          (car path))
         (max-entry-count fat32$c)))))
     :hints (("goal" :do-not-induct t
-             :in-theory (e/d (lofat-remove-file-helper)
-                             (make-list-ac-removal)))))
+             :in-theory (enable lofat-remove-file-helper))))
 
   (defthm
     lofat-unlink-refinement-lemma-17
@@ -963,8 +911,7 @@
                                           path))
         (pseudo-root-d-e fat32$c)))))
     :hints (("goal" :do-not-induct t
-             :in-theory (e/d (lofat-remove-file-helper)
-                             (make-list-ac-removal))))))
+             :in-theory (enable lofat-remove-file-helper)))))
 
 (defthm
   lofat-unlink-refinement-lemma-11
@@ -1059,8 +1006,7 @@
                                         path))
       (pseudo-root-d-e fat32$c)))))
   :hints (("goal" :do-not-induct t
-           :in-theory (e/d (lofat-remove-file-helper)
-                           (make-list-ac-removal)))))
+           :in-theory (enable lofat-remove-file-helper))))
 
 (defthm
   lofat-unlink-refinement-lemma-13
@@ -1185,7 +1131,7 @@
       path))))
   :hints (("goal" :do-not-induct t
            :in-theory (e/d (hifat-find-file)
-                           (make-list-ac-removal)))))
+                           ((:rewrite abs-pwrite-correctness-lemma-37))))))
 
 (defthm
   lofat-unlink-refinement-lemma-19
@@ -1227,7 +1173,7 @@
        path)))))
   :hints (("goal" :do-not-induct t
            :in-theory (e/d (hifat-find-file)
-                           (make-list-ac-removal)))))
+                           ((:rewrite abs-pwrite-correctness-lemma-37))))))
 
 (defthm
   lofat-unlink-refinement-lemma-20
@@ -1291,7 +1237,7 @@
       path))))
   :hints (("goal" :do-not-induct t
            :in-theory (e/d (hifat-find-file)
-                           (make-list-ac-removal)))))
+                           ((:rewrite abs-pwrite-correctness-lemma-37))))))
 
 (defthm
   lofat-unlink-refinement-lemma-21
@@ -1344,7 +1290,7 @@
       path))))
   :hints (("goal" :do-not-induct t
            :in-theory (e/d (hifat-find-file)
-                           (make-list-ac-removal)))))
+                           ((:rewrite abs-pwrite-correctness-lemma-37))))))
 
 (encapsulate
   ()
@@ -1356,7 +1302,6 @@
       lofat-to-hifat root-d-e-list
       update-dir-contents-correctness-1)
      ((:rewrite lofat-remove-file-correctness-1)
-      make-list-ac-removal
       (:rewrite lofat-find-file-correctness-1)
       (:rewrite
        d-e-cc-contents-of-lofat-place-file-coincident-lemma-15)
@@ -1394,7 +1339,6 @@
       :in-theory
       (e/d (lofat-remove-file)
            ((:rewrite d-e-cc-of-update-dir-contents-coincident)
-            make-list-ac-removal
             (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)))
       :use
       ((:instance (:rewrite lofat-remove-file-correctness-1)
@@ -1522,74 +1466,6 @@
      :f_fsid 0
      :f_namelen 72)))
 
-(defund lofat-pwrite (fd buf offset fat32$c fd-table file-table)
-  (declare (xargs :stobjs fat32$c
-                  :guard (and (lofat-fs-p fat32$c)
-                              (natp fd)
-                              (stringp buf)
-                              (natp offset)
-                              (fd-table-p fd-table)
-                              (file-table-p file-table))
-                  :guard-debug t
-                  :guard-hints (("Goal" :do-not-induct t
-                                 :in-theory (enable len-of-insert-text)))))
-  (b*
-      ((fd-table-entry (assoc-equal fd fd-table))
-       ((unless (consp fd-table-entry))
-        (mv fat32$c -1 *ebadf*))
-       (file-table-entry (assoc-equal (cdr fd-table-entry)
-                                      file-table))
-       ((unless (consp file-table-entry))
-        (mv fat32$c -1 *ebadf*))
-       (path (file-table-element->fid (cdr file-table-entry)))
-       ((mv root-d-e-list &)
-        (root-d-e-list fat32$c))
-       ((mv file error-code)
-        (lofat-find-file fat32$c root-d-e-list path))
-       ((mv oldtext d-e)
-        (if (and (equal error-code 0)
-                 (lofat-regular-file-p file))
-            (mv (coerce (lofat-file->contents file) 'list)
-                (lofat-file->d-e file))
-          (mv nil (d-e-fix nil))))
-       ((unless (unsigned-byte-p 32 (+ offset (length buf))))
-        (mv fat32$c -1 *enospc*))
-       (file
-        (make-lofat-file
-         :d-e d-e
-         :contents (coerce (insert-text oldtext offset buf)
-                           'string)))
-       ((mv fat32$c error-code)
-        (lofat-place-file fat32$c (pseudo-root-d-e fat32$c) path file)))
-    (mv fat32$c (if (equal error-code 0) 0 -1)
-        error-code)))
-
-(defthm integerp-of-lofat-pwrite
-  (and
-   (integerp (mv-nth 1 (lofat-pwrite fd buf offset fat32$c fd-table
-                                     file-table)))
-   (natp (mv-nth 2
-                 (lofat-pwrite fd buf
-                               offset fat32$c fd-table file-table))))
-  :hints (("Goal" :in-theory (enable lofat-pwrite)) )
-  :rule-classes
-  ((:type-prescription
-    :corollary
-    (integerp (mv-nth 1 (lofat-pwrite fd buf offset fat32$c fd-table
-                                      file-table))))
-   (:type-prescription
-    :corollary
-    (natp (mv-nth 2
-                  (lofat-pwrite fd buf
-                                offset fat32$c fd-table file-table))))))
-
-(defthm lofat-fs-p-of-lofat-pwrite
-  (implies
-   (lofat-fs-p fat32$c)
-   (lofat-fs-p (mv-nth 0 (lofat-pwrite fd buf offset fat32$c fd-table
-                                       file-table))))
-  :hints (("Goal" :in-theory (enable lofat-pwrite)) ))
-
 (defund lofat-close (fd fd-table file-table)
   (declare (xargs :guard (and (fd-table-p fd-table)
                               (file-table-p file-table))))
@@ -1638,7 +1514,7 @@
   (implies (lofat-fs-p fat32$c)
            (lofat-fs-p (mv-nth 0 (lofat-mkdir fat32$c path))))
   :hints (("goal" :in-theory (e/d (lofat-mkdir)
-                                  (nth make-list-ac-removal)))))
+                                  (nth)))))
 
 (defthm lofat-mkdir-correctness-1
   (and
