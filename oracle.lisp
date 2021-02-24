@@ -339,13 +339,6 @@
                            (entry-limit (max-entry-count fat32$c))
                            (root-d-e (pseudo-root-d-e fat32$c))))))
 
-;; Move later.
-(defthm m1-directory-file-p-of-m1-file-fix
-  (equal (m1-directory-file-p (m1-file-fix$inline file))
-         (m1-file-alist-p (m1-file->contents file)))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable m1-directory-file-p))))
-
 (encapsulate
   ()
 
