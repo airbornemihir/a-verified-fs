@@ -481,7 +481,6 @@
      (m1-file-hifat-file-alist-fix-normalisation
       abs-mkdir-correctness-lemma-36
       (:rewrite lofat-file-contents-fix-when-lofat-file-contents-p)
-      (:rewrite d-e-cc-contents-of-lofat-place-file-coincident-lemma-4)
       (:rewrite fat32-filename-p-correctness-1)
       (:rewrite lofat-file-contents-p-when-stringp)
       (:linear nth-when-d-e-p)
