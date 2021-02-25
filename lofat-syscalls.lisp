@@ -6,6 +6,7 @@
 ; return value (corresponding to the C return value) and an errno.
 
 (include-book "lofat/lofat-pwrite")
+(include-book "lofat/lofat-mkdir")
 
 (local (in-theory (disable make-list-ac-removal)))
 
@@ -1470,65 +1471,6 @@
   (declare (xargs :guard (and (fd-table-p fd-table)
                               (file-table-p file-table))))
   (hifat-close fd fd-table file-table))
-
-(defund lofat-mkdir (fat32$c path)
-  (declare (xargs :stobjs fat32$c
-                  :guard (and (lofat-fs-p fat32$c)
-                              (fat32-filename-list-p path))))
-  (b* ((dirname (dirname path))
-       ;; Never pass relative paths to syscalls - make them always begin
-       ;; with "/".
-       ((mv root-d-e-list &) (root-d-e-list fat32$c))
-       ((mv parent-dir errno)
-        (lofat-find-file fat32$c root-d-e-list dirname))
-       ((unless (or (atom dirname)
-                    (and (equal errno 0)
-                         (lofat-directory-file-p parent-dir))))
-        (mv fat32$c -1 *enoent*))
-       ((mv & errno)
-        (lofat-find-file fat32$c root-d-e-list path))
-       ((when (equal errno 0))
-        (mv fat32$c -1 *eexist*))
-       (basename (basename path))
-       ((unless (equal (length basename) 11))
-        (mv fat32$c -1 *enametoolong*))
-       (d-e
-        (d-e-install-directory-bit
-         (d-e-fix nil)
-         t))
-       (file (make-lofat-file :d-e d-e
-                              :contents nil))
-       ((mv fat32$c error-code)
-        (lofat-place-file fat32$c
-                          (pseudo-root-d-e fat32$c)
-                          path file))
-       ((unless (equal error-code 0))
-        (mv fat32$c -1 error-code)))
-    (mv fat32$c 0 0)))
-
-(defthm integerp-of-lofat-mkdir
-  (integerp (mv-nth 1 (lofat-mkdir fat32$c path)))
-  :hints (("Goal" :in-theory (enable lofat-mkdir)) ))
-
-(defthm lofat-fs-p-of-lofat-mkdir
-  (implies (lofat-fs-p fat32$c)
-           (lofat-fs-p (mv-nth 0 (lofat-mkdir fat32$c path))))
-  :hints (("goal" :in-theory (e/d (lofat-mkdir)
-                                  (nth)))))
-
-(defthm lofat-mkdir-correctness-1
-  (and
-   (integerp (mv-nth 1 (lofat-mkdir fat32$c path)))
-   (natp (mv-nth 2
-                 (lofat-mkdir fat32$c path))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable lofat-mkdir)))
-  :rule-classes ((:type-prescription
-                  :corollary
-                  (integerp (mv-nth 1 (lofat-mkdir fat32$c path))))
-                 (:type-prescription
-                  :corollary
-                  (natp (mv-nth 2 (lofat-mkdir fat32$c path))))))
 
 (defthm dir-stream-table-p-correctness-1
   (implies (dir-stream-table-p dir-stream-table)

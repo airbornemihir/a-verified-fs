@@ -1133,66 +1133,6 @@
                     (lofat-place-file fat32$c root-d-e nil file))))))
 
 (defthm
-  lofat-mkdir-refinement
-  (implies
-   (and
-    (lofat-fs-p fat32$c)
-    (fat32-filename-list-p path)
-    (equal (mv-nth 1 (lofat-to-hifat fat32$c))
-           0)
-    ;; Let's discuss this hypothesis.
-    ;;
-    ;; This is something that we actually should
-    ;; be able to derive from the structure of lofat-to-hifat-helper. That is,
-    ;; we should be able to say that if we're able to do lofat-to-hifat-helper
-    ;; with the max-entry-count parameter after the lofat-place-file operation,
-    ;; then obviously we must have the capacity for that number of entries. And
-    ;; if we don't have the capacity for that number of entries, then we must
-    ;; be contradicting the hypothesis about the error code of lofat-place-file
-    ;; being other than EIO. That is, this hypothesis should be implied by
-    ;; that one, because in the case where that one holds, we must have gotten
-    ;; away without an error while creating the new entry, and that means we
-    ;; couldn't have exceeded the max entry count!
-    ;;
-    ;; That kind of reasoning, however, is exactly the kind of thing we gave up
-    ;; on a while earlier. Now is not a great time to start either.
-    (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
-       (max-entry-count fat32$c))
-    (not
-     (equal
-      (mv-nth 2 (lofat-mkdir fat32$c path))
-      *enospc*)))
-   (and (equal (mv-nth 1
-                       (lofat-to-hifat (mv-nth 0 (lofat-mkdir fat32$c path))))
-               0)
-        (hifat-equiv
-         (mv-nth 0
-                 (lofat-to-hifat (mv-nth 0 (lofat-mkdir fat32$c path))))
-         (mv-nth 0
-                 (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
-                              path)))
-        (equal (mv-nth 1 (lofat-mkdir fat32$c path))
-               (mv-nth 1
-                       (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
-                                    path)))
-        (equal (mv-nth 2 (lofat-mkdir fat32$c path))
-               (mv-nth 2
-                       (hifat-mkdir (mv-nth 0 (lofat-to-hifat fat32$c))
-                                    path)))))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory
-    (e/d (lofat-mkdir)
-         ((:rewrite d-e-cc-of-update-dir-contents-coincident)
-          (:rewrite d-e-cc-contents-of-lofat-remove-file-coincident)
-          lofat-place-file))
-    :expand ((:free (fs) (hifat-find-file fs nil))
-             (:free (fs file)
-                    (hifat-place-file fs nil file))
-             (:free (fat32$c file root-d-e)
-                    (lofat-place-file fat32$c root-d-e nil file))))))
-
-(defthm
   absfat-oracle-single-step-refinement-lemma-1
   (implies
    (frame-reps-fs frame
