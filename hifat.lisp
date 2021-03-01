@@ -1568,6 +1568,8 @@
       :in-theory
       (enable m1-file-p m1-file->contents m1-file-contents-fix))))))
 
+(defthm m1-file->d-e-under-true-equiv (true-equiv (m1-file->d-e file) t))
+
 (defund m1-regular-file-p (file)
   (declare (xargs :guard t))
   (and (m1-file-p file)

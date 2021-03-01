@@ -5439,36 +5439,6 @@
                     (path (dirname path))
                     (frame (partial-collapse frame (dirname path)))))))
 
-(defthm abs-pwrite-correctness-lemma-23
-  (implies (and (m1-file-alist-p x)
-                (hifat-subsetp x y)
-                (atom (assoc-equal name x)))
-           (hifat-subsetp x (cons (cons name val) y)))
-  :hints (("goal" :in-theory (enable hifat-subsetp append))))
-
-;; Move later.
-(defthm abs-pwrite-correctness-lemma-24
-  (implies
-   (true-equiv d-e1 d-e2)
-   (hifat-equiv (put-assoc-equal name (m1-file d-e1 contents)
-                                 fs)
-                (put-assoc-equal name (m1-file d-e2 contents)
-                                 fs)))
-  :hints
-  (("goal" :induct (mv (put-assoc-equal name (m1-file d-e1 contents)
-                                        fs)
-                       (put-assoc-equal name (m1-file d-e2 contents)
-                                        fs))
-    :in-theory
-    (e/d (hifat-no-dups-p hifat-equiv
-                          hifat-file-alist-fix hifat-subsetp)
-         (hifat-subsetp-reflexive-lemma-4
-          (:rewrite hifat-file-alist-fix-when-hifat-no-dups-p)))))
-  :rule-classes :congruence)
-
-;; Move later.
-(defthm abs-pwrite-correctness-lemma-25 (true-equiv (m1-file->d-e file) t))
-
 (defthm
   abs-pwrite-correctness-lemma-9
   (implies
