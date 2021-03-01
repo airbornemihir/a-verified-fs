@@ -520,3 +520,25 @@
     :do-not-induct t
     :in-theory (e/d (absfat-oracle-single-step lofat-oracle-single-step)
                     (hifat-mkdir hifat-pwrite)))))
+
+(defund lofat-oracle-multi-step (fat32$c syscall-sym-list st)
+  (declare (xargs :stobjs fat32$c
+                  :guard (and (lofat-fs-p fat32$c)
+                              (lofat-st-p st))
+                  :verify-guards nil))
+  (b*
+      (((when (atom syscall-sym-list)) (mv fat32$c st))
+       ((mv fat32$c st) (lofat-oracle-single-step fat32$c (car syscall-sym-list) st)))
+    (lofat-oracle-multi-step fat32$c (cdr syscall-sym-list) st)))
+
+(defund absfat-oracle-multi-step (frame syscall-sym-list st)
+  (declare (xargs :guard (and (frame-p frame)
+                              (lofat-st-p st)
+                              (consp (assoc-equal 0 frame))
+                              (no-duplicatesp-equal (strip-cars frame)))
+                  :guard-debug t
+                  :verify-guards nil))
+  (b*
+      (((when (atom syscall-sym-list)) (mv frame st))
+       ((mv frame st) (absfat-oracle-single-step frame (car syscall-sym-list) st)))
+    (absfat-oracle-multi-step frame (cdr syscall-sym-list) st)))
