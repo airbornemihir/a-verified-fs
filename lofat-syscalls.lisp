@@ -1509,7 +1509,10 @@
        ((mv root-d-e-list &) (root-d-e-list fat32$c))
        ((mv file error-code)
         (lofat-find-file fat32$c root-d-e-list path))
-       ((unless (zp error-code)) (mv dir-stream-table -1 error-code))
+       ;; There was a bug here - previously we returned the error code as is,
+       ;; but the man page opendir(3) says ENOENT is the right error code
+       ;; regardless of the reason for the directory not being found.
+       ((unless (zp error-code)) (mv dir-stream-table -1 *enoent*))
        ((unless (lofat-directory-file-p file)) (mv dir-stream-table -1 *ENOTDIR*))
        (dir-stream-table-index
         (find-new-index (strip-cars dir-stream-table))))

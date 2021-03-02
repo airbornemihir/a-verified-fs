@@ -712,19 +712,6 @@
   :hints (("goal" :in-theory (enable hifat-opendir)))
   :rule-classes :type-prescription)
 
-(defthmd
-  lofat-opendir-correctness-2
-  (implies (equal (mv-nth 1 (lofat-to-hifat fat32$c))
-                  0)
-           (equal (mv-nth 1
-                          (lofat-opendir fat32$c dir-stream-table path))
-                  (mv-nth 0
-                          (hifat-opendir (mv-nth 0 (lofat-to-hifat fat32$c))
-                                         path dir-stream-table))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (e/d (lofat-opendir hifat-opendir lofat-to-hifat)
-                           (lofat-pread-refinement-lemma-2)))))
-
 (defthm hifat-opendir-correctness-lemma-1
   (implies (and (set-equiv x y)
                 (no-duplicatesp-equal x)
@@ -748,6 +735,25 @@
   :hints
   (("goal" :in-theory (disable hifat-equiv-implies-set-equiv-strip-cars-1)
     :use hifat-equiv-implies-set-equiv-strip-cars-1)))
+
+(defthmd
+  lofat-opendir-correctness-2
+  (implies (equal (mv-nth 1 (lofat-to-hifat fat32$c))
+                  0)
+           (and
+            (equal (mv-nth 1
+                           (lofat-opendir fat32$c dir-stream-table path))
+                   (mv-nth 0
+                           (hifat-opendir (mv-nth 0 (lofat-to-hifat fat32$c))
+                                          path dir-stream-table)))
+            (equal (mv-nth 2
+                           (lofat-opendir fat32$c dir-stream-table path))
+                   (mv-nth 2
+                           (hifat-opendir (mv-nth 0 (lofat-to-hifat fat32$c))
+                                          path dir-stream-table)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (lofat-opendir hifat-opendir lofat-to-hifat)
+                           (lofat-pread-refinement-lemma-2)))))
 
 (encapsulate
   ()
