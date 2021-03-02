@@ -521,37 +521,156 @@
     :in-theory (e/d (absfat-oracle-single-step lofat-oracle-single-step)
                     (hifat-mkdir hifat-pwrite)))))
 
-(defthmd
-  absfat-oracle-multi-step-refinement-lemma-2
+;; Move later.
+(defthm
+  hifat-pwrite-correctness-lemma-1
   (implies
-   (and
-    ;; Hypothesis 1
-    (lofat-fs-p fat32$c)
-    ;; Hypothesis 2
-    (equal (mv-nth '1 (lofat-to-hifat fat32$c))
-           '0)
-    ;; Hypothesis 3
-    (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
-       (max-entry-count fat32$c))
-    ;; Hypothesis 4
-    (not
-     (equal (lofat-st->errno
-             (mv-nth 1
-                     (lofat-oracle-single-step fat32$c syscall-sym st)))
-            *enospc*))
-    ;; Predicate relating AbsFAT and LoFAT.
-    (frame-reps-fs frame
-                   (mv-nth 0 (lofat-to-hifat fat32$c))))
+   (true-equiv d-e1 d-e2)
    (equal
     (mv-nth 1
-            (absfat-oracle-single-step frame syscall-sym st))
+            (hifat-place-file fs path (m1-file d-e1 contents)))
+    (mv-nth
+     1
+     (hifat-place-file fs path (m1-file d-e2 contents)))))
+  :hints (("goal" :in-theory (enable hifat-place-file)))
+  :rule-classes :congruence)
+
+;; Move later.
+(defthm
+  hifat-pwrite-correctness-2
+  (implies
+   (hifat-equiv fs1 fs2)
+   (equal
+    (mv-nth
+     1
+     (hifat-pwrite fd buf offset fs1 fd-table file-table))
     (mv-nth 1
-            (lofat-oracle-single-step fat32$c syscall-sym st))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (e/d (absfat-oracle-single-step lofat-oracle-single-step)
-                    (hifat-mkdir hifat-pwrite)))))
+            (hifat-pwrite fd
+                          buf offset fs2 fd-table file-table))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-no-dups-p)))
+  :rule-classes :congruence)
+
+(defthm
+  hifat-pwrite-correctness-3
+  (and
+   (integerp
+    (mv-nth
+     1
+     (hifat-pwrite fd buf offset fs1 fd-table file-table)))
+   (natp
+    (mv-nth
+     2
+     (hifat-pwrite fd buf offset fs1 fd-table file-table))))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (integerp
+     (mv-nth
+      1
+      (hifat-pwrite fd buf offset fs1 fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (natp
+     (mv-nth
+      2
+      (hifat-pwrite fd buf offset fs1 fd-table file-table))))))
+
+;; Move later.
+(defthm
+  hifat-pwrite-correctness-4
+  (implies
+   (hifat-equiv fs1 fs2)
+   (equal
+    (mv-nth
+     2
+     (hifat-pwrite fd buf offset fs1 fd-table file-table))
+    (mv-nth 2
+            (hifat-pwrite fd
+                          buf offset fs2 fd-table file-table))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-no-dups-p)))
+  :rule-classes :congruence)
+
+;; Move later.
+(defthm
+  hifat-mkdir-correctness-2
+  (implies
+   (hifat-equiv fs1 fs2)
+   (equal
+    (mv-nth
+     1
+     (hifat-mkdir fs1 path))
+    (mv-nth 1
+            (hifat-mkdir fs2 path))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-no-dups-p)))
+  :rule-classes :congruence)
+
+;; Move later.
+(defthm
+  hifat-mkdir-correctness-3
+  (and (integerp (mv-nth 1 (hifat-mkdir fs path)))
+       (natp (mv-nth 2 (hifat-mkdir fs path))))
+  :rule-classes
+  ((:type-prescription :corollary (integerp (mv-nth 1 (hifat-mkdir fs path))))
+   (:type-prescription
+    :corollary (natp (mv-nth 2 (hifat-mkdir fs path))))))
+
+;; Move later.
+(defthm
+  hifat-mkdir-correctness-4
+  (implies
+   (hifat-equiv fs1 fs2)
+   (equal
+    (mv-nth
+     2
+     (hifat-mkdir fs1 path))
+    (mv-nth 2
+            (hifat-mkdir fs2 path))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-no-dups-p)))
+  :rule-classes :congruence)
+
+(defthmd abs-open-correctness-2
+  (equal (abs-open path fd-table file-table)
+         (lofat-open path fd-table file-table))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-open abs-open))))
+
+(remove-hyps
+ (defthmd
+   absfat-oracle-multi-step-refinement-lemma-2
+   (implies
+    (and t
+         ;; Hypothesis 1
+         (lofat-fs-p fat32$c)
+         ;; Hypothesis 2
+         (equal (mv-nth '1 (lofat-to-hifat fat32$c))
+                '0)
+         ;; Hypothesis 3
+         (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
+            (max-entry-count fat32$c))
+         ;; Hypothesis 4
+         (not
+          (equal (lofat-st->errno
+                  (mv-nth 1
+                          (lofat-oracle-single-step fat32$c syscall-sym st)))
+                 *enospc*))
+         ;; Predicate relating AbsFAT and LoFAT.
+         (frame-reps-fs frame
+                        (mv-nth 0 (lofat-to-hifat fat32$c))))
+    (equal
+     (mv-nth 1
+             (absfat-oracle-single-step frame syscall-sym st))
+     (mv-nth 1
+             (lofat-oracle-single-step fat32$c syscall-sym st))))
+   :hints
+   (("goal"
+     :do-not-induct t
+     :in-theory (e/d (absfat-oracle-single-step lofat-oracle-single-step)
+                     (hifat-mkdir hifat-pwrite)))))
+ t)
 
 (defund lofat-oracle-multi-step (fat32$c syscall-sym-list st)
   (declare (xargs :stobjs fat32$c

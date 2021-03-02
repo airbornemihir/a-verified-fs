@@ -9632,6 +9632,8 @@
              (and
               (frame-reps-fs (mv-nth 0 (abs-mkdir frame path))
                              (mv-nth 0 (hifat-mkdir (mv-nth 0 (collapse frame)) path)))
+              (equal (mv-nth 1 (abs-mkdir frame path))
+                     (mv-nth 1 (hifat-mkdir (mv-nth 0 (collapse frame)) path)))
               (equal (mv-nth 2 (abs-mkdir frame path))
                      (mv-nth 2 (hifat-mkdir (mv-nth 0 (collapse frame)) path)))))
     :hints (("goal"
@@ -10165,6 +10167,13 @@
                    (hifat-pwrite fd
                                  buf offset (mv-nth 0 (collapse frame))
                                  fd-table file-table)))
+          (equal (mv-nth 1
+                         (abs-pwrite fd
+                                     buf offset frame fd-table file-table))
+                 (mv-nth 1
+                         (hifat-pwrite fd
+                                       buf offset (mv-nth 0 (collapse frame))
+                                       fd-table file-table)))
           (equal (mv-nth 2
                          (abs-pwrite fd
                                      buf offset frame fd-table file-table))
