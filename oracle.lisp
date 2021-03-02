@@ -705,11 +705,20 @@
   ((:type-prescription :corollary (integerp (mv-nth 1 (hifat-lstat fs path))))
    (:type-prescription :corollary (natp (mv-nth 2 (hifat-lstat fs path))))))
 
+(defthm
+  hifat-opendir-correctness-1
+  (integerp (mv-nth 2
+                    (hifat-opendir fs path dir-stream-table)))
+  :hints (("goal" :in-theory (enable hifat-opendir)))
+  :rule-classes :type-prescription)
+
 (defthmd
   lofat-opendir-correctness-2
   (implies
    (and
-    (equal  (mv-nth 1 (lofat-to-hifat fat32$c))0))
+    (equal (mv-nth 1 (lofat-to-hifat fat32$c)) 0)
+    (lofat-fs-p fat32$c)
+    (useful-d-e-list-p (mv-nth 0 (root-d-e-list fat32$c))))
    (equal
     (mv-nth
      1
@@ -718,14 +727,11 @@
      0
      (hifat-opendir (mv-nth 0 (lofat-to-hifat fat32$c)) path dir-stream-table))))
   :hints (("goal" :do-not-induct t
-           :in-theory (enable lofat-opendir hifat-opendir lofat-to-hifat))))
-
-(DEFTHM
-  HIFAT-OPENDIR-CORRECTNESS-1
-  (INTEGERP (MV-NTH 2
-                    (HIFAT-OPENDIR FS PATH DIR-STREAM-TABLE)))
-  :HINTS (("Goal" :IN-THEORY (ENABLE HIFAT-OPENDIR)))
-  :RULE-CLASSES :TYPE-PRESCRIPTION)
+           :in-theory
+           (e/d (lofat-opendir hifat-opendir lofat-to-hifat)
+                (
+                 lofat-pread-refinement-lemma-2))))
+  :otf-flg t)
 
 (defthmd
   absfat-oracle-multi-step-refinement-lemma-2

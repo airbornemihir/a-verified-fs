@@ -839,6 +839,8 @@
   (implies (fat32-filename-list-p x)
            (string-listp x)))
 
+;; There were a couple of bugs here because we were returning 0 in error cases
+;; when -1, as a stand-in for NULL, would have been appropriate.
 (defund hifat-opendir (fs path dir-stream-table)
   (declare (xargs :guard (and (dir-stream-table-p dir-stream-table)
                               (m1-file-alist-p fs)
@@ -860,9 +862,10 @@
        ((mv file error-code)
         (hifat-find-file fs path))
        ((unless (equal error-code 0))
-        (mv 0 dir-stream-table *enoent*))
+        (mv -1 dir-stream-table *enoent*))
        ((unless (m1-directory-file-p file))
-        (mv 0 dir-stream-table *enotdir*))
+        ;; The -1 is because that's our stand-in for NULL.
+        (mv -1 dir-stream-table *enotdir*))
        (dir-stream-table-index
         (find-new-index (strip-cars dir-stream-table))))
     (mv
@@ -881,9 +884,9 @@
    (mv-nth 1 (hifat-opendir fs path dir-stream-table)))
   :hints (("Goal" :in-theory (enable hifat-opendir))))
 
-(defthm natp-of-hifat-opendir
-  (natp (mv-nth 0
-                (hifat-opendir fs path dir-stream-table)))
+(defthm hifat-opendir-correctness-2
+  (integerp (mv-nth 0
+                    (hifat-opendir fs path dir-stream-table)))
   :hints (("goal" :in-theory (enable hifat-opendir)))
   :rule-classes :type-prescription)
 
