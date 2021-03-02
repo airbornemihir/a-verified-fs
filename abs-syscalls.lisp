@@ -779,36 +779,16 @@
    (:type-prescription
     :corollary (natp (mv-nth 2 (abs-lstat frame path))))))
 
-(encapsulate
-  ()
-
-  (local
-   (defthmd
-     lemma
-     (implies
-      (and
-       (frame-reps-fs frame fs)
-       (abs-fs-p fs)
-       (m1-file-alist-p fs)
-       (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))
-      (equal (abs-lstat frame path)
-             (hifat-lstat fs path)))
-     :hints (("goal" :do-not-induct t
-              :in-theory (enable abs-lstat frame-reps-fs hifat-lstat)))))
-
-  (defthm
-    abs-lstat-refinement
-    (implies
-     (and
-      (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame path))))
-      (frame-reps-fs frame fs)
-      (abs-fs-p fs)
-      (m1-file-alist-p fs))
-     (equal (abs-lstat frame path)
-            (hifat-lstat fs path)))
-    :hints (("goal" :do-not-induct t
-             :in-theory (enable frame-reps-fs)
-             :use lemma))))
+(defthm
+  abs-lstat-refinement
+  (implies
+   (and
+    (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame path))))
+    (frame-reps-fs frame fs))
+   (equal (abs-lstat frame path)
+          (hifat-lstat fs path)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-lstat frame-reps-fs hifat-lstat))))
 
 (defthm absfat-place-file-correctness-lemma-1
   (implies (m1-regular-file-p file)
