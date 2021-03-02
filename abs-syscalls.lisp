@@ -4462,7 +4462,7 @@
        ((mv file errno)
         (abs-find-file frame path))
        ((unless (equal errno 0))
-        (mv 0 dir-stream-table *enoent* frame))
+        (mv -1 dir-stream-table *enoent* frame))
        ((unless (m1-directory-file-p file))
         (mv -1 dir-stream-table *enotdir* frame))
        (dir-stream-table-index
