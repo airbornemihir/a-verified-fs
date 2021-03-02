@@ -780,13 +780,63 @@
     :corollary (natp (mv-nth 2 (abs-lstat frame path))))))
 
 (defthm
-  abs-lstat-refinement
+  abs-lstat-refinement-lemma-2
   (implies
-   (and
-    (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame path))))
-    (frame-reps-fs frame fs))
-   (equal (abs-lstat frame path)
-          (hifat-lstat fs path)))
+   (and (consp (assoc-equal 0 frame))
+        (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+        (mv-nth 1 (collapse frame))
+        (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame))
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame)))
+        (abs-separate frame))
+   (equal
+    (abs-directory-file-p (mv-nth 0 (abs-find-file frame path)))
+    (m1-directory-file-p (mv-nth 0
+                                 (hifat-find-file (mv-nth 0 (collapse frame))
+                                                  path)))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d
+     (abs-file-p-alt)
+     (abs-file-p-of-abs-find-file (:rewrite m1-regular-file-p-correctness-1)
+                                  m1-directory-file-p-when-m1-file-p
+                                  abs-find-file-correctness-2))
+    :use
+    (abs-file-p-of-abs-find-file
+     abs-find-file-correctness-2
+     (:instance (:rewrite m1-regular-file-p-correctness-1)
+                (file (mv-nth 0
+                              (hifat-find-file (mv-nth 0 (collapse frame))
+                                               path)))))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and
+      (consp (assoc-equal 0 frame))
+      (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+      (mv-nth 1 (collapse frame))
+      (frame-p frame)
+      (no-duplicatesp-equal (strip-cars frame))
+      (subsetp-equal (abs-addrs (frame->root frame))
+                     (frame-addrs-root (frame->frame frame)))
+      (abs-separate frame)
+      (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))
+     (equal (m1-directory-file-p (mv-nth 0 (abs-find-file frame path)))
+            (m1-directory-file-p
+             (mv-nth 0
+                     (hifat-find-file (mv-nth 0 (collapse frame))
+                                      path))))))))
+
+(defthm
+  abs-lstat-refinement
+  (implies (frame-reps-fs frame fs)
+           (equal (abs-lstat frame path)
+                  (hifat-lstat fs path)))
   :hints (("goal" :do-not-induct t
            :in-theory (enable abs-lstat frame-reps-fs hifat-lstat))))
 
@@ -1027,59 +1077,6 @@
     :use (:instance (:rewrite partial-collapse-correctness-1 . 1)
                     (path (dirname path))
                     (frame frame)))))
-
-(defthm
-  abs-mkdir-correctness-lemma-20
-  (implies
-   (and (consp (assoc-equal 0 frame))
-        (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-        (mv-nth 1 (collapse frame))
-        (frame-p frame)
-        (no-duplicatesp-equal (strip-cars frame))
-        (subsetp-equal (abs-addrs (frame->root frame))
-                       (frame-addrs-root (frame->frame frame)))
-        (abs-separate frame))
-   (equal
-    (abs-directory-file-p (mv-nth 0 (abs-find-file frame path)))
-    (m1-directory-file-p (mv-nth 0
-                                 (hifat-find-file (mv-nth 0 (collapse frame))
-                                                  path)))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
-    (e/d
-     (abs-file-p-alt)
-     (abs-file-p-of-abs-find-file (:rewrite m1-regular-file-p-correctness-1)
-                                  m1-directory-file-p-when-m1-file-p
-                                  abs-find-file-correctness-2))
-    :use
-    (abs-file-p-of-abs-find-file
-     abs-find-file-correctness-2
-     (:instance (:rewrite m1-regular-file-p-correctness-1)
-                (file (mv-nth 0
-                              (hifat-find-file (mv-nth 0 (collapse frame))
-                                               path)))))))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (and
-      (consp (assoc-equal 0 frame))
-      (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-      (mv-nth 1 (collapse frame))
-      (frame-p frame)
-      (no-duplicatesp-equal (strip-cars frame))
-      (subsetp-equal (abs-addrs (frame->root frame))
-                     (frame-addrs-root (frame->frame frame)))
-      (abs-separate frame)
-      (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))
-     (equal (m1-directory-file-p (mv-nth 0 (abs-find-file frame path)))
-            (m1-directory-file-p
-             (mv-nth 0
-                     (hifat-find-file (mv-nth 0 (collapse frame))
-                                      path))))))))
 
 (defthm abs-mkdir-correctness-lemma-25
   (implies (atom n)

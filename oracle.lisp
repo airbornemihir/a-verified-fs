@@ -720,25 +720,32 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-opendir hifat-opendir lofat-to-hifat))))
 
+(DEFTHM
+  HIFAT-OPENDIR-CORRECTNESS-1
+  (INTEGERP (MV-NTH 2
+                    (HIFAT-OPENDIR FS PATH DIR-STREAM-TABLE)))
+  :HINTS (("Goal" :IN-THEORY (ENABLE HIFAT-OPENDIR)))
+  :RULE-CLASSES :TYPE-PRESCRIPTION)
+
 (defthmd
   absfat-oracle-multi-step-refinement-lemma-2
   (implies
    (and t
-        ;; Hypothesis 1
+        ;; hypothesis 1
         (lofat-fs-p fat32$c)
-        ;; Hypothesis 2
+        ;; hypothesis 2
         (equal (mv-nth '1 (lofat-to-hifat fat32$c))
                '0)
-        ;; Hypothesis 3
+        ;; hypothesis 3
         (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
            (max-entry-count fat32$c))
-        ;; Hypothesis 4
+        ;; hypothesis 4
         (not
          (equal (lofat-st->errno
                  (mv-nth 1
                          (lofat-oracle-single-step fat32$c syscall-sym st)))
                 *enospc*))
-        ;; Predicate relating AbsFAT and LoFAT.
+        ;; predicate relating absfat and lofat.
         (frame-reps-fs frame
                        (mv-nth 0 (lofat-to-hifat fat32$c))))
    (equal
