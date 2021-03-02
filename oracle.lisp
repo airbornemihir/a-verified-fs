@@ -521,6 +521,38 @@
     :in-theory (e/d (absfat-oracle-single-step lofat-oracle-single-step)
                     (hifat-mkdir hifat-pwrite)))))
 
+(defthmd
+  absfat-oracle-multi-step-refinement-lemma-2
+  (implies
+   (and
+    ;; Hypothesis 1
+    (lofat-fs-p fat32$c)
+    ;; Hypothesis 2
+    (equal (mv-nth '1 (lofat-to-hifat fat32$c))
+           '0)
+    ;; Hypothesis 3
+    (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
+       (max-entry-count fat32$c))
+    ;; Hypothesis 4
+    (not
+     (equal (lofat-st->errno
+             (mv-nth 1
+                     (lofat-oracle-single-step fat32$c syscall-sym st)))
+            *enospc*))
+    ;; Predicate relating AbsFAT and LoFAT.
+    (frame-reps-fs frame
+                   (mv-nth 0 (lofat-to-hifat fat32$c))))
+   (equal
+    (mv-nth 1
+            (absfat-oracle-single-step frame syscall-sym st))
+    (mv-nth 1
+            (lofat-oracle-single-step fat32$c syscall-sym st))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (absfat-oracle-single-step lofat-oracle-single-step)
+                    (hifat-mkdir hifat-pwrite)))))
+
 (defund lofat-oracle-multi-step (fat32$c syscall-sym-list st)
   (declare (xargs :stobjs fat32$c
                   :guard (and (lofat-fs-p fat32$c)
@@ -542,3 +574,151 @@
       (((when (atom syscall-sym-list)) (mv frame st))
        ((mv frame st) (absfat-oracle-single-step frame (car syscall-sym-list) st)))
     (absfat-oracle-multi-step frame (cdr syscall-sym-list) st)))
+
+(defund good-lofat-oracle-steps-p-helper (fat32$c syscall-sym-list st)
+  (declare (xargs :stobjs fat32$c
+                  :guard (and (lofat-fs-p fat32$c)
+                              (lofat-st-p st))
+                  :verify-guards nil
+                  :measure (len syscall-sym-list)))
+  (b*
+      (((when (atom syscall-sym-list)) (mv t fat32$c))
+       ((mv fs &) (lofat-to-hifat fat32$c))
+       ((unless
+            (< (hifat-entry-count fs)
+               (max-entry-count fat32$c)))
+        (mv nil fat32$c))
+       ((mv fat32$c st)
+        (lofat-oracle-single-step fat32$c (car syscall-sym-list)
+                                  st))
+       ((when
+            (equal (lofat-st->errno
+                    st)
+                   *enospc*))
+        (mv nil fat32$c)))
+    (good-lofat-oracle-steps-p-helper fat32$c (cdr syscall-sym-list) st)))
+
+(defthm
+  lofat-oracle-multi-step-of-append
+  (equal
+   (lofat-oracle-multi-step fat32$c (append x y)
+                            st)
+   (lofat-oracle-multi-step (mv-nth 0
+                                    (lofat-oracle-multi-step fat32$c x st))
+                            y
+                            (mv-nth 1
+                                    (lofat-oracle-multi-step fat32$c x st))))
+  :hints (("goal" :in-theory (enable lofat-oracle-multi-step append))))
+
+(defthm
+  good-lofat-oracle-steps-p-helper-of-append
+  (equal (mv-nth 0
+                 (good-lofat-oracle-steps-p-helper fat32$c (append x y)
+                                                   st))
+         (and (mv-nth 0
+                      (good-lofat-oracle-steps-p-helper fat32$c x st))
+              (mv-nth 0
+                      (good-lofat-oracle-steps-p-helper
+                       (mv-nth 0
+                               (lofat-oracle-multi-step fat32$c x st))
+                       y
+                       (mv-nth 1
+                               (lofat-oracle-multi-step fat32$c x st))))))
+  :hints (("goal" :in-theory (enable good-lofat-oracle-steps-p-helper
+                                     lofat-oracle-multi-step append))))
+
+(defthm
+  absfat-oracle-multi-step-of-append
+  (equal
+   (absfat-oracle-multi-step frame (append x y)
+                            st)
+   (absfat-oracle-multi-step (mv-nth 0
+                                    (absfat-oracle-multi-step frame x st))
+                            y
+                            (mv-nth 1
+                                    (absfat-oracle-multi-step frame x st))))
+  :hints (("goal" :in-theory (enable absfat-oracle-multi-step append))))
+
+(encapsulate
+  ()
+
+  (local
+   (defun-nx
+     induction-scheme (fat32$c frame st syscall-sym-list)
+     (declare (xargs :stobjs fat32$c
+                     :verify-guards nil
+                     :measure (len syscall-sym-list)))
+     (cond
+      ((and
+        (not (atom syscall-sym-list))
+        (< (hifat-entry-count (mv-nth 0 (lofat-to-hifat fat32$c)))
+           (max-entry-count fat32$c))
+        (not
+         (equal
+          (lofat-st->errno
+           (mv-nth 1
+                   (lofat-oracle-single-step fat32$c (car syscall-sym-list)
+                                             st)))
+          28)))
+       (induction-scheme
+        (mv-nth 0
+                (lofat-oracle-single-step fat32$c (car syscall-sym-list)
+                                          st))
+        (mv-nth 0
+                (absfat-oracle-single-step frame (car syscall-sym-list)
+                                           st))
+        (mv-nth 1
+                (lofat-oracle-single-step fat32$c (car syscall-sym-list)
+                                          st))
+        (cdr syscall-sym-list)))
+      (t
+       (mv fat32$c frame st syscall-sym-list)))))
+
+  (local (include-book "std/basic/inductions" :dir :system))
+
+  (defthm
+    absfat-oracle-multi-step-refinement-lemma-1
+    (implies
+     (and
+      (lofat-fs-p fat32$c)
+      (equal (mv-nth '1 (lofat-to-hifat fat32$c))
+             '0)
+      (mv-nth 0
+              (good-lofat-oracle-steps-p-helper
+               fat32$c (take n syscall-sym-list) st))
+      (frame-reps-fs frame
+                     (mv-nth 0 (lofat-to-hifat fat32$c)))
+      (<= (nfix n) (len syscall-sym-list)))
+     (and
+      (lofat-fs-p (mv-nth 0
+                          (lofat-oracle-multi-step
+                           fat32$c (take n syscall-sym-list) st)))
+      (equal
+       (mv-nth '1
+               (lofat-to-hifat
+                (mv-nth 0
+                        (lofat-oracle-multi-step
+                         fat32$c (take n syscall-sym-list) st))))
+       '0)
+      (frame-reps-fs
+       (mv-nth 0
+               (absfat-oracle-multi-step
+                frame (take n syscall-sym-list) st))
+       (mv-nth
+        0
+        (lofat-to-hifat
+         (mv-nth 0
+                 (lofat-oracle-multi-step
+                  fat32$c (take n syscall-sym-list) st)))))))
+    :hints
+    (("goal"
+      :in-theory (e/d (absfat-oracle-multi-step lofat-oracle-multi-step
+                                                good-lofat-oracle-steps-p-helper)
+                      (hifat-mkdir hifat-pwrite take
+                                   append-of-take-and-cons))
+      :induct
+      (dec-induct n)
+      :expand
+      (:with
+       take-as-append-and-nth
+       (take n syscall-sym-list))))))
