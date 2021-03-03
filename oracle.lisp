@@ -474,6 +474,10 @@
 ;; get their turn in an arbitrary order to execute one instruction at a
 ;; time. I expect this to exacerbate any bad decisions I make now, which is why
 ;; I'm hoping to get this right before I go too far.
+;;
+;; Having written this question down and received advice from Dr Moore, Dr
+;; Swords and an acknowledgement from Dr Ray, I ultimately chose to make the
+;; predicate. Let's see how it pans out.
 (defthm
   absfat-oracle-single-step-refinement
   (implies
@@ -521,376 +525,11 @@
     :in-theory (e/d (absfat-oracle-single-step lofat-oracle-single-step)
                     (hifat-mkdir hifat-pwrite)))))
 
-;; Move later.
-(defthm
-  hifat-pwrite-correctness-lemma-1
-  (implies
-   (true-equiv d-e1 d-e2)
-   (equal
-    (mv-nth 1
-            (hifat-place-file fs path (m1-file d-e1 contents)))
-    (mv-nth
-     1
-     (hifat-place-file fs path (m1-file d-e2 contents)))))
-  :hints (("goal" :in-theory (enable hifat-place-file)))
-  :rule-classes :congruence)
-
-;; Move later.
-(defthm
-  hifat-pwrite-correctness-2
-  (implies
-   (hifat-equiv fs1 fs2)
-   (equal
-    (mv-nth
-     1
-     (hifat-pwrite fd buf offset fs1 fd-table file-table))
-    (mv-nth 1
-            (hifat-pwrite fd
-                          buf offset fs2 fd-table file-table))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable hifat-no-dups-p)))
-  :rule-classes :congruence)
-
-(defthm
-  hifat-pwrite-correctness-3
-  (and
-   (integerp
-    (mv-nth
-     1
-     (hifat-pwrite fd buf offset fs1 fd-table file-table)))
-   (natp
-    (mv-nth
-     2
-     (hifat-pwrite fd buf offset fs1 fd-table file-table))))
-  :rule-classes
-  ((:type-prescription
-    :corollary
-    (integerp
-     (mv-nth
-      1
-      (hifat-pwrite fd buf offset fs1 fd-table file-table))))
-   (:type-prescription
-    :corollary
-    (natp
-     (mv-nth
-      2
-      (hifat-pwrite fd buf offset fs1 fd-table file-table))))))
-
-;; Move later.
-(defthm
-  hifat-pwrite-correctness-4
-  (implies
-   (hifat-equiv fs1 fs2)
-   (equal
-    (mv-nth
-     2
-     (hifat-pwrite fd buf offset fs1 fd-table file-table))
-    (mv-nth 2
-            (hifat-pwrite fd
-                          buf offset fs2 fd-table file-table))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable hifat-no-dups-p)))
-  :rule-classes :congruence)
-
-;; Move later.
-(defthm
-  hifat-mkdir-correctness-2
-  (implies
-   (hifat-equiv fs1 fs2)
-   (equal
-    (mv-nth
-     1
-     (hifat-mkdir fs1 path))
-    (mv-nth 1
-            (hifat-mkdir fs2 path))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable hifat-no-dups-p)))
-  :rule-classes :congruence)
-
-;; Move later.
-(defthm
-  hifat-mkdir-correctness-3
-  (and (integerp (mv-nth 1 (hifat-mkdir fs path)))
-       (natp (mv-nth 2 (hifat-mkdir fs path))))
-  :rule-classes
-  ((:type-prescription :corollary (integerp (mv-nth 1 (hifat-mkdir fs path))))
-   (:type-prescription
-    :corollary (natp (mv-nth 2 (hifat-mkdir fs path))))))
-
-;; Move later.
-(defthm
-  hifat-mkdir-correctness-4
-  (implies
-   (hifat-equiv fs1 fs2)
-   (equal
-    (mv-nth
-     2
-     (hifat-mkdir fs1 path))
-    (mv-nth 2
-            (hifat-mkdir fs2 path))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable hifat-no-dups-p)))
-  :rule-classes :congruence)
-
 (defthmd abs-open-correctness-2
   (equal (lofat-open path fd-table file-table)
          (abs-open path fd-table file-table))
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-open abs-open))))
-
-(defcong hifat-equiv equal
-  (hifat-pread fd count offset fs fd-table file-table)
-  4
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable hifat-pread))))
-
-(defthm
-  lofat-opendir-correctness-lemma-1
-  (implies
-   (and (useful-d-e-list-p d-e-list)
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
-               0))
-   (equal
-    (lofat-directory-file-p (mv-nth 0
-                                    (lofat-find-file fat32$c d-e-list path)))
-    (m1-directory-file-p
-     (mv-nth
-      0
-      (hifat-find-file
-       (mv-nth 0
-               (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
-       path)))))
-  :hints (("goal" :induct (lofat-find-file fat32$c d-e-list path)
-           :in-theory (enable lofat-find-file hifat-find-file))))
-
-;; Replaces one of the corollaries of lofat-find-file-correctness-2.
-(defthm
-  lofat-find-file-correctness-5
-  (implies
-   (and (useful-d-e-list-p d-e-list)
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
-               0))
-   (equal
-    (mv-nth 1
-            (lofat-find-file fat32$c d-e-list path))
-    (mv-nth 1
-            (hifat-find-file
-             (mv-nth 0
-                     (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
-             path))))
-  :hints
-  (("goal"
-    :in-theory (enable hifat-find-file)
-    :induct
-    (mv
-     (mv-nth
-      0
-      (hifat-find-file
-       (mv-nth 0
-               (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
-       path))
-     (mv-nth 0
-             (lofat-find-file fat32$c d-e-list path)))
-    :expand (lofat-to-hifat-helper fat32$c nil entry-limit))))
-
-;; Move later.
-(defthm
-  hifat-lstat-correctness-3
-  (and (integerp (mv-nth 1 (hifat-lstat fs path)))
-       (natp (mv-nth 2 (hifat-lstat fs path))))
-  :hints (("Goal" :in-theory (enable hifat-lstat)))
-  :rule-classes
-  ((:type-prescription :corollary (integerp (mv-nth 1 (hifat-lstat fs path))))
-   (:type-prescription :corollary (natp (mv-nth 2 (hifat-lstat fs path))))))
-
-(defthm
-  hifat-opendir-correctness-1
-  (integerp (mv-nth 2
-                    (hifat-opendir fs path dir-stream-table)))
-  :hints (("goal" :in-theory (enable hifat-opendir)))
-  :rule-classes :type-prescription)
-
-(defthm hifat-opendir-correctness-lemma-1
-  (implies (and (set-equiv x y)
-                (no-duplicatesp-equal x)
-                (no-duplicatesp-equal y)
-                (true-listp x)
-                (true-listp y))
-           (equal (equal (<<-sort x) (<<-sort y))
-                  t))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable common-<<-sort-for-perms)
-           :use common-<<-sort-for-perms)))
-
-(defthm
-  hifat-opendir-correctness-lemma-2
-  (implies (and (hifat-equiv fs1 fs2)
-                (fat32-filename-list-p (strip-cars fs1))
-                (fat32-filename-list-p (strip-cars fs2)))
-           (equal (set-equiv (strip-cars fs1)
-                             (strip-cars fs2))
-                  t))
-  :hints
-  (("goal" :in-theory (disable hifat-equiv-implies-set-equiv-strip-cars-1)
-    :use hifat-equiv-implies-set-equiv-strip-cars-1)))
-
-(defthmd
-  lofat-opendir-correctness-2
-  (implies (equal (mv-nth 1 (lofat-to-hifat fat32$c))
-                  0)
-           (and
-            (equal (mv-nth 1
-                           (lofat-opendir fat32$c dir-stream-table path))
-                   (mv-nth 0
-                           (hifat-opendir (mv-nth 0 (lofat-to-hifat fat32$c))
-                                          path dir-stream-table)))
-            (equal (mv-nth 2
-                           (lofat-opendir fat32$c dir-stream-table path))
-                   (mv-nth 2
-                           (hifat-opendir (mv-nth 0 (lofat-to-hifat fat32$c))
-                                          path dir-stream-table)))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (e/d (lofat-opendir hifat-opendir lofat-to-hifat)
-                           (lofat-pread-refinement-lemma-2)))))
-
-(defthm
-  lofat-opendir-correctness-lemma-2
-  (implies
-   (and (useful-d-e-list-p d-e-list)
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
-               0))
-   (equal
-    (strip-cars (mv-nth 0
-                        (lofat-to-hifat-helper fat32$c d-e-list entry-limit)))
-    (names-from-d-e-list d-e-list)))
-  :hints (("goal" :in-theory (enable lofat-to-hifat-helper
-                                     names-from-d-e-list))))
-
-(defthm
-  lofat-opendir-correctness-lemma-3
-  (implies
-   (and
-    (equal (mv-nth 3
-                   (lofat-to-hifat-helper fat32$c
-                                          (mv-nth 0 (root-d-e-list fat32$c))
-                                          (max-entry-count fat32$c)))
-           0)
-    (lofat-fs-p fat32$c)
-    (m1-directory-file-p
-     (mv-nth
-      0
-      (hifat-find-file
-       (mv-nth 0
-               (lofat-to-hifat-helper fat32$c
-                                      (mv-nth 0 (root-d-e-list fat32$c))
-                                      (max-entry-count fat32$c)))
-       path))))
-   (equal
-    (<<-sort
-     (strip-cars
-      (m1-file->contents
-       (mv-nth
-        0
-        (hifat-find-file
-         (mv-nth 0
-                 (lofat-to-hifat-helper fat32$c
-                                        (mv-nth 0 (root-d-e-list fat32$c))
-                                        (max-entry-count fat32$c)))
-         path)))))
-    (<<-sort
-     (names-from-d-e-list
-      (lofat-file->contents
-       (mv-nth 0
-               (lofat-find-file fat32$c
-                                (mv-nth 0 (root-d-e-list fat32$c))
-                                path)))))))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory (disable (:rewrite lofat-find-file-correctness-2)
-                        lofat-pread-refinement-lemma-2)
-    :use (:instance (:rewrite lofat-find-file-correctness-2)
-                    (entry-limit (max-entry-count fat32$c))
-                    (path path)
-                    (d-e-list (mv-nth 0 (root-d-e-list fat32$c)))
-                    (fat32$c fat32$c)))))
-
-(defthmd
-  lofat-opendir-correctness-3
-  (implies (and (equal (mv-nth 1 (lofat-to-hifat fat32$c))
-                       0)
-                (lofat-fs-p fat32$c))
-           (equal (mv-nth 0
-                          (lofat-opendir fat32$c dir-stream-table path))
-                  (mv-nth 1
-                          (hifat-opendir (mv-nth 0 (lofat-to-hifat fat32$c))
-                                         path dir-stream-table))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (e/d (lofat-opendir hifat-opendir lofat-to-hifat)
-                           (lofat-pread-refinement-lemma-2)))))
-
-(encapsulate
-  ()
-
-  (local
-   (defthm
-     lemma
-     (implies
-      (hifat-equiv fs1 fs2)
-      (equal
-       (hifat-opendir fs1 path dir-stream-table)
-       (hifat-opendir fs2 path dir-stream-table)))
-     :hints (("goal" :in-theory (enable hifat-opendir)
-              :expand
-              ((:with
-                fat32-filename-list-fix-when-fat32-filename-list-p
-                (fat32-filename-list-fix
-                 (<<-sort
-                  (strip-cars (m1-file->contents (mv-nth 0 (hifat-find-file fs2
-                                                                            path)))))))
-               (:with
-                (:rewrite fat32-filename-list-p-of-<<-sort-when-fat32-filename-list-p)
-                (fat32-filename-list-p
-                 (<<-sort
-                  (strip-cars
-                   (m1-file->contents (mv-nth 0 (hifat-find-file fs2 path)))))))
-               (:with
-                (:rewrite fat32-filename-list-p-of-strip-cars-when-m1-file-alist-p)
-                (fat32-filename-list-p
-                 (strip-cars (m1-file->contents (mv-nth 0 (hifat-find-file fs2
-                                                                           path))))))
-               (:with
-                (:rewrite m1-file-alist-p-of-m1-file->contents)
-                (m1-file-alist-p
-                 (m1-file->contents (mv-nth 0 (hifat-find-file fs2 path)))))
-               (:with
-                (:rewrite hifat-opendir-correctness-lemma-1)
-                (equal
-                 (<<-sort
-                  (strip-cars (m1-file->contents (mv-nth 0 (hifat-find-file fs2 path)))))
-                 (<<-sort
-                  (strip-cars (m1-file->contents (mv-nth 0 (hifat-find-file fs1
-                                                                            path)))))))
-               (:with
-                (:rewrite no-duplicatesp-of-strip-cars-when-hifat-no-dups-p)
-                (no-duplicatesp-equal
-                 (strip-cars (m1-file->contents (mv-nth 0 (hifat-find-file fs2
-                                                                           path))))))
-               (:with
-                hifat-opendir-correctness-lemma-2
-                (set-equiv
-                 (strip-cars (m1-file->contents (mv-nth 0 (hifat-find-file fs1 path))))
-                 (strip-cars (m1-file->contents (mv-nth 0 (hifat-find-file fs2
-                                                                           path)))))))))
-     :rule-classes :congruence))
-
-  ;; Move later.
-  (defcong
-    hifat-equiv equal
-    (hifat-opendir fs path dir-stream-table)
-    1))
 
 (defthmd
   absfat-oracle-multi-step-refinement-lemma-2
@@ -1105,113 +744,117 @@
 
   (local (include-book "std/basic/inductions" :dir :system))
 
-  (defthmd
-    absfat-oracle-multi-step-refinement-lemma-1
+  ;; This is made local because it is ultimately implied by
+  ;; absfat-oracle-multi-step-refinement-1 and
+  ;; absfat-oracle-multi-step-refinement-2.
+  (local
+   (defthmd
+     lemma
+     (implies
+      (and
+       (lofat-fs-p fat32$c)
+       (equal (mv-nth '1 (lofat-to-hifat fat32$c))
+              '0)
+       (mv-nth
+        0
+        (good-lofat-oracle-steps-p-helper fat32$c (take n syscall-sym-list)
+                                          st))
+       (frame-reps-fs frame
+                      (mv-nth 0 (lofat-to-hifat fat32$c))))
+      (and
+       (lofat-fs-p
+        (mv-nth 0
+                (lofat-oracle-multi-step fat32$c (take n syscall-sym-list)
+                                         st)))
+       (equal
+        (mv-nth
+         '1
+         (lofat-to-hifat
+          (mv-nth 0
+                  (lofat-oracle-multi-step fat32$c (take n syscall-sym-list)
+                                           st))))
+        '0)
+       (frame-reps-fs
+        (mv-nth 0
+                (absfat-oracle-multi-step frame (take n syscall-sym-list)
+                                          st))
+        (mv-nth
+         0
+         (lofat-to-hifat
+          (mv-nth 0
+                  (lofat-oracle-multi-step fat32$c (take n syscall-sym-list)
+                                           st)))))
+       (equal (mv-nth 1
+                      (absfat-oracle-multi-step frame (take n syscall-sym-list)
+                                                st))
+              (mv-nth 1
+                      (lofat-oracle-multi-step fat32$c (take n syscall-sym-list)
+                                               st)))))
+     :hints
+     (("goal"
+       :in-theory
+       (e/d
+        (absfat-oracle-multi-step lofat-oracle-multi-step
+                                  good-lofat-oracle-steps-p-helper
+                                  absfat-oracle-multi-step-refinement-lemma-2)
+        (hifat-mkdir hifat-pwrite
+                     take append-of-take-and-cons))
+       :induct (dec-induct n)
+       :do-not-induct t
+       :expand (:with take-as-append-and-nth
+                      (take n syscall-sym-list))))))
+
+  (defthm
+    absfat-oracle-multi-step-refinement-1
     (implies
      (and
       (lofat-fs-p fat32$c)
-      (equal (mv-nth '1 (lofat-to-hifat fat32$c))
-             '0)
-      (mv-nth
-       0
-       (good-lofat-oracle-steps-p-helper fat32$c (take n syscall-sym-list)
-                                         st))
+      (equal (mv-nth 1 (lofat-to-hifat fat32$c))
+             0)
+      (mv-nth 0
+              (good-lofat-oracle-steps-p-helper fat32$c syscall-sym-list st))
       (frame-reps-fs frame
                      (mv-nth 0 (lofat-to-hifat fat32$c))))
      (and
       (lofat-fs-p
        (mv-nth 0
-               (lofat-oracle-multi-step fat32$c (take n syscall-sym-list)
-                                        st)))
+               (lofat-oracle-multi-step fat32$c syscall-sym-list st)))
       (equal
        (mv-nth
-        '1
+        1
         (lofat-to-hifat
          (mv-nth 0
-                 (lofat-oracle-multi-step fat32$c (take n syscall-sym-list)
-                                          st))))
-       '0)
+                 (lofat-oracle-multi-step fat32$c syscall-sym-list st))))
+       0)
       (frame-reps-fs
        (mv-nth 0
-               (absfat-oracle-multi-step frame (take n syscall-sym-list)
-                                         st))
+               (absfat-oracle-multi-step frame syscall-sym-list st))
        (mv-nth
         0
         (lofat-to-hifat
          (mv-nth 0
-                 (lofat-oracle-multi-step fat32$c (take n syscall-sym-list)
-                                          st)))))
+                 (lofat-oracle-multi-step fat32$c syscall-sym-list st)))))
       (equal (mv-nth 1
-                     (absfat-oracle-multi-step frame (take n syscall-sym-list)
-                                               st))
+                     (absfat-oracle-multi-step frame syscall-sym-list st))
              (mv-nth 1
-                     (lofat-oracle-multi-step fat32$c (take n syscall-sym-list)
-                                              st)))))
-    :hints
-    (("goal"
-      :in-theory
-      (e/d
-       (absfat-oracle-multi-step lofat-oracle-multi-step
-                                 good-lofat-oracle-steps-p-helper
-                                 absfat-oracle-multi-step-refinement-lemma-2)
-       (hifat-mkdir hifat-pwrite
-                    take append-of-take-and-cons))
-      :induct (dec-induct n)
-      :do-not-induct t
-      :expand (:with take-as-append-and-nth
-                     (take n syscall-sym-list))))))
+                     (lofat-oracle-multi-step fat32$c syscall-sym-list st)))))
+    :hints (("goal" :use (:instance lemma
+                                    (n (len syscall-sym-list))))))
 
-(defthm
-  absfat-oracle-multi-step-refinement-1
-  (implies
-   (and
-    (lofat-fs-p fat32$c)
-    (equal (mv-nth 1 (lofat-to-hifat fat32$c))
-           0)
-    (mv-nth 0
-            (good-lofat-oracle-steps-p-helper fat32$c syscall-sym-list st))
-    (frame-reps-fs frame
-                   (mv-nth 0 (lofat-to-hifat fat32$c))))
-   (and
-    (lofat-fs-p
-     (mv-nth 0
-             (lofat-oracle-multi-step fat32$c syscall-sym-list st)))
-    (equal
-     (mv-nth
-      1
-      (lofat-to-hifat
-       (mv-nth 0
-               (lofat-oracle-multi-step fat32$c syscall-sym-list st))))
-     0)
-    (frame-reps-fs
-     (mv-nth 0
-             (absfat-oracle-multi-step frame syscall-sym-list st))
-     (mv-nth
-      0
-      (lofat-to-hifat
-       (mv-nth 0
-               (lofat-oracle-multi-step fat32$c syscall-sym-list st)))))
-    (equal (mv-nth 1
-                   (absfat-oracle-multi-step frame syscall-sym-list st))
-           (mv-nth 1
-                   (lofat-oracle-multi-step fat32$c syscall-sym-list st)))))
-  :hints (("goal" :use (:instance absfat-oracle-multi-step-refinement-lemma-1
-                                  (n (len syscall-sym-list))))))
-
-(defthmd
-  absfat-oracle-multi-step-refinement-2
-  (implies
-   (and
-    (lofat-fs-p fat32$c)
-    (equal (mv-nth 1 (lofat-to-hifat fat32$c))
-           0)
-    (mv-nth 0
-            (good-lofat-oracle-steps-p-helper fat32$c syscall-sym-list st))
-    (frame-reps-fs frame
-                   (mv-nth 0 (lofat-to-hifat fat32$c))))
-   (equal (mv-nth 1
-                  (absfat-oracle-multi-step frame syscall-sym-list st))
-          (mv-nth 1
-                  (lofat-oracle-multi-step fat32$c syscall-sym-list st))))
-  :hints (("goal" :use (:instance absfat-oracle-multi-step-refinement-lemma-1
-                                  (n (len syscall-sym-list))))))
+  (defthmd
+    absfat-oracle-multi-step-refinement-2
+    (implies
+     (and
+      (lofat-fs-p fat32$c)
+      (equal (mv-nth 1 (lofat-to-hifat fat32$c))
+             0)
+      (mv-nth 0
+              (good-lofat-oracle-steps-p-helper fat32$c syscall-sym-list st))
+      (frame-reps-fs frame
+                     (mv-nth 0 (lofat-to-hifat fat32$c))))
+     (equal (mv-nth 1
+                    (absfat-oracle-multi-step frame syscall-sym-list st))
+            (mv-nth 1
+                    (lofat-oracle-multi-step fat32$c syscall-sym-list st))))
+    :hints (("goal" :use (:instance lemma
+                                    (n (len syscall-sym-list)))))))
