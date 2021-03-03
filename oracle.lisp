@@ -932,6 +932,25 @@
        ((mv fat32$c st) (lofat-oracle-single-step fat32$c (car syscall-sym-list) st)))
     (lofat-oracle-multi-step fat32$c (cdr syscall-sym-list) st)))
 
+(defthmd
+  lofat-oracle-multi-step-of-true-list-fix
+  (equal (lofat-oracle-multi-step fat32$c (true-list-fix syscall-sym-list)
+                                  st)
+         (lofat-oracle-multi-step fat32$c syscall-sym-list st))
+  :hints (("goal" :in-theory (enable lofat-oracle-multi-step
+                                     true-list-fix))))
+
+(defcong
+  list-equiv equal
+  (lofat-oracle-multi-step fat32$c syscall-sym-list st)
+  2
+  :hints
+  (("goal"
+    :use
+    (lofat-oracle-multi-step-of-true-list-fix
+     (:instance lofat-oracle-multi-step-of-true-list-fix
+                (syscall-sym-list syscall-sym-list-equiv))))))
+
 (defund absfat-oracle-multi-step (frame syscall-sym-list st)
   (declare (xargs :guard (and (frame-p frame)
                               (lofat-st-p st)
@@ -943,6 +962,25 @@
       (((when (atom syscall-sym-list)) (mv frame st))
        ((mv frame st) (absfat-oracle-single-step frame (car syscall-sym-list) st)))
     (absfat-oracle-multi-step frame (cdr syscall-sym-list) st)))
+
+(defthmd
+  absfat-oracle-multi-step-of-true-list-fix
+  (equal (absfat-oracle-multi-step frame (true-list-fix syscall-sym-list)
+                                  st)
+         (absfat-oracle-multi-step frame syscall-sym-list st))
+  :hints (("goal" :in-theory (enable absfat-oracle-multi-step
+                                     true-list-fix))))
+
+(defcong
+  list-equiv equal
+  (absfat-oracle-multi-step frame syscall-sym-list st)
+  2
+  :hints
+  (("goal"
+    :use
+    (absfat-oracle-multi-step-of-true-list-fix
+     (:instance absfat-oracle-multi-step-of-true-list-fix
+                (syscall-sym-list syscall-sym-list-equiv))))))
 
 (defund good-lofat-oracle-steps-p-helper (fat32$c syscall-sym-list st)
   (declare (xargs :stobjs fat32$c
@@ -966,6 +1004,28 @@
                    *enospc*))
         (mv nil fat32$c)))
     (good-lofat-oracle-steps-p-helper fat32$c (cdr syscall-sym-list) st)))
+
+(defthmd
+  good-lofat-oracle-steps-p-helper-of-true-list-fix
+  (equal
+   (good-lofat-oracle-steps-p-helper fat32$c (true-list-fix syscall-sym-list)
+                                     st)
+   (good-lofat-oracle-steps-p-helper fat32$c syscall-sym-list st))
+  :hints (("goal" :in-theory (enable good-lofat-oracle-steps-p-helper
+                                     true-list-fix))))
+
+(defcong
+  list-equiv equal
+  (good-lofat-oracle-steps-p-helper fat32$c syscall-sym-list st)
+  2
+  :hints
+  (("goal"
+    :do-not-induct t
+    :use
+    (good-lofat-oracle-steps-p-helper-of-true-list-fix
+     (:instance
+      good-lofat-oracle-steps-p-helper-of-true-list-fix
+      (syscall-sym-list syscall-sym-list-equiv))))))
 
 (defthm
   lofat-oracle-multi-step-of-append
@@ -1101,62 +1161,57 @@
       :expand (:with take-as-append-and-nth
                      (take n syscall-sym-list))))))
 
-;; Move later.
-(defthmd
-  good-lofat-oracle-steps-p-helper-of-true-list-fix
-  (equal
-   (good-lofat-oracle-steps-p-helper fat32$c (true-list-fix syscall-sym-list)
-                                     st)
-   (good-lofat-oracle-steps-p-helper fat32$c syscall-sym-list st))
-  :hints (("goal" :in-theory (enable good-lofat-oracle-steps-p-helper
-                                     true-list-fix))))
-(defcong
-  list-equiv equal
-  (good-lofat-oracle-steps-p-helper fat32$c syscall-sym-list st)
-  2
-  :hints
-  (("goal"
-    :do-not-induct t
-    :use
-    (good-lofat-oracle-steps-p-helper-of-true-list-fix
-     (:instance
-      good-lofat-oracle-steps-p-helper-of-true-list-fix
-      (syscall-sym-list syscall-sym-list-equiv))))))
+(defthm
+  absfat-oracle-multi-step-refinement-1
+  (implies
+   (and
+    (lofat-fs-p fat32$c)
+    (equal (mv-nth 1 (lofat-to-hifat fat32$c))
+           0)
+    (mv-nth 0
+            (good-lofat-oracle-steps-p-helper fat32$c syscall-sym-list st))
+    (frame-reps-fs frame
+                   (mv-nth 0 (lofat-to-hifat fat32$c))))
+   (and
+    (lofat-fs-p
+     (mv-nth 0
+             (lofat-oracle-multi-step fat32$c syscall-sym-list st)))
+    (equal
+     (mv-nth
+      1
+      (lofat-to-hifat
+       (mv-nth 0
+               (lofat-oracle-multi-step fat32$c syscall-sym-list st))))
+     0)
+    (frame-reps-fs
+     (mv-nth 0
+             (absfat-oracle-multi-step frame syscall-sym-list st))
+     (mv-nth
+      0
+      (lofat-to-hifat
+       (mv-nth 0
+               (lofat-oracle-multi-step fat32$c syscall-sym-list st)))))
+    (equal (mv-nth 1
+                   (absfat-oracle-multi-step frame syscall-sym-list st))
+           (mv-nth 1
+                   (lofat-oracle-multi-step fat32$c syscall-sym-list st)))))
+  :hints (("goal" :use (:instance absfat-oracle-multi-step-refinement-lemma-1
+                                  (n (len syscall-sym-list))))))
 
-;; Move later.
 (defthmd
-  lofat-oracle-multi-step-of-true-list-fix
-  (equal (lofat-oracle-multi-step fat32$c (true-list-fix syscall-sym-list)
-                                  st)
-         (lofat-oracle-multi-step fat32$c syscall-sym-list st))
-  :hints (("goal" :in-theory (enable lofat-oracle-multi-step
-                                     true-list-fix))))
-(defcong
-  list-equiv equal
-  (lofat-oracle-multi-step fat32$c syscall-sym-list st)
-  2
-  :hints
-  (("goal"
-    :use
-    (lofat-oracle-multi-step-of-true-list-fix
-     (:instance lofat-oracle-multi-step-of-true-list-fix
-                (syscall-sym-list syscall-sym-list-equiv))))))
-
-;; Move later.
-(defthmd
-  absfat-oracle-multi-step-of-true-list-fix
-  (equal (absfat-oracle-multi-step frame (true-list-fix syscall-sym-list)
-                                  st)
-         (absfat-oracle-multi-step frame syscall-sym-list st))
-  :hints (("goal" :in-theory (enable absfat-oracle-multi-step
-                                     true-list-fix))))
-(defcong
-  list-equiv equal
-  (absfat-oracle-multi-step frame syscall-sym-list st)
-  2
-  :hints
-  (("goal"
-    :use
-    (absfat-oracle-multi-step-of-true-list-fix
-     (:instance absfat-oracle-multi-step-of-true-list-fix
-                (syscall-sym-list syscall-sym-list-equiv))))))
+  absfat-oracle-multi-step-refinement-2
+  (implies
+   (and
+    (lofat-fs-p fat32$c)
+    (equal (mv-nth 1 (lofat-to-hifat fat32$c))
+           0)
+    (mv-nth 0
+            (good-lofat-oracle-steps-p-helper fat32$c syscall-sym-list st))
+    (frame-reps-fs frame
+                   (mv-nth 0 (lofat-to-hifat fat32$c))))
+   (equal (mv-nth 1
+                  (absfat-oracle-multi-step frame syscall-sym-list st))
+          (mv-nth 1
+                  (lofat-oracle-multi-step fat32$c syscall-sym-list st))))
+  :hints (("goal" :use (:instance absfat-oracle-multi-step-refinement-lemma-1
+                                  (n (len syscall-sym-list))))))
