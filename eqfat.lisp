@@ -825,62 +825,57 @@ channel state))
       (((mv file error-code)
         (hifat-find-file
          (mv-nth 0
-                 (lofat-to-hifat-helper
-                  fat32$c
-                  d-e-list entry-limit))
+                 (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
          path)))
     (implies
+     (and (lofat-fs-p fat32$c)
+          (useful-d-e-list-p d-e-list)
+          (equal (mv-nth 3
+                         (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
+                 0)
+          (lofat-directory-file-p
+           (mv-nth 0
+                   (lofat-find-file fat32$c d-e-list path))))
      (and
-      (lofat-fs-p fat32$c)
-      (useful-d-e-list-p d-e-list)
-      (equal (mv-nth 3
-                     (lofat-to-hifat-helper
-                      fat32$c
-                      d-e-list entry-limit))
-             0)
-      (lofat-directory-file-p
-       (mv-nth
-        0
-        (lofat-find-file fat32$c
-                         d-e-list path))))
-     (and
+      (equal (lofat-file->d-e (mv-nth 0
+                                      (lofat-find-file fat32$c d-e-list path)))
+             (m1-file->d-e file))
       (equal
-       (lofat-file->d-e
-        (mv-nth 0
-                (lofat-find-file
-                 fat32$c d-e-list path)))
-       (m1-file->d-e file))
-      (equal
-       (mv-nth
-        0
-        (lofat-to-hifat-helper
-         fat32$c
-         (lofat-file->contents
-          (mv-nth 0
-                  (lofat-find-file
-                   fat32$c d-e-list path)))
-         entry-limit))
+       (mv-nth 0
+               (lofat-to-hifat-helper
+                fat32$c
+                (lofat-file->contents
+                 (mv-nth 0
+                         (lofat-find-file fat32$c d-e-list path)))
+                entry-limit))
        (m1-file->contents file))
       (equal
-       (mv-nth 1
-               (lofat-find-file
-                fat32$c d-e-list path))
-       error-code))))
-  :hints
-  (("goal" :in-theory (enable hifat-find-file)
-    :induct
-    (mv (mv-nth 0
-                (hifat-find-file
+       (mv-nth 3
+               (lofat-to-hifat-helper
+                fat32$c
+                (lofat-file->contents
                  (mv-nth 0
-                         (lofat-to-hifat-helper
-                          fat32$c
-                          d-e-list entry-limit))
-                 path))
-        (mv-nth 0
-                (lofat-find-file
-                 fat32$c d-e-list path)))
-    :expand (lofat-to-hifat-helper
-             fat32$c nil entry-limit))))
+                         (lofat-find-file fat32$c d-e-list path)))
+                entry-limit))
+       0)
+      (equal (mv-nth 1
+                     (lofat-find-file fat32$c d-e-list path))
+             error-code))))
+  :hints
+  (("goal"
+    :in-theory (enable hifat-find-file)
+    :induct
+    (mv
+     (mv-nth
+      0
+      (hifat-find-file
+       (mv-nth 0
+               (lofat-to-hifat-helper fat32$c d-e-list entry-limit))
+       path))
+     (mv-nth 0
+             (lofat-find-file fat32$c d-e-list path)))
+    :do-not-induct t
+    :expand (lofat-to-hifat-helper fat32$c nil entry-limit))))
 
 (defthm
   lofat-find-file-correctness-3
