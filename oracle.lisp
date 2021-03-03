@@ -32,7 +32,7 @@
   (declare (xargs :stobjs fat32$c
                   :guard (and (lofat-fs-p fat32$c)
                               (lofat-st-p st))
-                  :guard-debug t))
+                  :verify-guards nil))
   (b*
       ((st (mbe :logic (lofat-st-fix st) :exec st))
        ((when (eq syscall-sym :pwrite))
@@ -118,7 +118,10 @@
           (mv fat32$c
               (change-lofat-st
                st :dir-stream-table dir-stream-table :dirp dirp
-               :retval retval :errno 0)))))
+               :retval retval :errno 0))))
+       ((when (and (consp syscall-sym) (eq (car syscall-sym) :set-path)))
+        (mv fat32$c
+            (change-lofat-st st :path (cdr syscall-sym)))))
     (mv fat32$c st)))
 
 ;; We aren't going to put statfs in this. It'll just make things pointlessly
@@ -128,7 +131,7 @@
                               (lofat-st-p st)
                               (consp (assoc-equal 0 frame))
                               (no-duplicatesp-equal (strip-cars frame)))
-                  :guard-debug t))
+                  :verify-guards nil))
   (b*
       ((st (mbe :logic (lofat-st-fix st) :exec st))
        ((when (eq syscall-sym :pwrite))
@@ -216,7 +219,10 @@
           (mv frame
               (change-lofat-st
                st :dir-stream-table dir-stream-table :dirp dirp
-               :retval retval :errno 0)))))
+               :retval retval :errno 0))))
+       ((when (and (consp syscall-sym) (eq (car syscall-sym) :set-path)))
+        (mv frame
+            (change-lofat-st st :path (cdr syscall-sym)))))
     (mv frame st)))
 
 ;; Counterexample, but for regular files which we aren't really thinking about
@@ -854,3 +860,7 @@
                     (lofat-oracle-multi-step fat32$c syscall-sym-list st))))
     :hints (("goal" :use (:instance lemma
                                     (n (len syscall-sym-list)))))))
+
+(defconst *example-prog-1*
+  (list ()
+        ()))
