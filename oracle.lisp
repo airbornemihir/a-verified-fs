@@ -833,11 +833,7 @@
         0
         (lofat-to-hifat
          (mv-nth 0
-                 (lofat-oracle-multi-step fat32$c syscall-sym-list st)))))
-      (equal (mv-nth 1
-                     (absfat-oracle-multi-step frame syscall-sym-list st))
-             (mv-nth 1
-                     (lofat-oracle-multi-step fat32$c syscall-sym-list st)))))
+                 (lofat-oracle-multi-step fat32$c syscall-sym-list st)))))))
     :hints (("goal" :use (:instance lemma
                                     (n (len syscall-sym-list))))))
 
