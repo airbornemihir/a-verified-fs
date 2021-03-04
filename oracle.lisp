@@ -943,12 +943,6 @@
  (equal (nonempty-queues (list nil (list 3) (list 4 5) nil))
         (list 1 2)))
 
-;; Move later.
-(defthm natp-of-nth-when-nat-listp
-  (implies (nat-listp l) (<= 0 (nth n l)))
-  :hints (("goal" :in-theory (enable nth nat-listp)))
-  :rule-classes :linear)
-
 (defthm
   member-of-nonempty-queues
   (iff (member-equal (nfix x)
@@ -1038,8 +1032,8 @@
       :pwrite :close))
     (list 0 1 1 1 0 0))
    (and (equal queue
-               '((:set-path "tmp        " "ticket1 txt")
-                 (:set-path "tmp        " "ticket2 txt")
+               '((:SET-PATH "TMP        " "TICKET1 TXT")
+                 (:SET-PATH "TMP        " "TICKET2 TXT")
                  :open :pwrite
                  :open :pwrite
                  :close :close))
