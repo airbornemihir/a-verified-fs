@@ -1,7 +1,10 @@
 (in-package "ACL2")
 
 (include-book "utilities/flatten-equiv")
-(include-book "hifat-to-lofat-inversion")
+
+(include-book "lofat/clusterchain")
+(include-book "hifat/hifat-equiv")
+
 (include-book "lofat-to-string-inversion")
 (local (include-book "std/lists/prefixp" :dir :system))
 (local (include-book "std/lists/intersectp" :dir :system))
@@ -14,16 +17,7 @@
 (local
  (in-theory (e/d ((:rewrite hifat-equiv-of-cons-lemma-4)
                   (:rewrite not-intersectp-list-of-cons-2))
-                 ((:rewrite free-index-list-listp-of-update-nth-lemma-1)
-                  (:rewrite free-index-list-listp-correctness-1)
-                  (:rewrite non-free-index-list-listp-correctness-1)
-                  (:rewrite count-free-clusters-of-set-indices-in-fa-table-2)
-                  (:rewrite count-free-clusters-of-set-indices-in-fa-table-lemma-1)
-                  (:rewrite non-free-index-listp-correctness-5)
-                  (:rewrite free-index-listp-correctness-1)
-                  (:rewrite consp-of-assoc-of-hifat-file-alist-fix)
-                  (:linear hifat-entry-count-when-hifat-subsetp)
-                  (:rewrite consp-of-assoc-when-hifat-equiv-lemma-1)
+                 ((:rewrite consp-of-assoc-when-hifat-equiv-lemma-1)
                   (:rewrite hifat-subsetp-preserves-assoc)
                   (:rewrite abs-find-file-correctness-1-lemma-40)
                   (:rewrite hifat-file-alist-fix-guard-lemma-1)
@@ -71,314 +65,24 @@
                   (:rewrite subsetp-member . 4)
                   (:rewrite subsetp-member . 2)
                   (:rewrite consp-of-nthcdr)
-                  (:induction integer-listp)
                   (:definition integer-listp)
                   (:definition rational-listp)
                   (:definition acl2-number-listp)
-                  (:induction update-nth)
                   (:definition update-nth)
                   (:definition mod)
                   (:definition ceiling)
                   (:rewrite characterp-nth)
                   (:definition string-listp)
-                  (:induction take)
                   (:definition take)
-                  (:induction member-equal)
                   (:definition member-equal)
                   (:definition floor)
-                  (:induction nth)
                   (:definition nth)
-                  (:induction true-listp)
                   (:definition true-listp)
-                  (:rewrite
-                   member-intersectp-of-set-difference$-lemma-1)))))
+                  (:rewrite member-intersectp-of-set-difference$-lemma-1)))))
 
 ;; I'm thinking it would be useful to eliminate a lot of case splits that arise
 ;; from nfix terms in lemmas using lofat-to-hifat-helper-correctness-4.
 (local (in-theory (disable nfix)))
-
-(defund-nx
-  eqfat (str1 str2)
-  (b*
-      (((mv fat32$c1 error-code1)
-        (string-to-lofat-nx str1))
-       (good1 (and (stringp str1) (equal error-code1 0)))
-       ((mv fat32$c2 error-code2)
-        (string-to-lofat-nx str2))
-       (good2 (and (stringp str2) (equal error-code2 0)))
-       ((unless (and good1 good2))
-        (and (not good1) (not good2))))
-    (lofat-equiv fat32$c1 fat32$c2)))
-
-(defequiv
-  eqfat
-  :hints (("goal" :in-theory (enable eqfat))))
-
-(defthm
-  string-to-lofat-inversion
-  (implies
-   (and (stringp str)
-        (fat32$c-p fat32$c)
-        (equal (mv-nth 1 (string-to-lofat fat32$c str))
-               0))
-   (eqfat (lofat-to-string
-           (mv-nth 0
-                   (string-to-lofat fat32$c str)))
-          str))
-  :hints
-  (("goal"
-    :in-theory (e/d (eqfat)
-                    (create-fat32$c
-                     (:rewrite lofat-to-string-inversion)))
-    :use
-    ((:instance
-      (:rewrite lofat-to-string-inversion)
-      (fat32$c
-       (mv-nth 0
-               (string-to-lofat (create-fat32$c)
-                                str))))
-     (:instance
-      (:rewrite string-to-lofat-ignore-lemma-14)
-      (str
-       (lofat-to-string
-        (mv-nth 0
-                (string-to-lofat (create-fat32$c)
-                                 str))))
-      (fat32$c
-       (mv-nth 0
-               (string-to-lofat (create-fat32$c)
-                                str))))
-     string-to-lofat-ignore-lemma-14))))
-
-(defthm
-  hifat-to-string-inversion
-  (implies
-   (and (lofat-fs-p fat32$c)
-        (m1-file-alist-p fs)
-        (hifat-bounded-file-alist-p fs)
-        (hifat-no-dups-p fs)
-        (<= (hifat-entry-count fs)
-            (max-entry-count fat32$c)))
-   (b*
-       (((mv fat32$c error-code)
-         (hifat-to-lofat fat32$c fs)))
-     (implies
-      (zp error-code)
-      (hifat-equiv
-       (mv-nth
-        0
-        (lofat-to-hifat
-         (mv-nth
-          0
-          (string-to-lofat
-           fat32$c
-           (lofat-to-string fat32$c)))))
-       fs)))))
-
-(defthm
-  string-to-hifat-inversion
-  (implies
-   (and (stringp str)
-        (fat32$c-p fat32$c))
-   (b*
-       (((mv fat32$c error-code1)
-         (string-to-lofat fat32$c str))
-        ((mv fs error-code2)
-         (lofat-to-hifat fat32$c)))
-     (implies
-      (and (equal error-code1 0)
-           (equal error-code2 0)
-           (hifat-bounded-file-alist-p fs)
-           (hifat-no-dups-p fs)
-           (equal (mv-nth 1 (hifat-to-lofat fat32$c fs))
-                  0))
-      (eqfat (lofat-to-string
-              (mv-nth 0 (hifat-to-lofat fat32$c fs)))
-             str))))
-  :hints
-  (("goal"
-    :in-theory (e/d (eqfat)
-                    ((:rewrite lofat-to-string-inversion)
-                     (:rewrite string-to-lofat-ignore)))
-    :use
-    ((:instance
-      (:rewrite lofat-to-string-inversion)
-      (fat32$c
-       (mv-nth
-        0
-        (hifat-to-lofat
-         (mv-nth 0 (string-to-lofat-nx str))
-         (mv-nth 0
-                 (lofat-to-hifat
-                  (mv-nth 0 (string-to-lofat-nx str))))))))
-     (:instance
-      (:rewrite string-to-lofat-ignore)
-      (str
-       (lofat-to-string
-        (mv-nth
-         0
-         (hifat-to-lofat
-          (mv-nth 0 (string-to-lofat-nx str))
-          (mv-nth 0
-                  (lofat-to-hifat
-                   (mv-nth 0 (string-to-lofat-nx str))))))))
-      (fat32$c
-       (mv-nth
-        0
-        (hifat-to-lofat
-         (mv-nth 0 (string-to-lofat-nx str))
-         (mv-nth 0
-                 (lofat-to-hifat
-                  (mv-nth 0 (string-to-lofat-nx str))))))))
-     (:rewrite string-to-lofat-ignore)
-     string-to-lofat-ignore-lemma-14
-     (:instance
-      (:rewrite string-to-lofat-ignore-lemma-14)
-      (str
-       (lofat-to-string
-        (mv-nth
-         0
-         (hifat-to-lofat
-          (mv-nth 0 (string-to-lofat fat32$c str))
-          (mv-nth
-           0
-           (lofat-to-hifat
-            (mv-nth 0
-                    (string-to-lofat fat32$c str))))))))
-      (fat32$c
-       (mv-nth
-        0
-        (hifat-to-lofat
-         (mv-nth 0 (string-to-lofat fat32$c str))
-         (mv-nth
-          0
-          (lofat-to-hifat
-           (mv-nth 0
-                   (string-to-lofat fat32$c str))))))))
-     (:instance
-      (:rewrite lofat-to-string-inversion)
-      (fat32$c
-       (mv-nth
-        0
-        (hifat-to-lofat
-         (mv-nth 0 (string-to-lofat fat32$c str))
-         (mv-nth
-          0
-          (lofat-to-hifat
-           (mv-nth
-            0
-            (string-to-lofat fat32$c str))))))))))))
-
-#|
-Some (rather awful) testing forms are
-(b* (((mv contents &)
-(get-cc-contents fat32$c 2 *ms-max-dir-size*)))
-(get-dir-filenames fat32$c contents *ms-max-dir-size*))
-(b* (((mv dir-contents &)
-(get-cc-contents fat32$c 2 *ms-max-dir-size*)))
-(lofat-to-hifat fat32$c))
-(b* (((mv dir-contents &)
-(get-cc-contents fat32$c 2 *ms-max-dir-size*))
-(fs (lofat-to-hifat fat32$c)))
-(hifat-open (list "INITRD  IMG") nil nil))
-(b* (((mv dir-contents &)
-(get-cc-contents fat32$c 2 *ms-max-dir-size*))
-(fs (lofat-to-hifat fat32$c))
-((mv fd-table file-table & &)
-(hifat-open (list "INITRD  IMG") nil nil)))
-(hifat-pread 0 6 49 fs fd-table file-table))
-(b* (((mv dir-contents &)
-(get-cc-contents fat32$c 2 *ms-max-dir-size*))
-(fs (lofat-to-hifat fat32$c))
-((mv fd-table file-table & &)
-(hifat-open (list "INITRD  IMG") nil nil)))
-(hifat-pwrite 0 "ornery" 49 fs fd-table file-table))
-(b* (((mv dir-contents &)
-(get-cc-contents fat32$c 2 *ms-max-dir-size*))
-(fs (lofat-to-hifat fat32$c))
-((mv fd-table file-table & &)
-(hifat-open (list "INITRD  IMG") nil nil))
-((mv fs & &)
-(hifat-pwrite 0 "ornery" 49 fs fd-table file-table))
-((mv fat32$c d-e-list)
-(hifat-to-lofat-helper fat32$c fs)))
-(mv fat32$c d-e-list))
-(b* (((mv dir-contents &)
-(get-cc-contents fat32$c 2 *ms-max-dir-size*))
-(fs (lofat-to-hifat fat32$c))
-((mv fd-table file-table & &)
-(hifat-open (list "INITRD  IMG") nil nil))
-((mv fs & &)
-(hifat-pwrite 0 "ornery" 49 fs fd-table file-table)))
-(hifat-to-lofat fat32$c fs))
-(time$
-(b*
-((str (lofat-to-string
-fat32$c))
-((unless (and (stringp str)
-(>= (length str) *initialbytcnt*)))
-(mv fat32$c -1))
-((mv fat32$c error-code)
-(read-reserved-area fat32$c str))
-((unless (equal error-code 0))
-(mv fat32$c "it was read-reserved-area"))
-(fat-read-size (/ (* (bpb_fatsz32 fat32$c)
-(bpb_bytspersec fat32$c))
-4))
-((unless (integerp fat-read-size))
-(mv fat32$c "it was fat-read-size"))
-(data-byte-count (* (count-of-clusters fat32$c)
-(cluster-size fat32$c)))
-((unless (> data-byte-count 0))
-(mv fat32$c "it was data-byte-count"))
-(tmp_bytspersec (bpb_bytspersec fat32$c))
-(tmp_init (* tmp_bytspersec
-(+ (bpb_rsvdseccnt fat32$c)
-(* (bpb_numfats fat32$c)
-(bpb_fatsz32 fat32$c)))))
-((unless (>= (length str)
-(+ tmp_init
-(data-region-length fat32$c))))
-(mv fat32$c "it was (length str)"))
-(fat32$c (resize-fat fat-read-size fat32$c))
-(fat32$c
-(update-fat fat32$c
-(subseq str
-(* (bpb_rsvdseccnt fat32$c)
-(bpb_bytspersec fat32$c))
-(+ (* (bpb_rsvdseccnt fat32$c)
-(bpb_bytspersec fat32$c))
-(* fat-read-size 4)))
-fat-read-size))
-(fat32$c
-(resize-data-region data-byte-count fat32$c))
-(data-region-string
-(subseq str tmp_init
-(+ tmp_init
-(data-region-length fat32$c))))
-(fat32$c
-(update-data-region fat32$c data-region-string
-(data-region-length fat32$c)
-0)))
-(mv fat32$c error-code)))
-(time$
-(b*
-(((mv channel state)
-(open-output-channel "test/disk2.raw" :character state))
-(state
-(princ$
-(lofat-to-string fat32$c)
-channel state))
-(state
-(close-output-channel channel state)))
-(mv fat32$c state)))
-(b* (((mv dir-contents &)
-(get-cc-contents fat32$c 2 *ms-max-dir-size*))
-(fs (lofat-to-hifat fat32$c))
-((mv fs & &)
-(hifat-mkdir fs (list "" "TMP        "))))
-(hifat-to-lofat fat32$c fs))
-|#
 
 (defund lofat-file-contents-p (contents)
   (declare (xargs :guard t))
@@ -10547,7 +10251,6 @@ channel state))
       (:rewrite nats=>chars-of-take)
       (:rewrite hifat-to-lofat-inversion-lemma-2)
       (:rewrite subsetp-car-member)
-      (:rewrite consp-of-assoc-of-hifat-file-alist-fix)
       (:rewrite assoc-of-car-when-member)
       (:rewrite not-intersectp-list-when-atom)
       (:rewrite subdir-contents-p-when-zero-length)

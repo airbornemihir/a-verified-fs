@@ -3072,3 +3072,58 @@
 (defthm character-listp-of-fat32-path-to-path
   (character-listp (fat32-path-to-path string-list))
   :hints (("goal" :in-theory (enable fat32-name-to-name fat32-path-to-path))))
+
+(defun
+    find-d-e (d-e-list filename)
+  (declare (xargs :guard (and (fat32-filename-p filename)
+                              (d-e-list-p d-e-list))))
+  (b* (((when (atom d-e-list))
+        (mv (d-e-fix nil) *enoent*))
+       (d-e (mbe :exec (car d-e-list)
+                     :logic (d-e-fix (car d-e-list))))
+       ((when (equal (d-e-filename d-e)
+                     filename))
+        (mv d-e 0)))
+    (find-d-e (cdr d-e-list)
+                  filename)))
+
+(defthm
+  find-d-e-correctness-1
+  (and
+   (d-e-p (mv-nth 0 (find-d-e d-e-list filename)))
+   (natp (mv-nth 1
+                 (find-d-e d-e-list filename))))
+  :hints (("goal" :induct (find-d-e d-e-list filename)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (d-e-p (mv-nth 0
+                       (find-d-e d-e-list filename))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 1
+                  (find-d-e d-e-list filename))))))
+
+(defthm
+  find-d-e-correctness-2
+  (implies
+   (not (equal (mv-nth 1 (find-d-e d-e-list filename))
+               0))
+   (equal (mv-nth 1 (find-d-e d-e-list filename))
+          *enoent*)))
+
+;; Kinda general.
+(defthm
+  d-e-filename-of-find-d-e
+  (equal (d-e-filename (mv-nth 0 (find-d-e d-e-list filename)))
+         (if (equal (mv-nth 1 (find-d-e d-e-list filename))
+                    0)
+             filename
+             (d-e-filename (d-e-fix nil)))))
+
+;; Rename later.
+(defthm d-e-cc-contents-of-lofat-place-file-coincident-lemma-15
+  (implies (not (equal (mv-nth 1 (find-d-e d-e-list filename))
+                       0))
+           (equal (mv-nth 0 (find-d-e d-e-list filename))
+                  (d-e-fix nil))))
