@@ -1014,3 +1014,33 @@
         (schedule-queues queues oracle)))
     (mv (cons next tail-queues)
         tail-oracle)))
+
+;; This shows that sensible things happen even if the oracle is shorter in
+;; length than expected. However, it also shows a potential ill-effect of
+;; heedless scheduling, as the paths get scrambled because of unwanted
+;; interleaving. We need to have transactions somehow...
+(assert-event
+ (mv-let
+   (queue oracle)
+   (schedule-queues
+    (list
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket1.txt" 'list)))
+      :open
+      :pwrite :close)
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket2.txt" 'list)))
+      :open
+      :pwrite :close))
+    (list 0 1 1 1 0 0))
+   (and (equal queue
+               '((:set-path "tmp        " "ticket1 txt")
+                 (:set-path "tmp        " "ticket2 txt")
+                 :open :pwrite
+                 :open :pwrite
+                 :close :close))
+        (equal oracle nil))))
