@@ -9,22 +9,23 @@
                            make-list-ac)))
 
 (fty::defprod lofat-st
-              ((fd natp)
-               (buf stringp)
-               (offset natp)
-               (count natp)
-               (retval integerp)
-               (errno natp)
-               (path fat32-filename-list-p)
-               (stat struct-stat-p)
-               (statfs struct-statfs-p)
-               (dirp integerp) ;; This is interesting. We try to mimic the
-               ;; NULL-returning behaviour of the actual opendir by making it
-               ;; return -1 at precisely those times. That means this cannot be
-               ;; assumed to be a natural number.
-               (fd-table fd-table-p)
-               (file-table file-table-p)
-               (dir-stream-table dir-stream-table-p)))
+              ((fd natp :default 0)
+               (buf stringp :default "")
+               (offset natp :default 0)
+               (count natp :default 0)
+               (retval integerp :default 0)
+               (errno natp :default 0)
+               (path fat32-filename-list-p :default nil)
+               (stat struct-stat-p :default (make-struct-stat))
+               (statfs struct-statfs-p :default (make-struct-statfs))
+               (dirp integerp :default 0)
+               ;; This is interesting. We try to mimic the NULL-returning
+               ;; behaviour of the actual opendir by making it return -1 at
+               ;; precisely those times. That means this cannot be assumed to
+               ;; be a natural number.
+               (fd-table fd-table-p :default nil)
+               (file-table file-table-p :default nil)
+               (dir-stream-table dir-stream-table-p :default nil)))
 
 ;; We aren't going to put statfs in this. It'll just make things pointlessly
 ;; complicated.
@@ -862,5 +863,16 @@
                                     (n (len syscall-sym-list)))))))
 
 (defconst *example-prog-1*
-  (list ()
-        ()))
+  (list (cons :set-path (path-to-fat32-path (coerce "/tmp/ticket1.txt" 'list)))
+        :open
+        :pwrite
+        (cons :set-path (path-to-fat32-path (coerce "/tmp/ticket2.txt" 'list)))
+        :open
+        :pwrite))
+
+#|
+(absfat-oracle-multi-step
+ (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+ *example-prog-1*
+(make-lofat-st))
+|#
