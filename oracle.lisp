@@ -1005,7 +1005,10 @@
        (queues (update-nth next-queue (cdr (nth next-queue queues))
                            queues))
        ((mv tail-queues tail-oracle)
-        (schedule-queues queues oracle)))
+        (schedule-queues queues oracle))
+       ((when (and (consp next) (equal (car next) :transaction)))
+        (mv (append (cdr next) tail-queues)
+            tail-oracle)))
     (mv (cons next tail-queues)
         tail-oracle)))
 
@@ -1038,3 +1041,37 @@
                  :open :pwrite
                  :close :close))
         (equal oracle nil))))
+
+;; This is a little bit better... we get an interleaving, but we leave the
+;; important things in place.
+(assert-event
+ (mv-let
+   (queue oracle)
+   (schedule-queues
+    (list
+     (list
+      (cons
+       :transaction
+       (list
+        (cons
+         :set-path
+         (path-to-fat32-path (coerce "/tmp/ticket1.txt" 'list)))
+        :open
+        :pwrite :close)))
+     (list
+      (cons
+       :transaction
+       (list
+        (cons
+         :set-path
+         (path-to-fat32-path (coerce "/tmp/ticket2.txt" 'list)))
+        :open
+        :pwrite :close))))
+    (list 1 1 1 0 0 0))
+   (and (equal queue
+               '((:SET-PATH "TMP        " "TICKET2 TXT")
+                 :OPEN :PWRITE :CLOSE
+                 (:SET-PATH "TMP        " "TICKET1 TXT")
+                 :OPEN
+                 :PWRITE :CLOSE))
+        (equal oracle (list 1 0 0 0)))))
