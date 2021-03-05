@@ -1080,7 +1080,7 @@
                  :PWRITE :CLOSE))
         (equal oracle (list 1 0 0 0)))))
 
-(thm
+(defthm oracle-prog-2-correctness-1
  (implies
   (true-equiv o1 o2)
   (collapse-equiv
@@ -1105,4 +1105,64 @@
  :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step)
           :do-not-induct t
           :expand
-          (:free (x y o) (schedule-queues (cons x y) o)))))
+          (:free (x y o) (schedule-queues (cons x y) o))))
+ :rule-classes :congruence)
+
+(defconst
+  *example-prog-3-queues*
+  (list
+   (list
+    (cons
+     :transaction
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket1.txt" 'list)))
+      :open
+      :pwrite :close)))
+   (list
+    (cons
+     :transaction
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket2.txt" 'list)))
+      :open
+      :pwrite :close)))
+   (list
+    (cons
+     :transaction
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket3.txt" 'list)))
+      :open
+      :pwrite :close)))))
+
+(defthm oracle-prog-3-correctness-1
+ (implies
+  (true-equiv o1 o2)
+  (collapse-equiv
+   (mv-nth
+    0
+    (absfat-oracle-multi-step
+     (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+     (mv-nth 0
+             (schedule-queues
+              *example-prog-2-queues*
+              o1))
+     (make-fat-st)))
+   (mv-nth
+    0
+    (absfat-oracle-multi-step
+     (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+     (mv-nth 0
+             (schedule-queues
+              *example-prog-2-queues*
+              o2))
+     (make-fat-st)))))
+ :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step)
+          :do-not-induct t
+          :expand
+          (:free (x y o) (schedule-queues (cons x y) o))))
+ :rule-classes :congruence)
