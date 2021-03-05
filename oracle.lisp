@@ -1042,31 +1042,35 @@
                  :close :close))
         (equal oracle nil))))
 
+(defconst
+  *example-prog-2-queues*
+  (list
+   (list
+    (cons
+     :transaction
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket1.txt" 'list)))
+      :open
+      :pwrite :close)))
+   (list
+    (cons
+     :transaction
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket2.txt" 'list)))
+      :open
+      :pwrite :close)))))
+
 ;; This is a little bit better... we get an interleaving, but we leave the
 ;; important things in place.
 (assert-event
  (mv-let
    (queue oracle)
    (schedule-queues
-    (list
-     (list
-      (cons
-       :transaction
-       (list
-        (cons
-         :set-path
-         (path-to-fat32-path (coerce "/tmp/ticket1.txt" 'list)))
-        :open
-        :pwrite :close)))
-     (list
-      (cons
-       :transaction
-       (list
-        (cons
-         :set-path
-         (path-to-fat32-path (coerce "/tmp/ticket2.txt" 'list)))
-        :open
-        :pwrite :close))))
+    *example-prog-2-queues*
     (list 1 1 1 0 0 0))
    (and (equal queue
                '((:SET-PATH "TMP        " "TICKET2 TXT")
@@ -1075,3 +1079,30 @@
                  :OPEN
                  :PWRITE :CLOSE))
         (equal oracle (list 1 0 0 0)))))
+
+(thm
+ (implies
+  (true-equiv o1 o2)
+  (collapse-equiv
+   (mv-nth
+    0
+    (absfat-oracle-multi-step
+     (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+     (mv-nth 0
+             (schedule-queues
+              *example-prog-2-queues*
+              o1))
+     (make-fat-st)))
+   (mv-nth
+    0
+    (absfat-oracle-multi-step
+     (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+     (mv-nth 0
+             (schedule-queues
+              *example-prog-2-queues*
+              o2))
+     (make-fat-st)))))
+ :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step)
+          :do-not-induct t
+          :expand
+          (:free (x y o) (schedule-queues (cons x y) o)))))
