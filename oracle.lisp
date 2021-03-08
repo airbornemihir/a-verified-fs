@@ -133,7 +133,10 @@
                st :fd-table fd-table :file-table file-table :errno errno))))
        ((when (and (consp syscall-sym) (eq (car syscall-sym) :set-path)))
         (mv fat32$c
-            (change-fat-st st :path (cdr syscall-sym)))))
+            (change-fat-st st :path (cdr syscall-sym))))
+       ((when (and (consp syscall-sym) (eq (car syscall-sym) :set-count)))
+        (mv fat32$c
+            (change-fat-st st :count (cdr syscall-sym)))))
     (mv fat32$c st)))
 
 ;; We aren't going to put statfs in this. It'll just make things pointlessly
@@ -244,7 +247,10 @@
                st :fd-table fd-table :file-table file-table :errno errno))))
        ((when (and (consp syscall-sym) (eq (car syscall-sym) :set-path)))
         (mv frame
-            (change-fat-st st :path (cdr syscall-sym)))))
+            (change-fat-st st :path (cdr syscall-sym))))
+       ((when (and (consp syscall-sym) (eq (car syscall-sym) :set-count)))
+        (mv frame
+            (change-fat-st st :count (cdr syscall-sym)))))
     (mv frame st)))
 
 ;; Counterexample, but for regular files which we aren't really thinking about
@@ -633,7 +639,7 @@
 (defthmd
   absfat-oracle-multi-step-of-true-list-fix
   (equal (absfat-oracle-multi-step frame (true-list-fix syscall-sym-list)
-                                  st)
+                                   st)
          (absfat-oracle-multi-step frame syscall-sym-list st))
   :hints (("goal" :in-theory (enable absfat-oracle-multi-step
                                      true-list-fix))))
@@ -727,12 +733,12 @@
   absfat-oracle-multi-step-of-append
   (equal
    (absfat-oracle-multi-step frame (append x y)
-                            st)
+                             st)
    (absfat-oracle-multi-step (mv-nth 0
-                                    (absfat-oracle-multi-step frame x st))
-                            y
-                            (mv-nth 1
-                                    (absfat-oracle-multi-step frame x st))))
+                                     (absfat-oracle-multi-step frame x st))
+                             y
+                             (mv-nth 1
+                                     (absfat-oracle-multi-step frame x st))))
   :hints (("goal" :in-theory (enable absfat-oracle-multi-step append))))
 
 (encapsulate
@@ -895,8 +901,8 @@
 
 #|
 (absfat-oracle-multi-step
- (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
- *example-prog-1*
+(frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+*example-prog-1*
 (make-fat-st))
 |#
 
@@ -1005,7 +1011,10 @@
        (queues (update-nth next-queue (cdr (nth next-queue queues))
                            queues))
        ((mv tail-queues tail-oracle)
-        (schedule-queues queues oracle)))
+        (schedule-queues queues oracle))
+       ((when (and (consp next) (equal (car next) :transaction)))
+        (mv (append (cdr next) tail-queues)
+            tail-oracle)))
     (mv (cons next tail-queues)
         tail-oracle)))
 
@@ -1038,3 +1047,199 @@
                  :open :pwrite
                  :close :close))
         (equal oracle nil))))
+
+(defconst
+  *example-prog-2-queues*
+  (list
+   (list
+    (cons
+     :transaction
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket1.txt" 'list)))
+      :open
+      :pwrite :close)))
+   (list
+    (cons
+     :transaction
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket2.txt" 'list)))
+      :open
+      :pwrite :close)))))
+
+;; This is a little bit better... we get an interleaving, but we leave the
+;; important things in place.
+(assert-event
+ (mv-let
+   (queue oracle)
+   (schedule-queues
+    *example-prog-2-queues*
+    (list 1 1 1 0 0 0))
+   (and (equal queue
+               '((:SET-PATH "TMP        " "TICKET2 TXT")
+                 :OPEN :PWRITE :CLOSE
+                 (:SET-PATH "TMP        " "TICKET1 TXT")
+                 :OPEN
+                 :PWRITE :CLOSE))
+        (equal oracle (list 1 0 0 0)))))
+
+(defthm oracle-prog-2-correctness-1
+  (implies
+   (true-equiv o1 o2)
+   (collapse-equiv
+    (mv-nth
+     0
+     (absfat-oracle-multi-step
+      (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+      (mv-nth 0
+              (schedule-queues
+               *example-prog-2-queues*
+               o1))
+      (make-fat-st)))
+    (mv-nth
+     0
+     (absfat-oracle-multi-step
+      (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+      (mv-nth 0
+              (schedule-queues
+               *example-prog-2-queues*
+               o2))
+      (make-fat-st)))))
+  :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step)
+           :do-not-induct t
+           :expand
+           (:free (x y o) (schedule-queues (cons x y) o))))
+  :rule-classes :congruence)
+
+(defconst
+  *example-prog-3-queues*
+  (list
+   (list
+    (cons
+     :transaction
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket1.txt" 'list)))
+      :open
+      :pwrite :close)))
+   (list
+    (cons
+     :transaction
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket2.txt" 'list)))
+      :open
+      :pwrite :close)))
+   (list
+    (cons
+     :transaction
+     (list
+      (cons
+       :set-path
+       (path-to-fat32-path (coerce "/tmp/ticket3.txt" 'list)))
+      :open
+      :pwrite :close)))))
+
+(defthm oracle-prog-3-correctness-1
+  (implies
+   (true-equiv o1 o2)
+   (collapse-equiv
+    (mv-nth
+     0
+     (absfat-oracle-multi-step
+      (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+      (mv-nth 0
+              (schedule-queues
+               *example-prog-2-queues*
+               o1))
+      (make-fat-st)))
+    (mv-nth
+     0
+     (absfat-oracle-multi-step
+      (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+      (mv-nth 0
+              (schedule-queues
+               *example-prog-2-queues*
+               o2))
+      (make-fat-st)))))
+  :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step)
+           :do-not-induct t
+           :expand
+           (:free (x y o) (schedule-queues (cons x y) o))))
+  :rule-classes :congruence)
+
+(defund cp-without-subdirs-helper (src dst names)
+  (if
+      (atom names)
+      nil
+    (cons
+     (list
+      (cons
+       :transaction
+       (list
+        (cons :set-path (append src (car names)))
+        :open
+        (cons :set-count (expt 2 32))
+        :pread
+        :close
+        (cons :set-path (append dst (car names)))
+        :open
+        :pwrite
+        :close)))
+     (cp-without-subdirs-helper src dst (cdr names)))))
+
+(defthm cp-without-subdirs-helper-correctness-1
+ (and (true-list-listp (cp-without-subdirs-helper src dst names))
+      (equal (len (cp-without-subdirs-helper src dst names))
+             (len names)))
+ :hints (("Goal" :in-theory (enable cp-without-subdirs-helper))))
+
+(defthm cp-without-subdirs-helper-correctness-2
+  (implies
+   (true-equiv o1 o2)
+   (collapse-equiv
+    (mv-nth
+     0
+     (absfat-oracle-multi-step
+      frame
+      (mv-nth 0
+              (schedule-queues
+               (cp-without-subdirs-helper src dst names)
+               o1))
+      st))
+    (mv-nth
+     0
+     (absfat-oracle-multi-step
+      frame
+      (mv-nth 0
+              (schedule-queues
+               (cp-without-subdirs-helper src dst names)
+               o2))
+      st))))
+  :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step
+                                     cp-without-subdirs-helper)
+           :expand
+           ((schedule-queues
+             (cons (list (list* :transaction
+                                (cons :set-path (append src (car names)))
+                                :open '(:set-count . 4294967296)
+                                :pread :close
+                                (cons :set-path (append dst (car names)))
+                                '(:open :pwrite :close)))
+                   (cp-without-subdirs-helper src dst (cdr names)))
+             o1)
+            (schedule-queues
+             (cons (list (list* :transaction
+                                (cons :set-path (append src (car names)))
+                                :open '(:set-count . 4294967296)
+                                :pread :close
+                                (cons :set-path (append dst (car names)))
+                                '(:open :pwrite :close)))
+                   (cp-without-subdirs-helper src dst (cdr names)))
+             o2))))
+  :rule-classes :congruence)
