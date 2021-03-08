@@ -1087,32 +1087,32 @@
         (equal oracle (list 1 0 0 0)))))
 
 (defthm oracle-prog-2-correctness-1
- (implies
-  (true-equiv o1 o2)
-  (collapse-equiv
-   (mv-nth
-    0
-    (absfat-oracle-multi-step
-     (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
-     (mv-nth 0
-             (schedule-queues
-              *example-prog-2-queues*
-              o1))
-     (make-fat-st)))
-   (mv-nth
-    0
-    (absfat-oracle-multi-step
-     (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
-     (mv-nth 0
-             (schedule-queues
-              *example-prog-2-queues*
-              o2))
-     (make-fat-st)))))
- :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step)
-          :do-not-induct t
-          :expand
-          (:free (x y o) (schedule-queues (cons x y) o))))
- :rule-classes :congruence)
+  (implies
+   (true-equiv o1 o2)
+   (collapse-equiv
+    (mv-nth
+     0
+     (absfat-oracle-multi-step
+      (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+      (mv-nth 0
+              (schedule-queues
+               *example-prog-2-queues*
+               o1))
+      (make-fat-st)))
+    (mv-nth
+     0
+     (absfat-oracle-multi-step
+      (frame-with-root (list (cons "TMP        " (make-m1-file :contents nil))) nil)
+      (mv-nth 0
+              (schedule-queues
+               *example-prog-2-queues*
+               o2))
+      (make-fat-st)))))
+  :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step)
+           :do-not-induct t
+           :expand
+           (:free (x y o) (schedule-queues (cons x y) o))))
+  :rule-classes :congruence)
 
 (defconst
   *example-prog-3-queues*
@@ -1194,10 +1194,69 @@
      (cp-without-subdirs-helper src dst (cdr names)))))
 
 (defthm cp-without-subdirs-helper-correctness-1
- (and (true-list-listp (cp-without-subdirs-helper src dst names))
-      (equal (len (cp-without-subdirs-helper src dst names))
-             (len names)))
- :hints (("Goal" :in-theory (enable cp-without-subdirs-helper))))
+  (and (true-list-listp (cp-without-subdirs-helper src dst names))
+       (equal (len (cp-without-subdirs-helper src dst names))
+              (len names)))
+  :hints (("Goal" :in-theory (enable cp-without-subdirs-helper))))
+
+;; Move later.
+(defthm
+  path-clear-partial-collapse
+  (implies
+   (and (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame))
+        (abs-separate frame)
+        (mv-nth 1 (collapse frame))
+        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame)))
+        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+               0))
+   (path-clear
+    path
+    (remove-assoc-equal (abs-find-file-src (partial-collapse frame path)
+                                           path)
+                        (frame->frame (partial-collapse frame path)))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (disable path-clear-partial-collapse-when-not-zp-src)
+    :use path-clear-partial-collapse-when-not-zp-src)))
+
+(defund plus-list (l n)
+  (if (atom l)
+      nil
+    (cons (+ (car l) n)
+          (plus-list (cdr l) n))))
+
+(defthm plus-list-correctness-1
+  (iff (equal (plus-list l n)
+              (acl2-number-list-fix l))
+       (or (equal (fix n) 0) (atom l)))
+  :hints (("goal" :in-theory (enable acl2-number-list-fix plus-list)))
+  :rule-classes
+  ((:rewrite :corollary (implies (equal (fix n) 0)
+                                 (equal (plus-list l n)
+                                        (acl2-number-list-fix l))))))
+
+(thm (equal (nonempty-queues (append x y))
+            (append (nonempty-queues x)
+                    (plus-list y (len x))))
+     :hints (("Goal" :in-theory (enable nonempty-queues append plus-list)
+              :induct (append x y))))
+
+(thm (implies (and (member-equal n
+                                 (nonempty-queues
+                                  (cp-without-subdirs-helper src dst names))))
+              (equal
+               (nth n
+                    (cp-without-subdirs-helper src dst names))
+               (list (list* :transaction
+                            (cons :set-path (append src (nth n names)))
+                            :open '(:set-count . 4294967296)
+                            :pread :close
+                            (cons :set-path (append dst (nth n names)))
+                            '(:open :pwrite :close)))))
+     :hints (("goal" :in-theory (enable cp-without-subdirs-helper))))
 
 (defthm cp-without-subdirs-helper-correctness-2
   (implies
