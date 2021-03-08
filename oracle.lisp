@@ -1228,6 +1228,12 @@
     (cons (+ (car l) n)
           (plus-list (cdr l) n))))
 
+(defthm plus-list-of-append
+  (equal (plus-list (append x y) n)
+         (append (plus-list x n)
+                 (plus-list y n)))
+  :hints (("goal" :in-theory (enable plus-list))))
+
 (defthm plus-list-correctness-1
   (iff (equal (plus-list l n)
               (acl2-number-list-fix l))
@@ -1238,25 +1244,61 @@
                                  (equal (plus-list l n)
                                         (acl2-number-list-fix l))))))
 
-(thm (equal (nonempty-queues (append x y))
-            (append (nonempty-queues x)
-                    (plus-list y (len x))))
-     :hints (("Goal" :in-theory (enable nonempty-queues append plus-list)
-              :induct (append x y))))
+;; Move later.
+(defthm acl2-number-listp-when-nat-listp
+  (implies (nat-listp l)
+           (acl2-number-listp l))
+  :hints (("goal" :in-theory (enable acl2-number-listp nat-listp))))
 
-(thm (implies (and (member-equal n
-                                 (nonempty-queues
-                                  (cp-without-subdirs-helper src dst names))))
-              (equal
-               (nth n
-                    (cp-without-subdirs-helper src dst names))
-               (list (list* :transaction
-                            (cons :set-path (append src (nth n names)))
-                            :open '(:set-count . 4294967296)
-                            :pread :close
-                            (cons :set-path (append dst (nth n names)))
-                            '(:open :pwrite :close)))))
-     :hints (("goal" :in-theory (enable cp-without-subdirs-helper))))
+(defthm
+  nonempty-queues-of-append
+  (equal (nonempty-queues (append x y))
+         (append (nonempty-queues x)
+                 (plus-list (nonempty-queues y)
+                            (len x))))
+  :hints
+  (("goal" :in-theory (e/d (nonempty-queues append plus-list
+                                            len painful-debugging-lemma-21)
+                           (nth-when->=-n-len-l))
+    :induct (nonempty-queues y)
+    :expand (nonempty-queues (append x y)))
+   ("subgoal *1/2" :cases ((consp (cdr y)))
+    :use (:instance (:rewrite nth-when->=-n-len-l)
+                    (l x)
+                    (n (+ -1 (len x) (len y)))))))
+
+(defthm nonempty-queues-of-cons
+  (equal (nonempty-queues (cons x y))
+         (if (consp x)
+             (cons 0 (plus-list (nonempty-queues y) 1))
+             (plus-list (nonempty-queues y) 1)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (nonempty-queues)
+                           (nonempty-queues-of-append))
+           :use (:instance nonempty-queues-of-append
+                           (x (list x))))))
+
+(defthm member-of-plus-list
+  (implies (acl2-number-listp l)
+           (iff (member-equal x (plus-list l n))
+                (and (acl2-numberp x)
+                     (member-equal (- x n) l))))
+  :hints (("goal" :in-theory (enable plus-list member-equal))))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-1
+  (implies
+   (member-equal n
+                 (nonempty-queues (cp-without-subdirs-helper src dst names)))
+   (equal (nth n
+               (cp-without-subdirs-helper src dst names))
+          (list (list* :transaction
+                       (cons :set-path (append src (nth n names)))
+                       :open '(:set-count . 4294967296)
+                       :pread :close
+                       (cons :set-path (append dst (nth n names)))
+                       '(:open :pwrite :close)))))
+  :hints (("goal" :in-theory (enable cp-without-subdirs-helper nth))))
 
 (defthm cp-without-subdirs-helper-correctness-2
   (implies
