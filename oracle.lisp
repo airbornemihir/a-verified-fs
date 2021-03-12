@@ -8,6 +8,13 @@
 (local (in-theory (disable nth make-list-ac-removal last
                            make-list-ac)))
 
+;; Move later.
+(defund
+  abs-close (fd fd-table file-table)
+  (declare (xargs :guard (and (fd-table-p fd-table)
+                              (file-table-p file-table))))
+  (hifat-close fd fd-table file-table))
+
 (fty::defprod fat-st
               ((fd natp :default 0)
                (buf stringp :default "")
@@ -238,7 +245,7 @@
        ((when (eq syscall-sym :close))
         (b*
             (((mv fd-table file-table errno)
-              (lofat-close
+              (abs-close
                (fat-st->fd st)
                (fat-st->fd-table st)
                (fat-st->file-table st))))
@@ -565,6 +572,18 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable lofat-open abs-open))))
 
+(defthm abs-close-correctness-1
+  (and (fd-table-p (mv-nth 0 (abs-close fd fd-table file-table)))
+       (file-table-p (mv-nth 1 (abs-close fd fd-table file-table))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-close hifat-close))))
+
+(defthmd abs-close-correctness-2
+  (equal (lofat-close fd fd-table file-table)
+         (abs-close fd fd-table file-table))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable lofat-close abs-close))))
+
 (defthmd
   absfat-oracle-multi-step-refinement-lemma-2
   (implies
@@ -592,7 +611,8 @@
                                                abs-open-correctness-2
                                                abs-opendir-correctness-2
                                                lofat-opendir-correctness-2
-                                               lofat-opendir-correctness-3)
+                                               lofat-opendir-correctness-3
+                                               abs-close-correctness-2)
                     (hifat-mkdir hifat-pwrite)))))
 
 (defund lofat-oracle-multi-step (fat32$c syscall-sym-list st)
@@ -1234,7 +1254,8 @@
                  (plus-list y n)))
   :hints (("goal" :in-theory (enable plus-list))))
 
-(defthm plus-list-correctness-1
+(defthm
+  plus-list-correctness-1
   (iff (equal (plus-list l n)
               (acl2-number-list-fix l))
        (or (equal (fix n) 0) (atom l)))
@@ -1242,13 +1263,20 @@
   :rule-classes
   ((:rewrite :corollary (implies (equal (fix n) 0)
                                  (equal (plus-list l n)
-                                        (acl2-number-list-fix l))))))
+                                        (acl2-number-list-fix l))))
+   (:type-prescription :corollary (implies (atom l)
+                                           (equal (plus-list l n) nil)))))
 
 ;; Move later.
-(defthm acl2-number-listp-when-nat-listp
+(defthm acl2-number-listp-when-rational-listp
+  (implies (rational-listp l)
+           (acl2-number-listp l)))
+(defthm rational-listp-when-integer-listp
+  (implies (integer-listp l)
+           (rational-listp l)))
+(defthm integer-listp-when-nat-listp
   (implies (nat-listp l)
-           (acl2-number-listp l))
-  :hints (("goal" :in-theory (enable acl2-number-listp nat-listp))))
+           (integer-listp l)))
 
 (defthm
   nonempty-queues-of-append
@@ -1279,10 +1307,10 @@
                            (x (list x))))))
 
 (defthm member-of-plus-list
-  (implies (acl2-number-listp l)
-           (iff (member-equal x (plus-list l n))
-                (and (acl2-numberp x)
-                     (member-equal (- x n) l))))
+  (iff (member-equal x (plus-list l n))
+       (and (acl2-numberp x)
+            (member-equal (- x n)
+                          (acl2-number-list-fix l))))
   :hints (("goal" :in-theory (enable plus-list member-equal))))
 
 (defthm
@@ -1299,6 +1327,211 @@
                        (cons :set-path (append dst (nth n names)))
                        '(:open :pwrite :close)))))
   :hints (("goal" :in-theory (enable cp-without-subdirs-helper nth))))
+
+;; Move later.
+(defcong fat32-filename-list-equiv equal (hifat-open path fd-table file-table) 1
+  :hints (("Goal" :do-not-induct t :in-theory (enable hifat-open))))
+(defcong fat32-filename-list-equiv equal (abs-open path fd-table file-table) 1
+  :hints (("Goal" :do-not-induct t :in-theory (enable abs-open))))
+
+(defund cp-spec-1 (frame syscall-sym-list st src fs)
+  (declare (xargs :verify-guards nil
+                  :measure (len syscall-sym-list)))
+  (b*
+      (((when (atom syscall-sym-list)) t)
+       ((mv new-frame st)
+        (absfat-oracle-single-step frame (car syscall-sym-list) st))
+       ((unless (and (equal
+                      (remove-assoc-equal (abs-find-file-src src new-frame) new-frame)
+                      (remove-assoc-equal (abs-find-file-src src frame) frame))
+                     (absfat-subsetp
+                      (cdr
+                       (assoc-equal (abs-find-file-src src new-frame) new-frame))
+                      fs)))
+        nil))
+    (cp-spec-1 new-frame (cdr syscall-sym-list) st src fs)))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-2
+  (equal (consp (flatten (cp-without-subdirs-helper src dst names)))
+         (consp names))
+  :hints (("goal"
+           :in-theory (enable cp-without-subdirs-helper))))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-3
+  (implies
+   (and (cp-spec-1 frame syscall-sym-list st src fs)
+        (absfat-subsetp (cdr (assoc-equal (abs-find-file-src src frame)
+                                          frame))
+                        fs))
+   (b*
+       (((mv new-frame &)
+         (absfat-oracle-multi-step frame syscall-sym-list st)))
+     (and (equal (remove-assoc-equal (abs-find-file-src src new-frame)
+                                     new-frame)
+                 (remove-assoc-equal (abs-find-file-src src frame)
+                                     frame))
+          (absfat-subsetp (cdr (assoc-equal (abs-find-file-src src new-frame)
+                                            new-frame))
+                          fs))))
+  :hints (("goal" :in-theory (enable absfat-oracle-multi-step cp-spec-1))))
+
+(skip-proofs
+ (defthm
+   cp-without-subdirs-helper-correctness-lemma-4
+   (implies
+    (absfat-subsetp (cdr (assoc-equal (abs-find-file-src src frame)
+                                      frame))
+                    fs)
+    (cp-spec-1 frame
+               (mv-nth
+                0
+                (schedule-queues (cp-without-subdirs-helper src dst names)
+                                 o))
+               st src fs))
+   :hints (("goal" :in-theory (enable cp-without-subdirs-helper schedule-queues
+                                      cp-spec-1 absfat-oracle-single-step
+                                      abs-pwrite)))))
+
+(defund cp-spec-2 (frame syscall-sym-list st src fs)
+  (declare (xargs :verify-guards nil
+                  :measure (len syscall-sym-list)))
+  (b*
+      (((when (atom syscall-sym-list)) t)
+       ((mv new-frame st)
+        (absfat-oracle-single-step frame (car syscall-sym-list) st))
+       ((unless (and (equal
+                      (remove-assoc-equal (abs-find-file-src src new-frame) new-frame)
+                      (remove-assoc-equal (abs-find-file-src src frame) frame))
+                     (absfat-subsetp
+                      fs
+                      (cdr
+                       (assoc-equal (abs-find-file-src src new-frame) new-frame)))))
+        nil))
+    (cp-spec-2 new-frame (cdr syscall-sym-list) st src fs)))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-5
+  (implies
+   (and (cp-spec-2 frame syscall-sym-list st src fs)
+        (absfat-subsetp fs
+                        (cdr (assoc-equal (abs-find-file-src src frame)
+                                          frame))))
+   (b*
+       (((mv new-frame &)
+         (absfat-oracle-multi-step frame syscall-sym-list st)))
+     (and (equal (remove-assoc-equal (abs-find-file-src src new-frame)
+                                     new-frame)
+                 (remove-assoc-equal (abs-find-file-src src frame)
+                                     frame))
+          (absfat-subsetp fs
+                          (cdr (assoc-equal (abs-find-file-src src new-frame)
+                                            new-frame))))))
+  :hints (("goal" :in-theory (enable absfat-oracle-multi-step cp-spec-2))))
+
+(defund cp-spec-3 (queues dst)
+  (or (atom queues)
+      (and
+       (or (atom (car queues))
+           (and (atom (cdar queues))
+                (equal (caaar queues) :transaction)
+                (equal (car (nth 0 (cdaar queues))) :set-path)
+                (equal (nth 1 (cdaar queues)) :open)
+                (equal (car (nth 2 (cdaar queues))) :set-count)
+                (equal (nth 3 (cdaar queues)) :pread)
+                (equal (nth 4 (cdaar queues)) :close)
+                (equal (car (nth 5 (cdaar queues))) :set-path)
+                (equal (nth 6 (cdaar queues)) :open)
+                (equal (nth 7 (cdaar queues)) :pwrite)
+                (equal (nth 8 (cdaar queues)) :close)
+                (fat32-filename-list-prefixp
+                 dst
+                 (cdr (nth 5 (cdaar queues))))))
+       (cp-spec-3 (cdr queues) dst))))
+
+(defthm
+   cp-without-subdirs-helper-correctness-lemma-6
+   (cp-spec-3 (cp-without-subdirs-helper src dst names)
+              dst)
+   :hints (("goal" :in-theory (enable cp-without-subdirs-helper cp-spec-3))))
+
+(thm
+ (implies
+  (<= 1 (len names))
+  (cp-spec-1
+   frame
+   (take 8
+         (mv-nth 0
+                 (schedule-queues (cp-without-subdirs-helper src dst names)
+                                  o1)))
+   st src
+   (cdr
+    (assoc-equal
+     (abs-find-file-src
+      src
+      (mv-nth
+       0
+       (absfat-oracle-multi-step
+        frame
+        (mv-nth 0
+                (schedule-queues (cp-without-subdirs-helper src dst names)
+                                 o2))
+        st)))
+     (mv-nth
+      0
+      (absfat-oracle-multi-step
+       frame
+       (mv-nth 0
+               (schedule-queues (cp-without-subdirs-helper src dst names)
+                                o2))
+       st))))))
+ :hints
+ (("Goal"
+   :do-not-induct t
+   :expand
+   (schedule-queues (cp-without-subdirs-helper src dst names)
+                    o1))
+  (if
+      (not stable-under-simplificationp)
+      nil
+    '(:in-theory (enable cp-spec-1 absfat-oracle-single-step))))
+ :otf-flg t)
+
+(encapsulate
+  ()
+
+  (local (include-book "std/basic/inductions" :dir :system))
+
+  (thm
+   (implies
+    (and
+     (not (zp n))
+     (<= n (len names)))
+    (b*
+        ((frame2
+          (mv-nth
+           0
+           (absfat-oracle-multi-step
+            frame
+            (mv-nth 0
+                    (schedule-queues
+                     (cp-without-subdirs-helper src dst names)
+                     o2))
+            st))))
+      (cp-spec-1 frame
+                 (take
+                  (* 8 n)
+                  (mv-nth 0
+                          (schedule-queues
+                           (cp-without-subdirs-helper src dst names)
+                           o1)))
+                 st src
+                 (cdr
+                  (assoc-equal
+                   (abs-find-file-src src frame2)
+                   frame2)))))
+   :hints (("goal" :induct (dec-induct n)))))
 
 (defthm cp-without-subdirs-helper-correctness-2
   (implies
@@ -1323,7 +1556,10 @@
                o2))
       st))))
   :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step
-                                     cp-without-subdirs-helper)
+                                     cp-without-subdirs-helper
+                                     absfat-oracle-single-step)
+           :induct
+           (cp-without-subdirs-helper src dst names)
            :expand
            ((schedule-queues
              (cons (list (list* :transaction
