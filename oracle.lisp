@@ -1219,29 +1219,6 @@
               (len names)))
   :hints (("Goal" :in-theory (enable cp-without-subdirs-helper))))
 
-;; Move later.
-(defthm
-  path-clear-partial-collapse-lemma-1
-  (implies
-   (and (frame-p frame)
-        (no-duplicatesp-equal (strip-cars frame))
-        (abs-separate frame)
-        (mv-nth 1 (collapse frame))
-        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
-        (subsetp-equal (abs-addrs (frame->root frame))
-                       (frame-addrs-root (frame->frame frame)))
-        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-               0))
-   (path-clear
-    path
-    (remove-assoc-equal (abs-find-file-src (partial-collapse frame path)
-                                           path)
-                        (frame->frame (partial-collapse frame path)))))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory (disable path-clear-partial-collapse-when-not-zp-src)
-    :use path-clear-partial-collapse-when-not-zp-src)))
-
 (defund plus-list (l n)
   (if (atom l)
       nil
@@ -1549,61 +1526,6 @@
                          :transaction)
                   (consp (nth n queues))))
   :hints (("goal" :in-theory (enable nth cp-spec-3 nonempty-queues))))
-
-(defthm cp-without-subdirs-helper-correctness-lemma-12
-  (implies (not (consp path))
-           (fat32-filename-list-equiv path nil))
-  :hints (("goal" :in-theory (enable fat32-filename-list-equiv)))
-  :rule-classes :forward-chaining)
-
-(defthm
-  cp-without-subdirs-helper-correctness-lemma-13
-  (implies (and (no-duplicatesp-equal (strip-cars frame))
-                (atom (frame-val->path (cdr (assoc-equal 0 frame))))
-                (path-clear path
-                            (remove-assoc-equal x (frame->frame frame)))
-                (atom (names-at (frame->root frame) path)))
-           (path-clear path (remove-assoc-equal x frame)))
-  :hints (("goal" :in-theory (enable remove-assoc-equal path-clear prefixp
-                                     frame->root frame->frame abs-separate)
-           :induct (remove-assoc-equal x frame))))
-
-(defthm
-  path-clear-partial-collapse
-  (implies
-   (and (frame-p frame)
-        (no-duplicatesp-equal (strip-cars frame))
-        (abs-separate frame)
-        (mv-nth 1 (collapse frame))
-        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
-        (subsetp-equal (abs-addrs (frame->root frame))
-                       (frame-addrs-root (frame->frame frame)))
-        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-               0)
-        (equal
-         x
-         (abs-find-file-src (partial-collapse frame path)
-                            path)))
-   (path-clear
-    path
-    (remove-assoc-equal x
-                        (partial-collapse frame path))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
-    (e/d (frame->frame)
-         (path-clear-partial-collapse-lemma-1
-          (:rewrite cp-without-subdirs-helper-correctness-lemma-13)
-          (:rewrite abs-mkdir-correctness-lemma-88)))
-    :use
-    (path-clear-partial-collapse-lemma-1
-     (:instance (:rewrite cp-without-subdirs-helper-correctness-lemma-13)
-                (frame (partial-collapse frame path))
-                (x (abs-find-file-src (partial-collapse frame path)
-                                      path))
-                (path path))
-     (:rewrite abs-mkdir-correctness-lemma-88)))))
 
 (thm
  (implies

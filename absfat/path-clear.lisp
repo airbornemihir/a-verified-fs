@@ -2075,3 +2075,221 @@
   (("goal"
     :in-theory (e/d (path-clear)
                     (len-when-prefixp (:rewrite prefixp-when-equal-lengths))))))
+
+(defthm
+  path-clear-partial-collapse-lemma-1
+  (implies
+   (and (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame))
+        (abs-separate frame)
+        (mv-nth 1 (collapse frame))
+        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame)))
+        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+               0))
+   (path-clear
+    path
+    (remove-assoc-equal (abs-find-file-src (partial-collapse frame path)
+                                           path)
+                        (frame->frame (partial-collapse frame path)))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (disable path-clear-partial-collapse-when-not-zp-src)
+    :use path-clear-partial-collapse-when-not-zp-src)))
+
+(defthmd
+  path-clear-partial-collapse-lemma-2
+  (implies
+   (and
+    (not (equal (abs-find-file-src frame path)
+                0))
+    (equal
+     (abs-find-file-helper
+      (frame-val->dir (cdr (assoc-equal (abs-find-file-src frame path)
+                                        (frame->frame frame))))
+      (nthcdr
+       (len (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
+                                               (frame->frame frame)))))
+       path))
+     (abs-find-file (frame->frame frame)
+                    path))
+    (no-duplicatesp-equal (strip-cars frame))
+    (mv-nth 1 (collapse frame))
+    (frame-p frame)
+    (dist-names (frame->root frame)
+                nil (frame->frame frame))
+    (abs-separate (frame->frame frame)))
+   (equal (mv-nth 1
+                  (abs-find-file-helper (frame->root frame)
+                                        path))
+          *enoent*))
+  :hints
+  (("goal"
+    :cases
+    ((not
+      (equal
+       (abs-find-file-helper
+        (frame-val->dir (cdr (assoc-equal (abs-find-file-src frame path)
+                                          (frame->frame frame))))
+        (nthcdr
+         (len
+          (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
+                                             (frame->frame frame)))))
+         path))
+       (abs-find-file (frame->frame frame)
+                      path))))
+    :do-not-induct t
+    :in-theory
+    (e/d (assoc-of-frame->frame)
+         ((:rewrite path-clear-partial-collapse-when-not-zp-src-lemma-3)))
+    :use (:rewrite path-clear-partial-collapse-when-not-zp-src-lemma-3))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     lemma
+     (implies
+      (and
+       (prefixp (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
+                                                   (frame->frame frame))))
+                (fat32-filename-list-fix path))
+       (no-duplicatesp-equal (strip-cars frame))
+       (mv-nth 1 (collapse frame))
+       (frame-p frame)
+       (dist-names (frame->root frame)
+                   nil (frame->frame frame))
+       (abs-separate (frame->frame frame))
+       (not (equal (mv-nth 1
+                           (abs-find-file-helper (frame->root frame)
+                                                 path))
+                   2)))
+      (equal (abs-find-file-src frame path)
+             0))
+     :hints
+     (("goal"
+       :use
+       path-clear-partial-collapse-lemma-2))))
+
+  (defthm
+    abs-find-file-after-abs-mkdir-lemma-21
+    (implies (and (no-duplicatesp-equal (strip-cars frame))
+                  (mv-nth 1 (collapse frame))
+                  (frame-p frame)
+                  (dist-names (frame->root frame)
+                              nil (frame->frame frame))
+                  (abs-separate (frame->frame frame))
+                  (not (equal (mv-nth 1
+                                      (abs-find-file-helper (frame->root frame)
+                                                            path))
+                              2)))
+             (equal (abs-find-file-src frame path)
+                    0))
+    :instructions
+    (:promote
+     (:dive 1)
+     (:claim
+      (prefixp (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
+                                                  (frame->frame frame))))
+               (fat32-filename-list-fix path))
+      :hints :none)
+     (:rewrite lemma)
+     (:dive 1 1 1)
+     (:rewrite assoc-of-frame->frame)
+     :top :bash)))
+
+(defthm
+  abs-mkdir-correctness-lemma-88
+  (implies (and (frame-p frame)
+                (no-duplicatesp-equal (strip-cars frame))
+                (abs-separate frame)
+                (mv-nth 1 (collapse frame))
+                (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+                (subsetp-equal (abs-addrs (frame->root frame))
+                               (frame-addrs-root (frame->frame frame)))
+                (not (equal (abs-find-file-src (partial-collapse frame path)
+                                               path)
+                            0)))
+           (equal (names-at (frame->root (partial-collapse frame path))
+                            path)
+                  nil))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (assoc-of-frame->frame)
+                    ((:rewrite path-clear-partial-collapse-when-zp-src-lemma-15)
+                     (:rewrite abs-find-file-src-correctness-1)
+                     (:rewrite path-clear-partial-collapse-when-zp-src-lemma-17)))
+    :use ((:instance (:rewrite path-clear-partial-collapse-when-zp-src-lemma-15)
+                     (path path)
+                     (fs (frame->root (partial-collapse frame path))))
+          (:instance abs-find-file-correctness-1-lemma-36
+                     (x (abs-find-file-src (partial-collapse frame path)
+                                           path)))
+          (:instance (:rewrite abs-find-file-src-correctness-1)
+                     (path path)
+                     (frame (partial-collapse frame path)))
+          (:instance (:rewrite path-clear-partial-collapse-when-zp-src-lemma-17)
+                     (path path)
+                     (frame frame)
+                     (x (abs-find-file-src (partial-collapse frame path)
+                                           path)))
+          (:instance (:rewrite abs-find-file-src-correctness-2)
+                     (frame (partial-collapse frame path)))))))
+
+(defthm cp-without-subdirs-helper-correctness-lemma-12
+  (implies (not (consp path))
+           (fat32-filename-list-equiv path nil))
+  :hints (("goal" :in-theory (enable fat32-filename-list-equiv)))
+  :rule-classes :forward-chaining)
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-13
+  (implies (and (no-duplicatesp-equal (strip-cars frame))
+                (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+                (path-clear path
+                            (remove-assoc-equal x (frame->frame frame)))
+                (atom (names-at (frame->root frame) path)))
+           (path-clear path (remove-assoc-equal x frame)))
+  :hints (("goal" :in-theory (enable remove-assoc-equal path-clear prefixp
+                                     frame->root frame->frame abs-separate)
+           :induct (remove-assoc-equal x frame))))
+
+(defthm
+  path-clear-partial-collapse
+  (implies
+   (and (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame))
+        (abs-separate frame)
+        (mv-nth 1 (collapse frame))
+        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame)))
+        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+               0)
+        (equal
+         x
+         (abs-find-file-src (partial-collapse frame path)
+                            path)))
+   (path-clear
+    path
+    (remove-assoc-equal x
+                        (partial-collapse frame path))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d (frame->frame)
+         (path-clear-partial-collapse-lemma-1
+          (:rewrite cp-without-subdirs-helper-correctness-lemma-13)
+          (:rewrite abs-mkdir-correctness-lemma-88)))
+    :use
+    (path-clear-partial-collapse-lemma-1
+     (:instance (:rewrite cp-without-subdirs-helper-correctness-lemma-13)
+                (frame (partial-collapse frame path))
+                (x (abs-find-file-src (partial-collapse frame path)
+                                      path))
+                (path path))
+     (:rewrite abs-mkdir-correctness-lemma-88)))))
