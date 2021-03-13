@@ -1202,12 +1202,12 @@
       (cons
        :transaction
        (list
-        (cons :set-path (append src (car names)))
+        (cons :set-path (append src (list (car names))))
         :open
         (cons :set-count (expt 2 32))
         :pread
         :close
-        (cons :set-path (append dst (car names)))
+        (cons :set-path (append dst (list (car names))))
         :open
         :pwrite
         :close)))
@@ -1221,7 +1221,7 @@
 
 ;; Move later.
 (defthm
-  path-clear-partial-collapse
+  path-clear-partial-collapse-lemma-1
   (implies
    (and (frame-p frame)
         (no-duplicatesp-equal (strip-cars frame))
@@ -1321,10 +1321,10 @@
    (equal (nth n
                (cp-without-subdirs-helper src dst names))
           (list (list* :transaction
-                       (cons :set-path (append src (nth n names)))
+                       (cons :set-path (append src (list (nth n names))))
                        :open '(:set-count . 4294967296)
                        :pread :close
-                       (cons :set-path (append dst (nth n names)))
+                       (cons :set-path (append dst (list (nth n names))))
                        '(:open :pwrite :close)))))
   :hints (("goal" :in-theory (enable cp-without-subdirs-helper nth))))
 
@@ -1456,82 +1456,353 @@
               dst)
    :hints (("goal" :in-theory (enable cp-without-subdirs-helper cp-spec-3))))
 
+(defthm cp-without-subdirs-helper-correctness-lemma-7
+  (implies (cp-spec-3 queues dst)
+           (and (not (consp (cdr (nth n queues))))
+                (list-equiv (cdr (nth n queues)) nil)))
+  :hints (("goal" :in-theory (enable nth cp-spec-3))))
+
+(defthm cp-without-subdirs-helper-correctness-lemma-8
+  (implies (and (cp-spec-3 queues dst) (atom val))
+           (cp-spec-3 (update-nth key val queues)
+                      dst))
+  :hints (("goal" :in-theory (enable update-nth cp-spec-3))))
+
+(defthm
+  take-of-true-list-list-fix
+  (equal (take n (true-list-list-fix x))
+         (true-list-list-fix (take n x)))
+  :hints
+  (("goal" :in-theory (e/d (true-list-list-fix)
+                           (take-of-too-many take-when-atom take-of-cons)))))
+
+(defthmd
+  nonempty-queues-of-true-list-list-fix
+  (equal (nonempty-queues (true-list-list-fix queues))
+         (nonempty-queues queues))
+  :hints (("goal" :in-theory (enable nonempty-queues true-list-list-fix)
+           :induct (nonempty-queues queues)
+           :expand (nonempty-queues (true-list-list-fix queues)))))
+
+(defcong
+ true-list-list-equiv equal
+ (nonempty-queues queues)
+ 1
+ :hints (("Goal"
+          :use
+          (nonempty-queues-of-true-list-list-fix
+           (:instance
+            nonempty-queues-of-true-list-list-fix
+            (queues queues-equiv))))))
+
+(defthm true-list-list-fix-of-update-nth
+  (equal (true-list-list-fix (update-nth key val l))
+         (update-nth key (true-list-fix val)
+                     (true-list-list-fix l)))
+  :hints (("goal" :in-theory (enable true-list-list-fix))))
+
+(defthm flatten-of-true-list-list-fix
+  (equal (flatten (true-list-list-fix queues))
+         (flatten queues))
+  :hints (("goal" :in-theory (enable true-list-list-fix flatten))))
+
+(defthmd
+  schedule-queues-of-true-list-list-fix
+  (equal
+   (schedule-queues (true-list-list-fix queues) o)
+   (schedule-queues queues o))
+  :hints (("goal" :in-theory (enable schedule-queues true-list-list-fix)
+           :induct (schedule-queues queues o)
+           :expand
+           (schedule-queues (true-list-list-fix queues)
+                            o))))
+
+(defcong
+  true-list-list-equiv
+  equal (schedule-queues queues o)
+  1
+  :hints
+  (("goal"
+    :use (schedule-queues-of-true-list-list-fix
+          (:instance schedule-queues-of-true-list-list-fix
+                     (queues queues-equiv))))))
+
+(defcong list-equiv true-list-list-equiv
+  (update-nth key val l)
+  2
+  :hints (("goal" :in-theory (enable update-nth))))
+
+(defthm cp-without-subdirs-helper-correctness-lemma-9
+  (implies (cp-spec-3 queues dst)
+           (not (equal (car (nth n queues)) :close)))
+  :hints (("goal" :in-theory (enable nth cp-spec-3))))
+
+(defthm cp-without-subdirs-helper-correctness-lemma-10
+  (implies (cp-spec-3 queues dst)
+           (equal (consp (car (nth n queues)))
+                  (consp (nth n queues))))
+  :hints (("goal" :in-theory (enable nth cp-spec-3 nonempty-queues))))
+
+(defthm cp-without-subdirs-helper-correctness-lemma-11
+  (implies (cp-spec-3 queues dst)
+           (equal (equal (car (car (nth n queues)))
+                         :transaction)
+                  (consp (nth n queues))))
+  :hints (("goal" :in-theory (enable nth cp-spec-3 nonempty-queues))))
+
+(defthm cp-without-subdirs-helper-correctness-lemma-12
+  (implies (not (consp path))
+           (fat32-filename-list-equiv path nil))
+  :hints (("goal" :in-theory (enable fat32-filename-list-equiv)))
+  :rule-classes :forward-chaining)
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-13
+  (implies (and (no-duplicatesp-equal (strip-cars frame))
+                (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+                (path-clear path
+                            (remove-assoc-equal x (frame->frame frame)))
+                (atom (names-at (frame->root frame) path)))
+           (path-clear path (remove-assoc-equal x frame)))
+  :hints (("goal" :in-theory (enable remove-assoc-equal path-clear prefixp
+                                     frame->root frame->frame abs-separate)
+           :induct (remove-assoc-equal x frame))))
+
+(defthm
+  path-clear-partial-collapse
+  (implies
+   (and (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame))
+        (abs-separate frame)
+        (mv-nth 1 (collapse frame))
+        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame)))
+        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+               0)
+        (equal
+         x
+         (abs-find-file-src (partial-collapse frame path)
+                            path)))
+   (path-clear
+    path
+    (remove-assoc-equal x
+                        (partial-collapse frame path))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d (frame->frame)
+         (path-clear-partial-collapse-lemma-1
+          (:rewrite cp-without-subdirs-helper-correctness-lemma-13)
+          (:rewrite abs-mkdir-correctness-lemma-88)))
+    :use
+    (path-clear-partial-collapse-lemma-1
+     (:instance (:rewrite cp-without-subdirs-helper-correctness-lemma-13)
+                (frame (partial-collapse frame path))
+                (x (abs-find-file-src (partial-collapse frame path)
+                                      path))
+                (path path))
+     (:rewrite abs-mkdir-correctness-lemma-88)))))
+
 (thm
  (implies
-  (<= 1 (len names))
+  (and
+   (consp (flatten queues))
+   (not (integerp (car o1)))
+   (< 0 (+ -1 (len (nonempty-queues queues))))
+   (cp-spec-1
+    frame
+    (mv-nth 0
+            (schedule-queues (update-nth (nth 0 (nonempty-queues queues))
+                                         nil queues)
+                             (cdr o1)))
+    st src fs)
+   (consp names)
+   (cp-spec-3 queues dst)
+   (absfat-subsetp
+    (cdr
+     (assoc-equal
+      (abs-find-file-src
+       src
+       (mv-nth
+        0
+        (absfat-oracle-multi-step frame
+                                  (mv-nth 0 (schedule-queues queues o2))
+                                  st)))
+      (mv-nth 0
+              (absfat-oracle-multi-step frame
+                                        (mv-nth 0 (schedule-queues queues o2))
+                                        st))))
+    fs)
+   (equal (car (nth (nth 0 (nonempty-queues queues))
+                    queues))
+          :close))
   (cp-spec-1
    frame
-   (take 8
-         (mv-nth 0
-                 (schedule-queues (cp-without-subdirs-helper src dst names)
-                                  o1)))
-   st src
-   (cdr
-    (assoc-equal
-     (abs-find-file-src
-      src
-      (mv-nth
-       0
-       (absfat-oracle-multi-step
-        frame
-        (mv-nth 0
-                (schedule-queues (cp-without-subdirs-helper src dst names)
-                                 o2))
-        st)))
-     (mv-nth
-      0
-      (absfat-oracle-multi-step
-       frame
-       (mv-nth 0
-               (schedule-queues (cp-without-subdirs-helper src dst names)
-                                o2))
-       st))))))
+   (mv-nth 0
+           (schedule-queues (update-nth (nth 0 (nonempty-queues queues))
+                                        nil queues)
+                            (cdr o1)))
+   (fat-st (fat-st->fd st)
+           (fat-st->buf st)
+           (fat-st->offset st)
+           (fat-st->count st)
+           (fat-st->retval st)
+           (mv-nth 2
+                   (abs-close (fat-st->fd st)
+                              (fat-st->fd-table st)
+                              (fat-st->file-table st)))
+           (fat-st->path st)
+           (fat-st->stat st)
+           (fat-st->statfs st)
+           (fat-st->dirp st)
+           (mv-nth 0
+                   (abs-close (fat-st->fd st)
+                              (fat-st->fd-table st)
+                              (fat-st->file-table st)))
+           (mv-nth 1
+                   (abs-close (fat-st->fd st)
+                              (fat-st->fd-table st)
+                              (fat-st->file-table st)))
+           (fat-st->dir-stream-table st)
+           (fat-st->oracle st))
+   src fs))
  :hints
- (("Goal"
+ (("goal"
    :do-not-induct t
-   :expand
-   (schedule-queues (cp-without-subdirs-helper src dst names)
-                    o1))
-  (if
-      (not stable-under-simplificationp)
-      nil
-    '(:in-theory (enable cp-spec-1 absfat-oracle-single-step))))
- :otf-flg t)
+   :in-theory
+   (e/d
+    (cp-spec-1 schedule-queues cp-spec-3 absfat-oracle-multi-step
+               absfat-oracle-single-step abs-pwrite)
+    ((:rewrite
+      m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+     (:rewrite abs-fs-p-correctness-1)
+     (:definition no-duplicatesp-equal)
+     (:rewrite abs-fs-p-when-hifat-no-dups-p)
+     (:rewrite abs-mkdir-correctness-lemma-235)
+     (:rewrite m1-file-contents-p-correctness-1)
+     (:rewrite remove-assoc-when-absent-1)
+     (:definition remove-assoc-equal)
+     (:rewrite
+      absfat-subsetp-transitivity-lemma-3)
+     (:rewrite member-of-abs-addrs-when-natp . 2)
+     (:linear
+      path-clear-partial-collapse-when-zp-src-lemma-9)
+     (:type-prescription
+      member-of-nonempty-queues . 2)
+     (:rewrite nth-when->=-n-len-l)
+     (:type-prescription true-listp-update-nth)
+     (:rewrite nth-update-nth)
+     (:type-prescription
+      member-of-nonempty-queues . 1)
+     (:rewrite nfix-when-zp)
+     (:rewrite default-cdr)
+     (:rewrite put-assoc-equal-without-change . 2)
+     (:definition abs-put-assoc-definition)
+     (:definition len)
+     (:rewrite equal-of-m1-file)
+     (:rewrite hifat-to-lofat-inversion-lemma-2)
+     (:rewrite m1-file-contents-p-when-stringp)
+     (:rewrite
+      m1-file-contents-fix-when-m1-file-contents-p)
+     (:rewrite default-car)
+     (:rewrite abs-alloc-correctness-1)
+     (:definition member-equal)
+     (:rewrite abs-mkdir-correctness-lemma-34)
+     (:type-prescription assoc-when-zp-len)
+     (:definition unsigned-byte-p)
+     (:definition integer-range-p)
+     (:rewrite insert-text-correctness-4)
+     (:rewrite abs-directory-file-p-correctness-1)
+     (:rewrite nfix-when-natp)
+     (:definition natp)
+     (:rewrite update-nth-of-update-nth-1)
+     (:rewrite integerp-of-nth-when-integer-listp)
+     (:definition nfix)
+     (:rewrite
+      append-nthcdr-dirname-basename-lemma-1
+      . 3)
+     (:definition update-nth)
+     (:rewrite integerp-of-car-when-integer-listp)
+     (:rewrite integer-listp-when-nat-listp)
+     (:rewrite
+      abs-find-file-after-abs-mkdir-lemma-21)
+     (:definition integer-listp)
+     (:rewrite
+      no-duplicatesp-of-strip-cars-when-hifat-no-dups-p)
+     (:definition assoc-equal)
+     (:definition nat-equiv$inline)
+     (:rewrite abs-mkdir-correctness-lemma-56)
+     (:rewrite hifat-no-dups-p-when-abs-complete)
+     (:rewrite nthcdr-when->=-n-len-l))))))
 
-(encapsulate
-  ()
-
-  (local (include-book "std/basic/inductions" :dir :system))
-
-  (thm
-   (implies
-    (and
-     (not (zp n))
-     (<= n (len names)))
-    (b*
-        ((frame2
-          (mv-nth
-           0
-           (absfat-oracle-multi-step
-            frame
-            (mv-nth 0
-                    (schedule-queues
-                     (cp-without-subdirs-helper src dst names)
-                     o2))
-            st))))
-      (cp-spec-1 frame
-                 (take
-                  (* 8 n)
-                  (mv-nth 0
-                          (schedule-queues
-                           (cp-without-subdirs-helper src dst names)
-                           o1)))
-                 st src
-                 (cdr
-                  (assoc-equal
-                   (abs-find-file-src src frame2)
-                   frame2)))))
-   :hints (("goal" :induct (dec-induct n)))))
+(thm
+ (implies
+  (and
+   (not
+    (equal (abs-find-file-src src frame)
+           (abs-find-file-src dst frame)))
+   (cp-spec-3 queues dst)
+   (path-clear
+    src
+    (remove-assoc-equal
+     (abs-find-file-src frame src) frame))
+   (path-clear
+    dst
+    (remove-assoc-equal
+     (abs-find-file-src frame dst) frame)))
+  (b*
+      ((frame1
+        (mv-nth
+         0
+         (absfat-oracle-multi-step
+          frame
+          (mv-nth 0
+                  (schedule-queues
+                   queues
+                   o1))
+          st)))
+       (frame2
+        (mv-nth
+         0
+         (absfat-oracle-multi-step
+          frame
+          (mv-nth 0
+                  (schedule-queues
+                   queues
+                   o2))
+          st))))
+    (implies
+     (absfat-subsetp
+      (cdr
+       (assoc-equal
+        (abs-find-file-src src frame2)
+        frame2))
+      fs)
+     (and
+      (equal
+       (remove-assoc-equal (abs-find-file-src src frame1)
+                           new-frame)
+       (remove-assoc-equal (abs-find-file-src src frame)
+                           frame))
+      (absfat-subsetp
+       (cdr (assoc-equal (abs-find-file-src src frame1)
+                         frame1))
+       fs)))))
+ :hints (("goal" :induct
+          (schedule-queues
+           queues
+           o1)
+          :in-theory (enable schedule-queues cp-spec-3 absfat-oracle-multi-step
+                             absfat-oracle-single-step)
+          :expand
+          ((:with
+            (:rewrite member-of-nonempty-queues . 1)
+            (consp (nth (nth (+ -1 (len (nonempty-queues queues)))
+                             (nonempty-queues queues))
+                        queues)))
+           (cp-spec-1 frame nil st src fs)))))
 
 (defthm cp-without-subdirs-helper-correctness-2
   (implies
