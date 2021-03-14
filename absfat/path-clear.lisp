@@ -2269,11 +2269,11 @@
     :in-theory
     (e/d (frame->frame)
          (path-clear-partial-collapse-lemma-1
-          (:rewrite path-clear-partial-collapse-lemma-5)
+          (:rewrite path-clear-partial-collapse-lemma-4)
           (:rewrite path-clear-partial-collapse-lemma-3)))
     :use
     (path-clear-partial-collapse-lemma-1
-     (:instance (:rewrite path-clear-partial-collapse-lemma-5)
+     (:instance (:rewrite path-clear-partial-collapse-lemma-4)
                 (frame (partial-collapse frame path))
                 (x (abs-find-file-src (partial-collapse frame path)
                                       path))
