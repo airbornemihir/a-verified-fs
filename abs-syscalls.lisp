@@ -4154,11 +4154,22 @@
        ((when (and (consp dirname) (m1-regular-file-p parent-dir)))
         (mv frame -1 *enotdir*))
        (src (abs-find-file-src frame dirname))
-       (new-index (find-new-index (strip-cars frame)))
+       (new-index
+        (if
+            (fat32-filename-list-equiv
+             (frame-val->path (cdr (assoc-equal src frame)))
+             dirname)
+            src
+          (find-new-index (strip-cars frame))))
        ((mv var new-src-dir)
-        (abs-alloc (frame-val->dir (cdr (assoc-equal src frame)))
-                   (nthcdr (len (frame-val->path (cdr (assoc-equal src frame)))) dirname)
-                   new-index))
+        (if
+            (fat32-filename-list-equiv
+             (frame-val->path (cdr (assoc-equal src frame)))
+             dirname)
+            (mv (frame-val->dir (cdr (assoc-equal src frame))) nil)
+          (abs-alloc (frame-val->dir (cdr (assoc-equal src frame)))
+                     (nthcdr (len (frame-val->path (cdr (assoc-equal src frame)))) dirname)
+                     new-index)))
        ((mv file error-code) (if (consp (abs-assoc (basename path) var))
                                  (mv (cdr (abs-assoc (basename path) var)) 0)
                                (mv (make-abs-file) *enoent*)))
@@ -4168,12 +4179,23 @@
                                (mv nil (d-e-fix nil))))
        ((when (and (consp (abs-assoc (basename path) var)) (m1-directory-file-p file)))
         (mv frame -1 *enoent*))
-       (frame (put-assoc-equal src (change-frame-val (cdr (assoc-equal src frame))
-                                                     :dir new-src-dir)
-                               frame))
        (file (make-m1-file :d-e d-e
                            :contents (coerce (insert-text oldtext offset buf) 'string)))
        (new-var (abs-put-assoc (basename path) file var))
+       ((when
+            (fat32-filename-list-equiv
+             (frame-val->path (cdr (assoc-equal src frame)))
+             dirname))
+        (mv
+         (put-assoc-equal src (change-frame-val (cdr (assoc-equal src frame))
+                                                :dir
+                                                new-var)
+                          frame)
+         0 0))
+       (frame (put-assoc-equal src (change-frame-val (cdr (assoc-equal src frame))
+                                                     :dir
+                                                     new-src-dir)
+                               frame))
        (frame (frame-with-root (frame->root frame)
                                (cons (cons new-index (frame-val dirname new-var src))
                                      (frame->frame frame)))))
@@ -9427,6 +9449,14 @@
          (assoc-equal name (frame->root frame)))
   :hints (("goal" :in-theory (enable frame->root))))
 
+(defthm
+  abs-pwrite-correctness-lemma-24
+  (implies (atom frame)
+           (dist-names dir relpath
+                       (remove-assoc-equal 0 (frame-with-root root frame))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable frame-with-root dist-names))))
+
 (encapsulate
   ()
 
@@ -9666,7 +9696,8 @@
                       (file-table-element->fid
                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                          file-table)))
-                      file))))))))
+                      file))))))
+    :otf-flg t))
 
 (defund abs-open (path fd-table file-table)
   (declare (xargs :guard (and (fat32-filename-list-p path)
