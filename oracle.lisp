@@ -1787,8 +1787,6 @@
      (:definition update-nth)
      (:rewrite integerp-of-car-when-integer-listp)
      (:rewrite integer-listp-when-nat-listp)
-     (:rewrite
-      abs-find-file-after-abs-mkdir-lemma-21)
      (:definition integer-listp)
      (:rewrite
       no-duplicatesp-of-strip-cars-when-hifat-no-dups-p)

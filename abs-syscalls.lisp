@@ -5607,7 +5607,6 @@
          ((:rewrite collapse-hifat-place-file-lemma-6)
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                     . 2)
-          (:rewrite abs-find-file-after-abs-mkdir-lemma-21)
           (:rewrite len-when-prefixp)
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                     . 3)
@@ -6160,7 +6159,6 @@
          ((:rewrite collapse-hifat-place-file-lemma-6)
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                     . 2)
-          (:rewrite abs-find-file-after-abs-mkdir-lemma-21)
           (:rewrite len-when-prefixp)
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                     . 3)
@@ -7179,7 +7177,6 @@
          ((:rewrite collapse-hifat-place-file-lemma-6)
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                     . 2)
-          (:rewrite abs-find-file-after-abs-mkdir-lemma-21)
           (:rewrite len-when-prefixp)
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                     . 3)
@@ -9049,8 +9046,6 @@
       (:rewrite
        collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-2)
       (:rewrite
-       abs-find-file-after-abs-mkdir-lemma-21)
-      (:rewrite
        abs-directory-file-p-correctness-1)
       (:rewrite
        fat32-filename-list-p-when-not-consp)
@@ -9447,7 +9442,6 @@
          ((:rewrite collapse-hifat-place-file-lemma-6)
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                     . 2)
-          (:rewrite abs-find-file-after-abs-mkdir-lemma-21)
           (:rewrite len-when-prefixp)
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                     . 3)
