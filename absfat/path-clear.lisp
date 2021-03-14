@@ -2231,14 +2231,8 @@
           (:instance (:rewrite abs-find-file-src-correctness-2)
                      (frame (partial-collapse frame path)))))))
 
-(defthm path-clear-partial-collapse-lemma-4
-  (implies (not (consp path))
-           (fat32-filename-list-equiv path nil))
-  :hints (("goal" :in-theory (enable fat32-filename-list-equiv)))
-  :rule-classes :forward-chaining)
-
 (defthm
-  path-clear-partial-collapse-lemma-5
+  path-clear-partial-collapse-lemma-4
   (implies (and (no-duplicatesp-equal (strip-cars frame))
                 (atom (frame-val->path (cdr (assoc-equal 0 frame))))
                 (path-clear path
