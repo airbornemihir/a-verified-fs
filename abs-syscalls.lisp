@@ -5949,28 +5949,14 @@
        (cdr (assoc-equal 0
                          (partial-collapse frame (dirname path)))))
       (dirname path)))))
-  :instructions
-  ((:bash ("goal" :in-theory (enable member-of-names-at)))
-   (:bash
-    ("goal" :in-theory (disable (:rewrite abs-mkdir-correctness-lemma-2))
-     :use (:instance (:rewrite abs-mkdir-correctness-lemma-2)
-                     (x-path (dirname path))
-                     (path (dirname path))
-                     (frame (partial-collapse frame (dirname path))))))
-   (:dive 1 1 1)
-   (:= (fat32-filename-fix (basename path)))
-   :top (:dive 1 1 2)
-   (:=
-    (hifat-file-alist-fix
-     (m1-file->contents$inline
-      (mv-nth '0
-              (hifat-find-file
-               (mv-nth '0
-                       (collapse (partial-collapse frame (dirname path))))
-               (dirname path))))))
-   :top (:dive 1 1 2 1 1 2 1)
-   (:rewrite (:rewrite partial-collapse-correctness-1 . 2))
-   :top :bash))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (member-of-names-at)
+                    ((:rewrite abs-mkdir-correctness-lemma-2)))
+    :use (:instance (:rewrite abs-mkdir-correctness-lemma-2)
+                    (x-path (dirname path))
+                    (path (dirname path))
+                    (frame (partial-collapse frame (dirname path)))))))
 
 (encapsulate
   ()
