@@ -1568,6 +1568,94 @@
   (implies (path-clear path frame)
            (path-clear path (frame->frame frame)))
   :hints (("goal" :in-theory (enable frame->frame))))
+(defthmd path-clear-of-true-list-fix
+  (equal (path-clear path (true-list-fix frame))
+         (path-clear path frame))
+  :hints (("Goal" :in-theory (enable path-clear true-list-fix))))
+(defcong
+  list-equiv equal (path-clear path frame)
+  2
+  :hints
+  (("goal" :use (path-clear-of-true-list-fix
+                 (:instance path-clear-of-true-list-fix
+                            (frame frame-equiv))))))
+
+;; Move later.
+(defthm consp-of-strip-cars (equal (consp (strip-cars x)) (consp x)))
+(defthm nthcdr-when->=-n-len-l-under-list-equiv
+  (implies (>= (nfix n) (len l))
+           (list-equiv (nthcdr n l) nil)))
+
+(defthm cp-without-subdirs-helper-correctness-lemma-12
+  (implies (and
+            (not (consp (assoc-equal z frame)))
+            (syntaxp (not (quotep z))))
+           (iff (equal (abs-find-file-src frame path) z)
+                (and (equal (abs-find-file-src frame path) 0)
+                     (equal z 0)))))
+
+(encapsulate
+  ()
+
+  (local (include-book "std/lists/prefixp" :dir :system))
+
+  (defthm
+    cp-without-subdirs-helper-correctness-lemma-13
+    (implies
+     (and (path-clear path frame)
+          (no-duplicatesp-equal (strip-cars frame))
+          (atom (assoc-equal 0 frame)))
+     (not
+      (consp
+       (names-at
+        (frame-val->dir (cdr (assoc-equal (abs-find-file-src frame path)
+                                          frame)))
+        (nthcdr
+         (len (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
+                                                 frame))))
+         path)))))
+    :hints (("goal" :in-theory (enable path-clear
+                                       abs-find-file-src frame-p strip-cars
+                                       no-duplicatesp-equal names-at))))
+
+  (thm
+   (implies
+    (and
+     ;; (not
+     ;;  (zp
+     ;;   (abs-find-file-src frame path)))
+     (frame-p frame)
+     (abs-complete
+      (frame-val->dir
+       (cdr
+        (assoc-equal
+         (abs-find-file-src frame path)
+         frame))))
+     (no-duplicatesp-equal (strip-cars frame))
+     (path-clear path
+                 (remove-assoc-equal
+                  (abs-find-file-src frame path)
+                  frame))
+     (not
+      (fat32-filename-list-equiv
+       path
+       (frame-val->path
+        (cdr
+         (assoc-equal
+          (abs-find-file-src frame path)
+          frame)))))
+     (atom (assoc-equal 0 frame)))
+    (equal (1st-complete-under-path frame path)
+           0))
+   :hints (("goal" :in-theory (enable 1st-complete-under-path remove-assoc-equal
+                                      path-clear
+                                      abs-find-file-src
+                                      no-duplicatesp-equal
+                                      strip-cars
+                                      frame-p)
+            :expand ((:free
+                      (fs)
+                      (names-at fs nil)))))))
 
 (assert-event
  (b*
