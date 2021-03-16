@@ -466,6 +466,10 @@
            (list-equiv path nil))
   :rule-classes :forward-chaining)
 
+(defthm nthcdr-when->=-n-len-l-under-list-equiv
+  (implies (>= (nfix n) (len l))
+           (list-equiv (nthcdr n l) nil)))
+
 (defthmd
   painful-debugging-lemma-14
   (implies (not (zp cluster-size))

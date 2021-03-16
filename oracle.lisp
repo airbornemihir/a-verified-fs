@@ -1582,9 +1582,6 @@
 
 ;; Move later.
 (defthm consp-of-strip-cars (equal (consp (strip-cars x)) (consp x)))
-(defthm nthcdr-when->=-n-len-l-under-list-equiv
-  (implies (>= (nfix n) (len l))
-           (list-equiv (nthcdr n l) nil)))
 
 (defthm cp-without-subdirs-helper-correctness-lemma-12
   (implies (and
@@ -1753,6 +1750,121 @@
                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
               (contents . "")))
         (src . 0))))
+    (equal st
+           '((fd . 0)
+             (buf . "")
+             (offset . 0)
+             (count . 4294967296)
+             (retval . 0)
+             (errno . 0)
+             (PATH "VAR        "
+                   "TMP        " "TICKET1 TXT")
+             (stat (st_size . 0))
+             (statfs (f_type . 0)
+                     (f_bsize . 0)
+                     (f_blocks . 0)
+                     (f_bfree . 0)
+                     (f_bavail . 0)
+                     (f_files . 0)
+                     (f_ffree . 0)
+                     (f_fsid . 0)
+                     (f_namelen . 72))
+             (dirp . 0)
+             (fd-table)
+             (file-table)
+             (dir-stream-table)
+             (oracle))))))
+
+;; This assertion shows a little bit about the problems with the current
+;; definition of 1st-complete-under-path and in turn partial-collapse. There
+;; was no need to split the 1 variable and produce the 2 variable, but that's
+;; what we ended up doing...
+(assert-event
+ (b*
+     (((mv frame st)
+       (absfat-oracle-multi-step
+        '((0
+           (PATH)
+           (DIR
+            ("TMP        "
+             (D-E 0 0 0 0 0 0 0 0 0 0 0 0
+                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+             (CONTENTS ("TICKET2 TXT" (D-E 0 0 0 0 0 0 0 0 0 0 0 0
+                                           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                        (CONTENTS . ""))
+                       ("TICKET3 TXT" (D-E 0 0 0 0 0 0 0 0 0 0 0 0
+                                           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                        (CONTENTS . ""))
+                       ("TICKET1 TXT" (D-E 0 0 0 0 0 0 0 0 0 0 0 0
+                                           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                        (CONTENTS . ""))))
+            ("VAR        " (D-E 0 0 0 0 0 0 0 0 0 0 0 16
+                                0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+             (CONTENTS 1)))
+           (SRC . 0))
+          (1 (PATH "VAR        ")
+             (DIR ("TMP        " (D-E 0 0 0 0 0 0 0 0 0 0 0 16
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                   (CONTENTS)))
+             (SRC . 0)))
+        '((:set-path "TMP        " "TICKET2 TXT")
+          :open (:set-count . 4294967296)
+          :pread :close
+          (:set-path "VAR        "
+                     "TMP        " "TICKET2 TXT")
+          :open :pwrite :close
+          (:set-path "TMP        " "TICKET3 TXT")
+          :open (:set-count . 4294967296)
+          :pread :close
+          (:set-path "VAR        "
+                     "TMP        " "TICKET3 TXT")
+          :open :pwrite :close
+          (:set-path "TMP        " "TICKET1 TXT")
+          :open (:set-count . 4294967296)
+          :pread :close
+          (:set-path "VAR        "
+                     "TMP        " "TICKET1 TXT")
+          :open
+          :pwrite :close)
+        (make-fat-st))))
+   (and
+    (equal
+     frame
+     '((0
+        (path)
+        (dir
+         ("TMP        "
+          (d-e 0 0 0 0 0 0 0 0 0 0 0 0
+               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+          (contents ("TICKET2 TXT" (d-e 0 0 0 0 0 0 0 0 0 0 0 0
+                                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                     (contents . ""))
+                    ("TICKET3 TXT" (d-e 0 0 0 0 0 0 0 0 0 0 0 0
+                                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                     (contents . ""))
+                    ("TICKET1 TXT" (d-e 0 0 0 0 0 0 0 0 0 0 0 0
+                                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                     (contents . ""))))
+         ("VAR        " (d-e 0 0 0 0 0 0 0 0 0 0 0 16
+                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+          (contents 1)))
+        (src . 0))
+       (2 (path "VAR        " "TMP        ")
+          (dir ("TICKET2 TXT" (d-e 0 0 0 0 0 0 0 0 0 0 0 0
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                (contents . ""))
+               ("TICKET3 TXT" (d-e 0 0 0 0 0 0 0 0 0 0 0 0
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                (contents . ""))
+               ("TICKET1 TXT" (d-e 0 0 0 0 0 0 0 0 0 0 0 0
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                (contents . "")))
+          (src . 1))
+       (1 (path "VAR        ")
+          (dir ("TMP        " (d-e 0 0 0 0 0 0 0 0 0 0 0 16
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                (contents 2)))
+          (src . 0))))
     (equal st
            '((fd . 0)
              (buf . "")
