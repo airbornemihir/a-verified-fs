@@ -1690,6 +1690,13 @@
              (dir-stream-table)
              (oracle))))))
 
+(defthm
+  remove-assoc-of-frame-with-root-1
+  (equal (remove-assoc-equal 0 (frame-with-root root frame))
+         (remove-assoc-equal 0 frame))
+  :hints (("goal" :in-theory (enable frame-with-root remove-assoc-equal)
+           :do-not-induct t)))
+
 (encapsulate
   ()
 
@@ -1697,7 +1704,7 @@
           (e/d (nth cp-spec-3 absfat-oracle-multi-step
                     absfat-oracle-single-step
                     abs-open abs-pread abs-pwrite abs-close
-                    hifat-open hifat-close)
+                    hifat-open hifat-close abs-find-file-src)
                ((:linear lofat-to-hifat-helper-correctness-1)
                 (:rewrite
                  lofat-to-hifat-helper-of-place-contents)
@@ -1715,13 +1722,30 @@
                  not-intersectp-list-of-lofat-to-hifat-helper)
                 (:rewrite
                  count-free-clusters-of-set-indices-in-fa-table-1)
+                ;; Somehow the whole thing gets slowed down when this is
+                ;; enabled...
                 (:rewrite remove-assoc-when-absent-1)
                 (:definition no-duplicatesp-equal)
-                (:definition remove-assoc-equal)
                 (:type-prescription
                  abs-addrs-of-remove-assoc-lemma-1)
                 (:rewrite abs-find-file-src-correctness-1)
-                (:rewrite member-of-abs-addrs-when-natp . 2)))))
+                (:rewrite member-of-abs-addrs-when-natp . 2)
+                (:rewrite names-at-of-put-assoc)
+                (:rewrite abs-directory-file-p-correctness-1)
+                (:rewrite
+                 path-clear-partial-collapse-when-zp-src-lemma-15)
+                (:rewrite str::consp-of-explode)
+                (:rewrite abs-mkdir-correctness-lemma-228)
+                (:rewrite consp-of-nthcdr)
+                (:type-prescription assoc-when-zp-len)
+                (:rewrite hifat-to-lofat-inversion-lemma-2)
+                (:linear
+                 path-clear-partial-collapse-when-zp-src-lemma-9)
+                (:rewrite abs-directory-file-p-when-m1-file-p)
+                (:rewrite m1-directory-file-p-when-m1-file-p)
+                (:rewrite
+                 no-duplicatesp-of-strip-cars-when-hifat-no-dups-p)
+                (:rewrite names-at-of-abs-alloc-2)))))
 
   (local (deflabel theory-label))
 
@@ -1730,7 +1754,4137 @@
   (encapsulate
     ()
 
-    (local (in-theory (current-theory 'theory-label))))
+    (local (in-theory (current-theory 'theory-label)))
+
+    (thm
+     (implies
+      (and (consp syscall-sym-list)
+           (equal (car (car syscall-sym-list))
+                  :set-path)
+           (consp (cdr syscall-sym-list))
+           (equal (cadr syscall-sym-list) :open)
+           (consp (cddr syscall-sym-list))
+           (equal (car (caddr syscall-sym-list))
+                  :set-count)
+           (consp (cdddr syscall-sym-list))
+           (equal (cadddr syscall-sym-list) :pread)
+           (consp (cddddr syscall-sym-list))
+           (equal (car (cddddr syscall-sym-list))
+                  :close)
+           (consp (cdr (cddddr syscall-sym-list)))
+           (equal (car (cadr (cddddr syscall-sym-list)))
+                  :set-path)
+           (consp (cddr (cddddr syscall-sym-list)))
+           (equal (caddr (cddddr syscall-sym-list))
+                  :open)
+           (consp (cdddr (cddddr syscall-sym-list)))
+           (equal (cadddr (cddddr syscall-sym-list))
+                  :pwrite)
+           (consp (cddddr (cddddr syscall-sym-list)))
+           (equal (car (cddddr (cddddr syscall-sym-list)))
+                  :close)
+           (not (consp (cdr (cddddr (cddddr syscall-sym-list)))))
+           (fat32-filename-list-prefixp dst
+                                        (cdr (cadr (cddddr syscall-sym-list))))
+           (path-clear dst
+                       (remove-assoc-equal (abs-find-file-src frame dst)
+                                           frame)))
+      (path-clear
+       dst
+       (remove-assoc-equal
+        (abs-find-file-src
+         (mv-nth
+          0
+          (absfat-oracle-single-step
+           (mv-nth
+            0
+            (absfat-oracle-single-step
+             (mv-nth
+              0
+              (absfat-oracle-single-step
+               (mv-nth
+                0
+                (absfat-oracle-single-step
+                 (mv-nth
+                  0
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))
+                 (cadr (cddddr syscall-sym-list))
+                 (mv-nth
+                  1
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))))
+               :open
+               (mv-nth
+                1
+                (absfat-oracle-single-step
+                 (mv-nth
+                  0
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))
+                 (cadr (cddddr syscall-sym-list))
+                 (mv-nth
+                  1
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))))))
+             :pwrite
+             (mv-nth
+              1
+              (absfat-oracle-single-step
+               (mv-nth
+                0
+                (absfat-oracle-single-step
+                 (mv-nth
+                  0
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))
+                 (cadr (cddddr syscall-sym-list))
+                 (mv-nth
+                  1
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))))
+               :open
+               (mv-nth
+                1
+                (absfat-oracle-single-step
+                 (mv-nth
+                  0
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))
+                 (cadr (cddddr syscall-sym-list))
+                 (mv-nth
+                  1
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))))))))
+           :close
+           (mv-nth
+            1
+            (absfat-oracle-single-step
+             (mv-nth
+              0
+              (absfat-oracle-single-step
+               (mv-nth
+                0
+                (absfat-oracle-single-step
+                 (mv-nth
+                  0
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))
+                 (cadr (cddddr syscall-sym-list))
+                 (mv-nth
+                  1
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))))
+               :open
+               (mv-nth
+                1
+                (absfat-oracle-single-step
+                 (mv-nth
+                  0
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))
+                 (cadr (cddddr syscall-sym-list))
+                 (mv-nth
+                  1
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))))))
+             :pwrite
+             (mv-nth
+              1
+              (absfat-oracle-single-step
+               (mv-nth
+                0
+                (absfat-oracle-single-step
+                 (mv-nth
+                  0
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))
+                 (cadr (cddddr syscall-sym-list))
+                 (mv-nth
+                  1
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))))
+               :open
+               (mv-nth
+                1
+                (absfat-oracle-single-step
+                 (mv-nth
+                  0
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))
+                 (cadr (cddddr syscall-sym-list))
+                 (mv-nth
+                  1
+                  (absfat-oracle-single-step
+                   (mv-nth
+                    0
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))
+                   :close
+                   (mv-nth
+                    1
+                    (absfat-oracle-single-step
+                     (mv-nth
+                      0
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))
+                     :pread
+                     (mv-nth
+                      1
+                      (absfat-oracle-single-step
+                       (mv-nth
+                        0
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))
+                       (caddr syscall-sym-list)
+                       (mv-nth
+                        1
+                        (absfat-oracle-single-step
+                         (mv-nth
+                          0
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))
+                         :open
+                         (mv-nth
+                          1
+                          (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                     st))))))))))))))))))
+         dst)
+        (mv-nth
+         0
+         (absfat-oracle-single-step
+          (mv-nth
+           0
+           (absfat-oracle-single-step
+            (mv-nth
+             0
+             (absfat-oracle-single-step
+              (mv-nth
+               0
+               (absfat-oracle-single-step
+                (mv-nth
+                 0
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))
+                (cadr (cddddr syscall-sym-list))
+                (mv-nth
+                 1
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))))
+              :open
+              (mv-nth
+               1
+               (absfat-oracle-single-step
+                (mv-nth
+                 0
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))
+                (cadr (cddddr syscall-sym-list))
+                (mv-nth
+                 1
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))))))
+            :pwrite
+            (mv-nth
+             1
+             (absfat-oracle-single-step
+              (mv-nth
+               0
+               (absfat-oracle-single-step
+                (mv-nth
+                 0
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))
+                (cadr (cddddr syscall-sym-list))
+                (mv-nth
+                 1
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))))
+              :open
+              (mv-nth
+               1
+               (absfat-oracle-single-step
+                (mv-nth
+                 0
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))
+                (cadr (cddddr syscall-sym-list))
+                (mv-nth
+                 1
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))))))))
+          :close
+          (mv-nth
+           1
+           (absfat-oracle-single-step
+            (mv-nth
+             0
+             (absfat-oracle-single-step
+              (mv-nth
+               0
+               (absfat-oracle-single-step
+                (mv-nth
+                 0
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))
+                (cadr (cddddr syscall-sym-list))
+                (mv-nth
+                 1
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))))
+              :open
+              (mv-nth
+               1
+               (absfat-oracle-single-step
+                (mv-nth
+                 0
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))
+                (cadr (cddddr syscall-sym-list))
+                (mv-nth
+                 1
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))))))
+            :pwrite
+            (mv-nth
+             1
+             (absfat-oracle-single-step
+              (mv-nth
+               0
+               (absfat-oracle-single-step
+                (mv-nth
+                 0
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))
+                (cadr (cddddr syscall-sym-list))
+                (mv-nth
+                 1
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))))
+              :open
+              (mv-nth
+               1
+               (absfat-oracle-single-step
+                (mv-nth
+                 0
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))))
+                (cadr (cddddr syscall-sym-list))
+                (mv-nth
+                 1
+                 (absfat-oracle-single-step
+                  (mv-nth
+                   0
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))))
+                  :close
+                  (mv-nth
+                   1
+                   (absfat-oracle-single-step
+                    (mv-nth
+                     0
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))))
+                    :pread
+                    (mv-nth
+                     1
+                     (absfat-oracle-single-step
+                      (mv-nth
+                       0
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))))
+                      (caddr syscall-sym-list)
+                      (mv-nth
+                       1
+                       (absfat-oracle-single-step
+                        (mv-nth
+                         0
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st))
+                        :open
+                        (mv-nth
+                         1
+                         (absfat-oracle-single-step frame (car syscall-sym-list)
+                                                    st)))))))))))))))))))))
+     :hints (("goal" :do-not-induct t
+              :in-theory (enable path-clear)))
+     :otf-flg t))
 
   (thm
    (implies
