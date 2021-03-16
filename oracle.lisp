@@ -1690,13 +1690,6 @@
              (dir-stream-table)
              (oracle))))))
 
-(defthm
-  remove-assoc-of-frame-with-root-1
-  (equal (remove-assoc-equal 0 (frame-with-root root frame))
-         (remove-assoc-equal 0 frame))
-  :hints (("goal" :in-theory (enable frame-with-root remove-assoc-equal)
-           :do-not-induct t)))
-
 (encapsulate
   ()
 

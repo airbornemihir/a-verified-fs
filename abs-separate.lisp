@@ -2669,6 +2669,8 @@
            :use (:instance alistp-when-frame-p
                            (x (frame-with-root root frame))))))
 
+;; Gonna assume that both of these are disabled because of their potential to
+;; cause case splits...
 (defthmd put-assoc-equal-of-frame-with-root
   (equal (put-assoc-equal key val (frame-with-root root frame))
          (if (equal key 0)
@@ -2676,13 +2678,20 @@
            (frame-with-root root (put-assoc-equal key val frame))))
   :hints (("goal" :do-not-induct t
            :in-theory (enable frame-with-root))))
-
 (defthmd assoc-equal-of-frame-with-root
   (equal (assoc-equal x (frame-with-root root frame))
          (if (equal x 0)
              (cons 0 (frame-val nil (abs-fs-fix root) 0))
              (assoc-equal x frame)))
   :hints (("goal" :in-theory (enable frame-with-root))))
+
+;; Move later.
+(defthm
+  remove-assoc-of-frame-with-root-1
+  (equal (remove-assoc-equal 0 (frame-with-root root frame))
+         (remove-assoc-equal 0 frame))
+  :hints (("goal" :in-theory (enable frame-with-root remove-assoc-equal)
+           :do-not-induct t)))
 
 (defund frame->root (frame)
   (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame)))))
