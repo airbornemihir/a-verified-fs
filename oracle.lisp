@@ -5936,6 +5936,18 @@
               (frame syscall-sym-list st)
               (absfat-oracle-multi-step frame syscall-sym-list st)))))))
 
+(thm
+ (implies
+  (and (path-clear path1
+                   (remove-assoc-equal
+                    (abs-find-file-src frame path1)
+                    frame))
+       (fat32-filename-list-prefixp path1 path2)
+       (not
+        (fat32-filename-list-equiv path1 path2)))
+  (equal (partial-collapse frame path2)
+         frame)))
+
 (defund abs-pwrit1 (fd buf offset frame fd-table file-table)
   (declare (xargs :guard (and (frame-p frame) (fd-table-p fd-table) (file-table-p file-table)
                               (natp fd) (stringp buf) (natp offset) (consp (assoc-equal 0 frame)))
