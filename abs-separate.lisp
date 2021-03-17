@@ -5111,13 +5111,6 @@
   :hints (("goal" :in-theory (enable dist-names prefixp abs-separate)
            :do-not-induct t)))
 
-;; Move later.
-(defthm fat32-filename-list-equiv-when-atom-right
-  (implies (atom y)
-           (equal (fat32-filename-list-equiv x y)
-                  (atom x)))
-  :hints (("goal" :in-theory (enable fat32-filename-list-equiv))))
-
 (defthmd
   abs-separate-of-collapse-this-lemma-3
   (implies
