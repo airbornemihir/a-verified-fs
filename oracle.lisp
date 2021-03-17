@@ -1872,6 +1872,122 @@
     :hints (("goal" :in-theory (enable 1st-complete-under-path
                                        assoc-equal frame-p)))))
 
+(defund
+  abs-pwrit1
+  (fd buf offset frame fd-table file-table)
+  (declare
+   (xargs
+    :guard (and (frame-p frame)
+                (fd-table-p fd-table)
+                (file-table-p file-table)
+                (natp fd)
+                (stringp buf)
+                (natp offset)
+                (consp (assoc-equal 0 frame)))
+    :guard-hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d
+       (len-of-insert-text abs-no-dups-file-p abs-no-dups-p abs-pwrite)
+       (unsigned-byte-p))
+      :expand
+      (:with
+       m1-file-contents-fix-when-m1-file-contents-p
+       (:free
+        (oldtext)
+        (m1-file-contents-fix
+         (implode (insert-text oldtext offset buf)))))))))
+  (b*
+      ((fd-table-entry (assoc-equal fd fd-table))
+       ((unless (consp fd-table-entry))
+        (mv frame -1 *ebadf*))
+       (file-table-entry (assoc-equal (cdr fd-table-entry)
+                                      file-table))
+       ((unless (consp file-table-entry))
+        (mv frame -1 *ebadf*))
+       ((unless (unsigned-byte-p 32 (+ offset (length buf))))
+        (mv frame -1 *enospc*))
+       (path (file-table-element->fid (cdr file-table-entry)))
+       ((unless (consp path))
+        (mv frame -1 *enoent*))
+       (dirname (dirname path))
+       ((mv frame retval errno)
+        (abs-pwrite
+         fd buf offset frame fd-table file-table))
+       (frame (partial-collapse frame dirname)))
+    (mv frame retval errno)))
+
+(skip-proofs
+ (defthm
+   good-frame-p-of-abs-pwrite
+   (implies
+    (good-frame-p frame)
+    (good-frame-p
+     (mv-nth
+      0
+      (abs-pwrite fd
+                  buf offset frame fd-table file-table))))
+   :hints
+   (("goal" :do-not-induct t
+     :in-theory (enable abs-pwrite good-frame-p)))))
+
+(defthm
+  abs-pwrit1-correctness-1
+  (implies
+   (good-frame-p frame)
+   (and (collapse-equiv
+         (mv-nth 0
+                 (abs-pwrit1 fd
+                             buf offset frame fd-table file-table))
+         (mv-nth 0
+                 (abs-pwrite fd
+                             buf offset frame fd-table file-table)))
+        (equal (mv-nth 1
+                       (abs-pwrit1 fd
+                                   buf offset frame fd-table file-table))
+               (mv-nth 1
+                       (abs-pwrite fd
+                                   buf offset frame fd-table file-table)))
+        (equal (mv-nth 2
+                       (abs-pwrit1 fd
+                                   buf offset frame fd-table file-table))
+               (mv-nth 2
+                       (abs-pwrite fd buf
+                                   offset frame fd-table file-table)))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (abs-pwrit1 hifat-find-file hifat-place-file)
+                    ((:rewrite-quoted-constant true-fix-under-true-equiv))))
+   (if (not stable-under-simplificationp)
+       nil
+       '(:in-theory
+         (e/d (abs-pwrite abs-pwrit1
+                          hifat-find-file hifat-place-file)
+              ((:rewrite-quoted-constant true-fix-under-true-equiv))))))
+  :otf-flg t)
+
+(defthm good-frame-p-of-partial-collapse
+  (implies (good-frame-p frame)
+           (good-frame-p (partial-collapse frame pathname)))
+  :hints (("goal" :in-theory (enable good-frame-p)
+           :do-not-induct t)))
+
+(defthm
+  good-frame-p-of-abs-pwrit1
+  (implies
+   (good-frame-p frame)
+   (good-frame-p
+    (mv-nth
+     0
+     (abs-pwrit1 fd
+                 buf offset frame fd-table file-table))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (enable abs-pwrit1)
+    :use good-frame-p-of-abs-pwrite)))
+
 (encapsulate
   ()
 
