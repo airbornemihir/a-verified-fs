@@ -2919,13 +2919,51 @@
 ;; Kinda general.
 (defthmd
   abs-mkdir-correctness-lemma-30
-  (implies
-   (zp (mv-nth 1 (abs-find-file-helper fs path)))
-   (equal (mv-nth 0 (abs-alloc fs path new-index))
-          (if (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs path)))
-              (abs-file->contents (mv-nth 0 (abs-find-file-helper fs path)))
-              nil)))
+  (equal
+   (mv-nth 0 (abs-alloc fs path new-index))
+   (cond
+    ((atom path) (abs-fs-fix fs))
+    ((and (zp (mv-nth 1 (abs-find-file-helper fs path)))
+          (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs path))))
+     (abs-file->contents (mv-nth 0 (abs-find-file-helper fs path))))
+    (t nil)))
   :hints (("goal" :in-theory (enable abs-alloc abs-find-file-helper))))
+
+(defthmd
+  cp-without-subdirs-helper-correctness-lemma-33
+  (implies
+   (and (abs-fs-p fs)
+        (abs-directory-file-p (cdr (assoc-equal name fs))))
+   (set-equiv
+    (abs-addrs fs)
+    (append (abs-addrs (remove-assoc-equal name fs))
+            (abs-addrs (abs-file->contents (cdr (assoc-equal name fs)))))))
+  :hints (("goal" :in-theory (enable remove-assoc-equal abs-addrs))))
+
+(defthmd
+  cp-without-subdirs-helper-correctness-lemma-34
+  (implies
+   (and
+    (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs path)))
+    (zp (mv-nth 1 (abs-find-file-helper fs path)))
+    (abs-complete
+     (abs-file->contents (mv-nth 0 (abs-find-file-helper fs path)))))
+   (set-equiv (abs-addrs (mv-nth 1 (abs-alloc fs path new-index)))
+              (cons (nfix new-index)
+                    (abs-addrs (abs-fs-fix fs)))))
+  :hints
+  (("goal" :in-theory (enable abs-alloc
+                              abs-find-file-helper abs-addrs)
+    :induct (abs-alloc fs path new-index)
+    :expand ((abs-file-contents-fix (list new-index))
+             (abs-file-contents-p (list new-index))
+             (abs-file-alist-p (list new-index))))
+   ("subgoal *1/3"
+    :use
+    (:instance
+     (:rewrite cp-without-subdirs-helper-correctness-lemma-33)
+     (fs (abs-fs-fix fs))
+     (name (fat32-filename-fix (car path)))))))
 
 ;; Inductive, therefore probably not worth disabling.
 (defthm

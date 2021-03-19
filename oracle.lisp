@@ -2639,7 +2639,8 @@
                            abs-alloc
                            1st-complete-under-path
                            assoc-of-frame->frame
-                           frame->frame-of-put-assoc)
+                           frame->frame-of-put-assoc
+                           cp-without-subdirs-helper-correctness-lemma-34)
                ((:rewrite-quoted-constant true-fix-under-true-equiv)))
               :expand
               ((partial-collapse
