@@ -3089,7 +3089,6 @@
           (:rewrite
            partial-collapse-correctness-lemma-2)
           (:definition rational-listp)
-          (:rewrite list-equiv-when-true-listp)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite ctx-app-ok-when-abs-complete)
           (:rewrite nth-when->=-n-len-l)

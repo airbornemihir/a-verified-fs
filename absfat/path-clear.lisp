@@ -70,7 +70,7 @@
   :hints
   (("goal" :in-theory (e/d (frame-p path-clear
                                     1st-complete-under-path names-at
-                                    fat32-filename-list-prefixp-alt)
+                                    fat32-filename-list-prefixp-alt list-equiv)
                            (prefixp-when-equal-lengths len-when-prefixp)))))
 
 ;; I suspect this might be useful later.
@@ -2041,7 +2041,7 @@
                                  y)))))
   :hints
   (("goal"
-    :in-theory (e/d nil
+    :in-theory (e/d ()
                     ((:rewrite prefixp-nthcdr-nthcdr)
                      (:rewrite names-at-when-prefixp)
                      len-when-prefixp))
@@ -2084,7 +2084,7 @@
            (path-clear y frame))
   :hints
   (("goal"
-    :in-theory (e/d (path-clear)
+    :in-theory (e/d (path-clear list-equiv)
                     (len-when-prefixp (:rewrite prefixp-when-equal-lengths))))))
 
 (defthm
