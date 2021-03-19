@@ -2239,7 +2239,7 @@
                      (frame frame)
                      (x (abs-find-file-src (partial-collapse frame path)
                                            path)))
-          (:instance (:rewrite abs-find-file-src-correctness-2)
+          (:instance abs-find-file-src-correctness-2
                      (frame (partial-collapse frame path)))))))
 
 (defthm
