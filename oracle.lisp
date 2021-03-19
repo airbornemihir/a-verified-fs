@@ -1984,10 +1984,14 @@
       (consp (assoc-equal x frame))
       (atom (assoc-equal 0 frame))
       (abs-complete (frame-val->dir (cdr (assoc-equal x frame))))
-      (fat32-filename-list-equiv path
-                                 (frame-val->path (cdr (assoc-equal x frame)))))
-     (not (equal (1st-complete-under-path frame path)
-                 0)))
+      (equal (1st-complete-under-path frame path) 0))
+     (and
+      (not
+       (fat32-filename-list-equiv
+        path (frame-val->path (cdr (assoc-equal x frame)))))
+      (not
+       (fat32-filename-list-equiv
+        (frame-val->path (cdr (assoc-equal x frame))) path))))
     :hints (("goal" :in-theory (enable 1st-complete-under-path
                                        assoc-equal frame-p)))))
 
@@ -2122,7 +2126,8 @@
                 (list-equiv (frame-val->path (cdr (assoc-equal 0 frame)))
                             nil)
                 (mv-nth '1 (collapse frame))
-                (frame-p frame)))
+                (frame-p frame)
+                (abs-separate frame)))
   :hints (("goal" :do-not-induct t
            :in-theory (enable good-frame-p))))
 
@@ -2298,6 +2303,163 @@
                         path))))
   :hints (("goal" :in-theory (enable abs-find-file-src abs-find-file))))
 
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-27
+  (implies
+   (and (atom (assoc-equal 0 frame))
+        (not (zp name))
+        (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame)))
+   (iff (> (1st-complete-under-path (put-assoc-equal name val frame)
+                                    path)
+           0)
+        (or (> (1st-complete-under-path (remove-assoc-equal name frame)
+                                        path)
+               0)
+            (and (fat32-filename-list-prefixp path (frame-val->path val))
+                 (abs-complete (frame-val->dir val))))))
+  :hints (("goal" :in-theory (enable 1st-complete-under-path
+                                     strip-cars no-duplicatesp-equal))))
+
+(defthm
+  1st-complete-under-path-of-remove-assoc-1
+  (implies (and (not (zp name))
+                (equal (1st-complete-under-path frame path)
+                       0))
+           (equal (1st-complete-under-path (remove-assoc-equal name frame)
+                                           path)
+                  0))
+  :hints (("goal" :in-theory (enable 1st-complete-under-path
+                                     strip-cars no-duplicatesp-equal))))
+
+(defthm fat32-filename-list-prefixp-when-fat32-filename-list-prefixp
+  (implies (fat32-filename-list-prefixp x y)
+           (equal (fat32-filename-list-prefixp y x)
+                  (fat32-filename-list-equiv x y)))
+  :hints (("goal" :in-theory (enable fat32-filename-list-equiv))))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-28
+  (implies
+   (and
+    (frame-p (frame->frame frame))
+    (consp (assoc-equal x (frame->frame frame)))
+    (abs-complete (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
+    (equal (1st-complete-under-path (frame->frame frame)
+                                    path)
+           0)
+    (equal (assoc-equal x (frame->frame frame))
+           (assoc-equal x frame)))
+   (and
+    (not (fat32-filename-list-equiv
+          path
+          (frame-val->path (cdr (assoc-equal x frame)))))
+    (not
+     (fat32-filename-list-equiv (frame-val->path (cdr (assoc-equal x frame)))
+                                path))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (disable 1st-complete-under-path-could-fire-up-at-a-painful-moment)
+    :use (:instance 1st-complete-under-path-could-fire-up-at-a-painful-moment
+                    (frame (frame->frame frame))))))
+
+(defthm cp-without-subdirs-helper-correctness-lemma-29
+  (implies (and (abs-fs-p (put-assoc-equal name val fs))
+                (abs-fs-p fs)
+                (case-split (not (null name))))
+           (set-equiv (names-at (put-assoc-equal name val fs)
+                                nil)
+                      (cons name (names-at fs nil))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (names-at)))))
+
+(defthm
+  abs-complete-of-abs-fs-fix
+  (implies (and (abs-file-alist-p abs-file-alist)
+                (abs-complete abs-file-alist))
+           (abs-complete (abs-fs-fix abs-file-alist)))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-complete subsetp-equal)
+                    (no-duplicatesp-of-abs-addrs-of-abs-fs-fix-lemma-1))
+    :use no-duplicatesp-of-abs-addrs-of-abs-fs-fix-lemma-1)))
+
+;; Really move later!
+(defthm find-new-index-correctness-1-corollary
+  (implies
+   (subsetp-equal x fd-list)
+   (not (member-equal (find-new-index fd-list)
+                      x)))
+  :hints (("goal" :in-theory (disable find-new-index-correctness-1)
+           :use find-new-index-correctness-1)))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-30
+  (implies
+   (and (mv-nth 1 (collapse frame))
+        (abs-separate (frame->frame frame))
+        (frame-p (frame->frame frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (not (equal x 0)))
+   (subsetp-equal (abs-addrs (frame-val->dir (cdr (assoc-equal x frame))))
+                  (strip-cars frame)))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (assoc-of-frame->frame)
+                    (path-clear-partial-collapse-when-zp-src-lemma-22))
+    :use path-clear-partial-collapse-when-zp-src-lemma-22)))
+
+;; Really move later!
+(defthm
+  subsetp-of-frame-addrs-root-strip-cars-corollary
+  (implies (subsetp-equal (strip-cars frame) y)
+           (subsetp-equal (frame-addrs-root frame)
+                          y))
+  :hints (("goal" :in-theory (disable subsetp-of-frame-addrs-root-strip-cars)
+           :use subsetp-of-frame-addrs-root-strip-cars)))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-31
+  (implies
+   (good-frame-p frame)
+   (subsetp-equal (abs-addrs (frame-val->dir (cdr (assoc-equal x frame))))
+                  (strip-cars frame)))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (frame->root good-frame-p)
+                    (cp-without-subdirs-helper-correctness-lemma-30))
+    :use cp-without-subdirs-helper-correctness-lemma-30)))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-32
+  (implies
+   (good-frame-p frame)
+   (no-duplicatesp-equal
+    (abs-addrs
+     (mv-nth
+      1
+      (abs-alloc
+       (frame-val->dir (cdr (assoc-equal (abs-find-file-src frame path)
+                                         frame)))
+       (nthcdr
+        (len (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
+                                                frame))))
+        path)
+       (find-new-index (strip-cars frame)))))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (abs-pwrit1 abs-pwrite
+                                abs-find-file-src-of-frame-with-root
+                                partial-collapse 1st-complete
+                                collapse-this remove-assoc-when-absent-1
+                                abs-alloc 1st-complete-under-path
+                                assoc-of-frame->frame
+                                frame->frame-of-put-assoc)
+                    ((:rewrite-quoted-constant true-fix-under-true-equiv))))))
+
 (encapsulate
   ()
 
@@ -2351,9 +2513,26 @@
                  no-duplicatesp-of-strip-cars-when-hifat-no-dups-p)
                 (:rewrite names-at-of-abs-alloc-2)
                 names-at-of-put-assoc
-                collapse-hifat-place-file-lemma-6))))
+                collapse-hifat-place-file-lemma-6
+                (:rewrite car-of-nthcdr)
+                (:rewrite nth-when->=-n-len-l)
+                (:rewrite nfix-when-zp)
+                (:rewrite
+                 fat32-filename-p-of-nth-when-fat32-filename-list-p)
+                (:rewrite
+                 append-nthcdr-dirname-basename-lemma-1
+                 . 3)
+                (:definition nthcdr)
+                (:definition nat-equiv$inline)
+                (:rewrite m1-directory-file-p-correctness-1)
+                (:rewrite abs-pwrite-correctness-lemma-29)
+                (:definition nth)
+                (:rewrite frame-p-of-cdr-when-frame-p)
+                (:rewrite names-at-of-abs-alloc-1)
+                (:rewrite put-assoc-equal-without-change . 2)))))
 
   (local (include-book "std/lists/prefixp" :dir :system))
+  (local (include-book "std/lists/intersectp" :dir :system))
 
   (local (deflabel theory-label))
 
@@ -2500,71 +2679,28 @@
                     (abs-find-file-src
                      frame
                      (dirname (cdr (cadr (cddddr syscall-sym-list)))))))
-                  (frame->frame
-                   (put-assoc-equal
-                    (abs-find-file-src frame
-                                       (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                    (frame-val
-                     (frame-val->path
-                      (cdr (assoc-equal
-                            (abs-find-file-src
-                             frame
-                             (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                            frame)))
-                     (mv-nth
-                      1
-                      (abs-alloc
-                       (frame-val->dir
-                        (cdr (assoc-equal
-                              (abs-find-file-src
-                               frame
-                               (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                              frame)))
-                       (nthcdr
-                        (len
-                         (frame-val->path
-                          (cdr
-                           (assoc-equal
-                            (abs-find-file-src
-                             frame
-                             (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                            frame))))
-                        (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                       (find-new-index (strip-cars frame))))
-                     (frame-val->src
-                      (cdr (assoc-equal
-                            (abs-find-file-src
-                             frame
-                             (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                            frame))))
-                    frame))))
-                (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-               (partial-collapse
-                (frame-with-root
-                 (frame->root frame)
-                 (put-assoc-equal
-                  (abs-find-file-src frame
-                                     (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                  (frame-val
-                   (frame-val->path$inline
-                    (cdr
-                     (assoc-equal
-                      (abs-find-file-src frame
-                                         (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                      frame)))
-                   (ctx-app
+                  (put-assoc-equal
+                   (abs-find-file-src frame
+                                      (dirname (cdr (cadr (cddddr syscall-sym-list)))))
+                   (frame-val
+                    (frame-val->path
+                     (cdr
+                      (assoc-equal (abs-find-file-src
+                                    frame
+                                    (dirname (cdr (cadr (cddddr syscall-sym-list)))))
+                                   frame)))
                     (mv-nth
                      1
                      (abs-alloc
-                      (frame-val->dir$inline
-                       (cdr
-                        (assoc-equal (abs-find-file-src
-                                      frame
-                                      (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                                     frame)))
+                      (frame-val->dir
+                       (cdr (assoc-equal
+                             (abs-find-file-src
+                              frame
+                              (dirname (cdr (cadr (cddddr syscall-sym-list)))))
+                             frame)))
                       (nthcdr
                        (len
-                        (frame-val->path$inline
+                        (frame-val->path
                          (cdr (assoc-equal
                                (abs-find-file-src
                                 frame
@@ -2572,84 +2708,13 @@
                                frame))))
                        (dirname (cdr (cadr (cddddr syscall-sym-list)))))
                       (find-new-index (strip-cars frame))))
-                    (put-assoc-equal
-                     (basename (cdr (cadr (cddddr syscall-sym-list))))
-                     (m1-file '(0 0 0 0 0 0 0 0 0 0 0 0
-                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                              (implode$inline (insert-text nil (fat-st->offset$inline st)
-                                                           "")))
-                     (mv-nth
-                      0
-                      (abs-alloc
-                       (frame-val->dir$inline
-                        (cdr
-                         (assoc-equal (abs-find-file-src
-                                       frame
-                                       (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                                      frame)))
-                       (nthcdr
-                        (len
-                         (frame-val->path$inline
-                          (cdr (assoc-equal
-                                (abs-find-file-src
-                                 frame
-                                 (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                                frame))))
-                        (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                       (find-new-index (strip-cars frame)))))
-                    (find-new-index (strip-cars frame))
-                    (nthcdr
-                     (len
-                      (frame-val->path$inline
-                       (cdr
-                        (assoc-equal (abs-find-file-src
-                                      frame
-                                      (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                                     frame))))
-                     (dirname (cdr (cadr (cddddr syscall-sym-list))))))
-                   (frame-val->src$inline
-                    (cdr
-                     (assoc-equal
-                      (abs-find-file-src frame
-                                         (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                      frame))))
-                  (frame->frame
-                   (put-assoc-equal
-                    (abs-find-file-src frame
-                                       (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                    (frame-val
-                     (frame-val->path$inline
-                      (cdr
-                       (assoc-equal
-                        (abs-find-file-src frame
-                                           (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                        frame)))
-                     (mv-nth
-                      1
-                      (abs-alloc
-                       (frame-val->dir$inline
-                        (cdr
-                         (assoc-equal (abs-find-file-src
-                                       frame
-                                       (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                                      frame)))
-                       (nthcdr
-                        (len
-                         (frame-val->path$inline
-                          (cdr (assoc-equal
-                                (abs-find-file-src
-                                 frame
-                                 (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                                frame))))
-                        (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                       (find-new-index (strip-cars frame))))
-                     (frame-val->src$inline
-                      (cdr
-                       (assoc-equal
-                        (abs-find-file-src frame
-                                           (dirname (cdr (cadr (cddddr syscall-sym-list)))))
-                        frame))))
-                    frame))))
+                    (frame-val->src
+                     (cdr
+                      (assoc-equal (abs-find-file-src
+                                    frame
+                                    (dirname (cdr (cadr (cddddr syscall-sym-list)))))
+                                   frame))))
+                   (frame->frame frame))))
                 (dirname (cdr (cadr (cddddr syscall-sym-list)))))))))
 
     (thm

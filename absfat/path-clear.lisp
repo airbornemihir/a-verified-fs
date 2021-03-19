@@ -279,7 +279,7 @@
                 (y (fat32-filename-list-fix path))))))
   :rule-classes :linear)
 
-(defthm
+(defthmd
   path-clear-partial-collapse-when-zp-src-lemma-7
   (implies (and (consp (assoc-equal 0 frame))
                 (not (consp (assoc-equal x frame))))
@@ -310,7 +310,8 @@
   :hints (("goal" :in-theory
            (e/d (partial-collapse collapse-this
                                   assoc-equal-of-frame-with-root
-                                  assoc-of-frame->frame)
+                                  assoc-of-frame->frame
+                                  path-clear-partial-collapse-when-zp-src-lemma-7)
                 ((:definition remove-assoc-equal)
                  (:rewrite remove-assoc-when-absent-1)
                  (:rewrite remove-assoc-of-put-assoc)

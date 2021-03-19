@@ -116,7 +116,13 @@
     (:rewrite path-clear-partial-collapse-when-zp-src-lemma-17)
     (:rewrite
      abs-separate-of-collapse-this-lemma-7)
-    (:rewrite 1st-complete-of-put-assoc-lemma-1)))))
+    (:rewrite 1st-complete-of-put-assoc-lemma-1)
+    m1-file->contents-of-m1-file-hifat-file-alist-fix
+    absfat-equiv-implies-equal-m1-file-alist-p-of-abs-fs-fix-lemma-1
+    hifat-place-file-when-hifat-equiv-3
+    frame-val->src-of-cdr-of-assoc-when-member-of-frame-addrs-before
+    abs-separate-of-frame->frame-of-collapse-this-lemma-10
+    m1-file-alist-p-of-remove-assoc))))
 
 (defund abs-no-dups-file-p (file)
   (declare (xargs :guard t))
@@ -9295,7 +9301,9 @@
           (:rewrite partial-collapse-when-path-clear-of-prefix)
           (:rewrite abs-find-file-correctness-lemma-12)
           (:rewrite path-clear-partial-collapse-when-zp-src-lemma-3)
-          D-E-FIX-UNDER-D-E-EQUIV))))
+          d-e-fix-under-d-e-equiv
+          (:rewrite equal-of-abs-file)
+          (:rewrite equal-of-m1-file)))))
 
   ;; This was a counterexample, because abs-pwrite used to return *enotdir*.
   (thm
