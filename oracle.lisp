@@ -4968,199 +4968,180 @@
     :in-theory (e/d (nth cp-spec-3)
                     ((:rewrite-quoted-constant true-fix-under-true-equiv))))))
 
-;; (thm
-;;  (implies
-;;   (and
-;;    (cp-spec-3 queues dst)
-;;    (consp (nth n queues))
-;;    (equal
-;;     (1st-complete-under-path
-;;      (frame->frame frame)
-;;      dst)
-;;     0)
-;;    (abs-complete
-;;     (mv-nth
-;;      0
-;;      (abs-alloc
-;;       (frame-val->dir$inline
-;;        (cdr (assoc-equal (abs-find-file-src frame
-;;                                             dst)
-;;                          frame)))
-;;       (nthcdr
-;;        (len
-;;         (frame-val->path$inline
-;;          (cdr (assoc-equal (abs-find-file-src frame dst)
-;;                            frame))))
-;;        path)
-;;       t))))
-;;   (equal
-;;    (abs-find-file-src
-;;     (mv-nth
-;;      0
-;;      (absfat-oracle-multi-step frame
-;;                                (cdr (car (nth n queues)))
-;;                                st))
-;;     src)
-;;    (abs-find-file-src frame src)))
-;;  :hints (("Goal" :in-theory (enable nth cp-spec-3))))
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-41
+  (implies
+   (and (cp-spec-3 queues dst)
+        (consp (nth n queues))
+        (equal (1st-complete-under-path (frame->frame frame)
+                                        dst)
+               0))
+   (equal
+    (abs-find-file-src
+     (mv-nth 0
+             (absfat-oracle-multi-step frame (cdr (car (nth n queues)))
+                                       st))
+     src)
+    (abs-find-file-src frame src)))
+  :hints (("goal" :in-theory (enable nth cp-spec-3))))
 
-;; (encapsulate
-;;   ()
+(encapsulate
+  ()
 
-;;   (local
-;;    (defun-nx induction-scheme
-;;      (dst frame fs o1 queues src st)
-;;      (declare (xargs :verify-guards nil
-;;                      :measure (len (flatten queues))))
-;;      (cond
-;;       ((and
-;;         (not (atom (flatten queues)))
-;;         (consp (car (nth (nth (min (nfix (car o1))
-;;                                    (+ -1 (len (nonempty-queues queues))))
-;;                               (nonempty-queues queues))
-;;                          queues)))
-;;         (equal (car (car (nth (nth (min (nfix (car o1))
-;;                                         (+ -1 (len (nonempty-queues queues))))
-;;                                    (nonempty-queues queues))
-;;                               queues)))
-;;                :transaction))
-;;        (induction-scheme
-;;         dst
-;;         (mv-nth 0
-;;                 (absfat-oracle-multi-step
-;;                      frame
-;;                      (cdr (car (nth (nth (min (nfix (car o1))
-;;                                               (+ -1 (len (nonempty-queues queues))))
-;;                                          (nonempty-queues queues))
-;;                                     queues)))
-;;                      st))
-;;         fs (cdr o1)
-;;         (update-nth (nth (min (nfix (car o1))
-;;                               (+ -1 (len (nonempty-queues queues))))
-;;                          (nonempty-queues queues))
-;;                     (cdr (nth (nth (min (nfix (car o1))
-;;                                         (+ -1 (len (nonempty-queues queues))))
-;;                                    (nonempty-queues queues))
-;;                               queues))
-;;                     queues)
-;;         src
-;;         (mv-nth 1
-;;                 (absfat-oracle-multi-step
-;;                  frame
-;;                  (cdr (car (nth
-;;                             (nth (min (nfix (car o1))
-;;                                         (+ -1 (len (nonempty-queues queues))))
-;;                                    (nonempty-queues queues))
-;;                                 queues)))
-;;                  st))))
-;;       (t
-;;        (mv dst frame fs o1 queues src st)))))
+  (local
+   (defun-nx induction-scheme
+     (dst frame fs o1 queues src st)
+     (declare (xargs :verify-guards nil
+                     :measure (len (flatten queues))))
+     (cond
+      ((and
+        (not (atom (flatten queues)))
+        (consp (car (nth (nth (min (nfix (car o1))
+                                   (+ -1 (len (nonempty-queues queues))))
+                              (nonempty-queues queues))
+                         queues)))
+        (equal (car (car (nth (nth (min (nfix (car o1))
+                                        (+ -1 (len (nonempty-queues queues))))
+                                   (nonempty-queues queues))
+                              queues)))
+               :transaction))
+       (induction-scheme
+        dst
+        (mv-nth 0
+                (absfat-oracle-multi-step
+                     frame
+                     (cdr (car (nth (nth (min (nfix (car o1))
+                                              (+ -1 (len (nonempty-queues queues))))
+                                         (nonempty-queues queues))
+                                    queues)))
+                     st))
+        fs (cdr o1)
+        (update-nth (nth (min (nfix (car o1))
+                              (+ -1 (len (nonempty-queues queues))))
+                         (nonempty-queues queues))
+                    (cdr (nth (nth (min (nfix (car o1))
+                                        (+ -1 (len (nonempty-queues queues))))
+                                   (nonempty-queues queues))
+                              queues))
+                    queues)
+        src
+        (mv-nth 1
+                (absfat-oracle-multi-step
+                 frame
+                 (cdr (car (nth
+                            (nth (min (nfix (car o1))
+                                        (+ -1 (len (nonempty-queues queues))))
+                                   (nonempty-queues queues))
+                                queues)))
+                 st))))
+      (t
+       (mv dst frame fs o1 queues src st)))))
 
-;;   (thm
-;;    (implies
-;;     (and
-;;      (cp-spec-3 queues dst))
-;;     (b*
-;;         ((frame1
-;;           (mv-nth
-;;            0
-;;            (absfat-oracle-multi-step
-;;             frame
-;;             (mv-nth 0
-;;                     (schedule-queues
-;;                      queues
-;;                      o1))
-;;             st)))
-;;          (frame2
-;;           (mv-nth
-;;            0
-;;            (absfat-oracle-multi-step
-;;             frame
-;;             (mv-nth 0
-;;                     (schedule-queues
-;;                      queues
-;;                      o2))
-;;             st))))
-;;       (implies
-;;        (absfat-subsetp
-;;         (cdr
-;;          (assoc-equal
-;;           (abs-find-file-src frame2 src)
-;;           frame2))
-;;         fs)
-;;        (and
-;;         (equal
-;;          (abs-find-file-src frame1 src)
-;;          (abs-find-file-src frame src))
-;;         (equal
-;;          (remove-assoc-equal (abs-find-file-src frame1 src)
-;;                              frame1)
-;;          (remove-assoc-equal (abs-find-file-src frame src)
-;;                              frame))
-;;         (absfat-subsetp
-;;          (cdr (assoc-equal (abs-find-file-src frame1 src)
-;;                            frame1))
-;;          fs)))))
-;;    :hints (("goal" :induct
-;;             (induction-scheme
-;;              dst frame fs o1 queues src st)
-;;             :in-theory (enable schedule-queues cp-spec-3 absfat-oracle-multi-step
-;;                                absfat-oracle-single-step)
-;;             :expand
-;;             ((:with
-;;               (:rewrite member-of-nonempty-queues . 1)
-;;               (consp (nth (nth (+ -1 (len (nonempty-queues queues)))
-;;                                (nonempty-queues queues))
-;;                           queues)))
-;;              (cp-spec-1 frame nil st src fs)
-;;              (schedule-queues
-;;               queues
-;;               o1))))))
+  (thm
+   (implies
+    (and
+     (cp-spec-3 queues dst))
+    (b*
+        ((frame1
+          (mv-nth
+           0
+           (absfat-oracle-multi-step
+            frame
+            (mv-nth 0
+                    (schedule-queues
+                     queues
+                     o1))
+            st)))
+         (frame2
+          (mv-nth
+           0
+           (absfat-oracle-multi-step
+            frame
+            (mv-nth 0
+                    (schedule-queues
+                     queues
+                     o2))
+            st))))
+      (implies
+       (absfat-subsetp
+        (cdr
+         (assoc-equal
+          (abs-find-file-src frame2 src)
+          frame2))
+        fs)
+       (and
+        (equal
+         (abs-find-file-src frame1 src)
+         (abs-find-file-src frame src))
+        (equal
+         (remove-assoc-equal (abs-find-file-src frame1 src)
+                             frame1)
+         (remove-assoc-equal (abs-find-file-src frame src)
+                             frame))
+        (absfat-subsetp
+         (cdr (assoc-equal (abs-find-file-src frame1 src)
+                           frame1))
+         fs)))))
+   :hints (("goal" :induct
+            (induction-scheme
+             dst frame fs o1 queues src st)
+            :in-theory (enable schedule-queues cp-spec-3 absfat-oracle-multi-step
+                               absfat-oracle-single-step)
+            :expand
+            ((:with
+              (:rewrite member-of-nonempty-queues . 1)
+              (consp (nth (nth (+ -1 (len (nonempty-queues queues)))
+                               (nonempty-queues queues))
+                          queues)))
+             (cp-spec-1 frame nil st src fs)
+             (schedule-queues
+              queues
+              o1))))))
 
-;; (defthm cp-without-subdirs-helper-correctness-2
-;;   (implies
-;;    (true-equiv o1 o2)
-;;    (collapse-equiv
-;;     (mv-nth
-;;      0
-;;      (absfat-oracle-multi-step
-;;       frame
-;;       (mv-nth 0
-;;               (schedule-queues
-;;                (cp-without-subdirs-helper src dst names)
-;;                o1))
-;;       st))
-;;     (mv-nth
-;;      0
-;;      (absfat-oracle-multi-step
-;;       frame
-;;       (mv-nth 0
-;;               (schedule-queues
-;;                (cp-without-subdirs-helper src dst names)
-;;                o2))
-;;       st))))
-;;   :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step
-;;                                      cp-without-subdirs-helper
-;;                                      absfat-oracle-single-step)
-;;            :induct
-;;            (cp-without-subdirs-helper src dst names)
-;;            :expand
-;;            ((schedule-queues
-;;              (cons (list (list* :transaction
-;;                                 (cons :set-path (append src (car names)))
-;;                                 :open '(:set-count . 4294967296)
-;;                                 :pread :close
-;;                                 (cons :set-path (append dst (car names)))
-;;                                 '(:open :pwrite :close)))
-;;                    (cp-without-subdirs-helper src dst (cdr names)))
-;;              o1)
-;;             (schedule-queues
-;;              (cons (list (list* :transaction
-;;                                 (cons :set-path (append src (car names)))
-;;                                 :open '(:set-count . 4294967296)
-;;                                 :pread :close
-;;                                 (cons :set-path (append dst (car names)))
-;;                                 '(:open :pwrite :close)))
-;;                    (cp-without-subdirs-helper src dst (cdr names)))
-;;              o2))))
-;;   :rule-classes :congruence)
+(defthm cp-without-subdirs-helper-correctness-2
+  (implies
+   (true-equiv o1 o2)
+   (collapse-equiv
+    (mv-nth
+     0
+     (absfat-oracle-multi-step
+      frame
+      (mv-nth 0
+              (schedule-queues
+               (cp-without-subdirs-helper src dst names)
+               o1))
+      st))
+    (mv-nth
+     0
+     (absfat-oracle-multi-step
+      frame
+      (mv-nth 0
+              (schedule-queues
+               (cp-without-subdirs-helper src dst names)
+               o2))
+      st))))
+  :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step
+                                     cp-without-subdirs-helper
+                                     absfat-oracle-single-step)
+           :induct
+           (cp-without-subdirs-helper src dst names)
+           :expand
+           ((schedule-queues
+             (cons (list (list* :transaction
+                                (cons :set-path (append src (car names)))
+                                :open '(:set-count . 4294967296)
+                                :pread :close
+                                (cons :set-path (append dst (car names)))
+                                '(:open :pwrite :close)))
+                   (cp-without-subdirs-helper src dst (cdr names)))
+             o1)
+            (schedule-queues
+             (cons (list (list* :transaction
+                                (cons :set-path (append src (car names)))
+                                :open '(:set-count . 4294967296)
+                                :pread :close
+                                (cons :set-path (append dst (car names)))
+                                '(:open :pwrite :close)))
+                   (cp-without-subdirs-helper src dst (cdr names)))
+             o2))))
+  :rule-classes :congruence)
