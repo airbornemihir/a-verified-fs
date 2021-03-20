@@ -1575,7 +1575,7 @@
                                           path))))))))))
 
 ;; This is important too - it establishes that after partially-collapsing on
-;; path, the contents of the directory at path are complete, or that there's a
+;; path, the contents of the directory at path are complete, or there's a
 ;; regular file at path.
 (defthm
   path-clear-partial-collapse-when-zp-src-lemma-43
