@@ -2681,7 +2681,10 @@
      (abs-file-contents-fix (list (nfix new-index))))
     :induct (abs-find-file-helper fs path))))
 
-;; This is nice and general.
+;; This is important! It's a very generally applicable statement of
+;; abs-find-file-helper of abs-find-file-src standing for abs-find-file. It's
+;; derived from a combination of abs-find-file-src-correctness-2 and
+;; abs-find-file-correctness-lemma-9.
 (defthm
   abs-mkdir-correctness-lemma-2
   (implies

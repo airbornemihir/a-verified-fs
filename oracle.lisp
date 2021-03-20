@@ -4985,6 +4985,41 @@
     (abs-find-file-src frame src)))
   :hints (("goal" :in-theory (enable nth cp-spec-3))))
 
+(defthm
+  good-frame-p-of-abs-opendir
+  (implies
+   (good-frame-p frame)
+   (good-frame-p (mv-nth 3
+                         (abs-opendir frame path dir-stream-table-p))))
+  :hints (("goal" :in-theory (enable abs-opendir))))
+
+(skip-proofs
+ (defthm good-frame-p-of-abs-mkdir
+   (implies (good-frame-p frame)
+            (good-frame-p (mv-nth 0 (abs-mkdir frame path))))
+   :hints (("goal" :in-theory (enable abs-mkdir good-frame-p)))))
+
+(defthm good-frame-p-of-absfat-oracle-single-step
+ (implies
+  (good-frame-p frame)
+  (good-frame-p (mv-nth 0 (absfat-oracle-single-step frame syscall-sym st))))
+ :hints (("Goal" :in-theory (enable absfat-oracle-single-step))))
+
+(defthm good-frame-p-of-absfat-oracle-single-step
+ (implies
+  (good-frame-p frame)
+  (good-frame-p (mv-nth 0 (absfat-oracle-single-step frame syscall-sym st))))
+ :hints (("Goal" :in-theory (enable absfat-oracle-single-step))))
+
+(defthm
+  good-frame-p-of-absfat-oracle-multi-step
+  (implies
+   (good-frame-p frame)
+   (good-frame-p
+    (mv-nth 0
+            (absfat-oracle-multi-step frame syscall-sym-list st))))
+  :hints (("goal" :in-theory (enable absfat-oracle-multi-step))))
+
 (encapsulate
   ()
 
@@ -5040,6 +5075,8 @@
   (thm
    (implies
     (and
+     (good-frame-p frame)
+     (abs-file-alist-p fs)
      (cp-spec-3 queues dst))
     (b*
         ((frame1
@@ -5100,7 +5137,7 @@
 
 (defthm cp-without-subdirs-helper-correctness-2
   (implies
-   (true-equiv o1 o2)
+   (good-frame-p frame)
    (collapse-equiv
     (mv-nth
      0
