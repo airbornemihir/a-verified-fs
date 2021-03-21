@@ -10529,73 +10529,55 @@
                (cp-spec-1 frame nil st src fs)
                (schedule-queues queues o1)))))
 
-  ;; (thm
-  ;;    (implies
-  ;;     (and
-  ;;      (good-frame-p frame)
-  ;;      (abs-file-alist-p fs)
-  ;;      (cp-spec-3 queues dst))
-  ;;     (b*
-  ;;         ((frame1
-  ;;           (mv-nth
-  ;;            0
-  ;;            (absfat-oracle-multi-step
-  ;;             frame
-  ;;             (mv-nth 0
-  ;;                     (schedule-queues
-  ;;                      queues
-  ;;                      o1))
-  ;;             st)))
-  ;;          (frame2
-  ;;           (mv-nth
-  ;;            0
-  ;;            (absfat-oracle-multi-step
-  ;;             frame
-  ;;             (mv-nth 0
-  ;;                     (schedule-queues
-  ;;                      queues
-  ;;                      o2))
-  ;;             st))))
-  ;;       (implies
-  ;;        (absfat-subsetp
-  ;;         (cdr
-  ;;          (assoc-equal
-  ;;           (abs-find-file-src frame2 src)
-  ;;           frame2))
-  ;;         fs)
-  ;;        (and
-  ;;         (equal
-  ;;          (abs-find-file-src frame1 src)
-  ;;          (abs-find-file-src frame src))
-  ;;         (equal
-  ;;          (remove-assoc-equal (abs-find-file-src frame1 src)
-  ;;                              frame1)
-  ;;          (remove-assoc-equal (abs-find-file-src frame src)
-  ;;                              frame))
-  ;;         (absfat-subsetp
-  ;;          (cdr (assoc-equal (abs-find-file-src frame1 src)
-  ;;                            frame1))
-  ;;          fs)))))
-  ;;    :hints (("goal" :induct
-  ;;             (induction-scheme
-  ;;              dst frame fs o1 queues src st)
-  ;;             :in-theory (enable schedule-queues cp-spec-3 absfat-oracle-multi-step
-  ;;                                absfat-oracle-single-step)
-  ;;             :expand
-  ;;             ((:with
-  ;;               (:rewrite member-of-nonempty-queues . 1)
-  ;;               (consp (nth (nth (+ -1 (len (nonempty-queues queues)))
-  ;;                                (nonempty-queues queues))
-  ;;                           queues)))
-  ;;              (cp-spec-1 frame nil st src fs)
-  ;;              (schedule-queues
-  ;;               queues
-  ;;               o1)))))
-  )
+  (skip-proofs
+   (defthm
+    cp-without-subdirs-helper-correctness-lemma-62
+    (implies
+     (and
+      (good-frame-p frame)
+      (cp-spec-3 queues dst)
+      (equal (1st-complete-under-path (frame->frame frame)
+                                      dst)
+             0))
+     (b*
+         ((frame1
+           (mv-nth
+            0
+            (absfat-oracle-multi-step
+             frame
+             (mv-nth 0
+                     (schedule-queues
+                      queues
+                      o1))
+             st)))
+          (frame2
+           (mv-nth
+            0
+            (absfat-oracle-multi-step
+             frame
+             (mv-nth 0
+                     (schedule-queues
+                      queues
+                      o2))
+             st))))
+       (absfat-subsetp
+        (frame-val->dir
+         (cdr (assoc-equal (abs-find-file-src frame src)
+                           frame1)))
+        (frame-val->dir
+         (cdr
+          (assoc-equal
+           (abs-find-file-src frame src)
+           frame2)))))))))
 
 (defthm cp-without-subdirs-helper-correctness-2
   (implies
-   (good-frame-p frame)
+   (and
+    (cp-spec-3 queues dst)
+    (equal (1st-complete-under-path (frame->frame frame)
+                                    dst)
+           0)
+    (good-frame-p frame))
    (collapse-equiv
     (mv-nth
      0
@@ -10615,27 +10597,39 @@
                (cp-without-subdirs-helper src dst names)
                o2))
       st))))
-  :hints (("Goal" :in-theory (enable schedule-queues absfat-oracle-multi-step
-                                     cp-without-subdirs-helper
-                                     absfat-oracle-single-step)
-           :induct
-           (cp-without-subdirs-helper src dst names)
-           :expand
-           ((schedule-queues
-             (cons (list (list* :transaction
-                                (cons :set-path (append src (car names)))
-                                :open '(:set-count . 4294967296)
-                                :pread :close
-                                (cons :set-path (append dst (car names)))
-                                '(:open :pwrite :close)))
-                   (cp-without-subdirs-helper src dst (cdr names)))
-             o1)
-            (schedule-queues
-             (cons (list (list* :transaction
-                                (cons :set-path (append src (car names)))
-                                :open '(:set-count . 4294967296)
-                                :pread :close
-                                (cons :set-path (append dst (car names)))
-                                '(:open :pwrite :close)))
-                   (cp-without-subdirs-helper src dst (cdr names)))
-             o2)))))
+  :hints (("Goal" :in-theory
+           (e/d
+            (collapse-equiv absfat-equiv)
+            (COLLAPSE-CONGRUENCE-2))
+           :do-not-induct
+           t
+           :use
+           ((:instance
+             COLLAPSE-CONGRUENCE-2
+             (root (frame->root frame))
+             (frame (frame->frame frame))
+             (x (abs-find-file-src frame src))
+             (dir1
+              (frame-val->dir
+               (cdr (assoc-equal (abs-find-file-src frame src)
+                                 (mv-nth
+                                  0
+                                  (absfat-oracle-multi-step
+                                   frame
+                                   (mv-nth 0
+                                           (schedule-queues
+                                            queues
+                                            o1))
+                                   st))))))
+             (dir2
+              (frame-val->dir
+               (cdr (assoc-equal (abs-find-file-src frame src)
+                                 (mv-nth
+                                  0
+                                  (absfat-oracle-multi-step
+                                   frame
+                                   (mv-nth 0
+                                           (schedule-queues
+                                            queues
+                                            o2))
+                                   st)))))))))))
