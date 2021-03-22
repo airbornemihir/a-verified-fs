@@ -97,7 +97,8 @@
        ((mv frame retval errno)
         (abs-pwrite
          fd buf offset frame fd-table file-table))
-       (frame (partial-collapse frame dirname)))
+       (frame (if (consp dirname) frame
+                (partial-collapse frame dirname))))
     (mv frame retval errno)))
 
 (skip-proofs
@@ -149,6 +150,80 @@
                           hifat-find-file hifat-place-file)
               ((:rewrite-quoted-constant true-fix-under-true-equiv))))))
   :otf-flg t)
+
+(defund cp-spec-4 (frame dirname)
+  (b*
+      (((when (atom dirname))
+        (and (abs-complete (frame->root frame)) (atom (frame->frame frame))))
+       ((mv file error-code) (abs-find-file frame dirname)))
+    (and (zp error-code)
+         (m1-directory-file-p file)
+         (abs-complete (frame-val->dir (cdr (assoc-equal
+                                             (abs-find-file-src frame dirname)
+                                             frame))))
+         (equal
+          (1st-complete-under-path
+           (collapse-this frame (abs-find-file-src frame dirname))
+           dirname)
+          0))))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-17
+  (implies
+   (and (good-frame-p frame)
+        (equal (1st-complete (frame->frame frame))
+               0))
+   (and
+    (not
+     (consp (abs-addrs (frame-val->dir$inline (cdr (assoc-equal 0 frame))))))
+    (abs-complete (frame->root frame))
+    (abs-complete (frame-val->dir$inline (cdr (assoc-equal 0 frame))))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable good-frame-p
+                              collapse frame->root abs-complete))))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-63
+  (implies
+   (and (good-frame-p frame)
+        (not (consp (frame->frame frame))))
+   (m1-file-alist-p
+    (mv-nth '0
+            (abs-alloc (frame-val->dir$inline (cdr (assoc-equal '0 frame)))
+                       'nil
+                       (find-new-index (strip-cars frame))))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-alloc))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthm lemma-1
+     (implies (and (m1-file-p file)
+                   (not (m1-directory-file-p file)))
+              (m1-regular-file-p file))
+     :hints (("goal" :do-not-induct t))))
+
+  (thm
+   (implies (and (good-frame-p frame)
+                 (cp-spec-4 frame (dirname (file-table-element->fid
+                                            (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                                              file-table))))))
+            (cp-spec-4
+             (mv-nth
+              0
+              (abs-pwrite fd buf offset frame fd-table file-table))
+             (dirname (file-table-element->fid
+                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                         file-table))))))
+   :hints (("goal"
+            :do-not-induct t
+            :in-theory (enable abs-pwrite cp-spec-4
+                               abs-mkdir-correctness-lemma-30
+                               abs-find-file-src 1st-complete-under-path
+                               abs-find-file collapse-this)))
+   :otf-flg t))
 
 (defthm good-frame-p-of-partial-collapse
   (implies (good-frame-p frame)
@@ -1970,21 +2045,6 @@
     :corollary
     (implies (good-frame-p frame)
              (not (equal (find-new-index (strip-cars frame)) 0))))))
-
-(defthm
-  cp-without-subdirs-helper-correctness-lemma-17
-  (implies
-   (and (good-frame-p frame)
-        (equal (1st-complete (frame->frame frame))
-               0))
-   (and
-    (not
-     (consp (abs-addrs (frame-val->dir$inline (cdr (assoc-equal 0 frame))))))
-    (abs-complete (frame->root frame))
-    (abs-complete (frame-val->dir$inline (cdr (assoc-equal 0 frame))))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable good-frame-p
-                              collapse frame->root abs-complete))))
 
 (defthm cp-without-subdirs-helper-correctness-lemma-20
   (implies (and (integerp n) (abs-complete x))
