@@ -205,25 +205,26 @@
               (m1-regular-file-p file))
      :hints (("goal" :do-not-induct t))))
 
-  (thm
-   (implies (and (good-frame-p frame)
-                 (cp-spec-4 frame (dirname (file-table-element->fid
-                                            (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                                              file-table))))))
-            (cp-spec-4
-             (mv-nth
-              0
-              (abs-pwrite fd buf offset frame fd-table file-table))
-             (dirname (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table))))))
-   :hints (("goal"
-            :do-not-induct t
-            :in-theory (enable abs-pwrite cp-spec-4
-                               abs-mkdir-correctness-lemma-30
-                               abs-find-file-src 1st-complete-under-path
-                               abs-find-file collapse-this)))
-   :otf-flg t))
+  ;; (thm
+  ;;  (implies (and (good-frame-p frame)
+  ;;                (cp-spec-4 frame (dirname (file-table-element->fid
+  ;;                                           (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+  ;;                                                             file-table))))))
+  ;;           (cp-spec-4
+  ;;            (mv-nth
+  ;;             0
+  ;;             (abs-pwrite fd buf offset frame fd-table file-table))
+  ;;            (dirname (file-table-element->fid
+  ;;                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+  ;;                                        file-table))))))
+  ;;  :hints (("goal"
+  ;;           :do-not-induct t
+  ;;           :in-theory (enable abs-pwrite cp-spec-4
+  ;;                              abs-mkdir-correctness-lemma-30
+  ;;                              abs-find-file-src 1st-complete-under-path
+  ;;                              abs-find-file collapse-this)))
+  ;;  :otf-flg t)
+  )
 
 (defthm good-frame-p-of-partial-collapse
   (implies (good-frame-p frame)
@@ -10445,6 +10446,9 @@
 ;;  :hints (("goal" :in-theory (enable absfat-subsetp put-assoc-equal
 ;;                                     abs-file-alist-p assoc-equal))))
 
+;; Arguments: frame st oracle queues
+(defstub cp-spec-5 (* * * *) => *)
+
 (encapsulate
   ()
 
@@ -10591,6 +10595,43 @@
 
   (skip-proofs
    (defthm
+     cp-without-subdirs-helper-correctness-lemma-64
+     (implies
+      (and (good-frame-p frame)
+           (cp-spec-3 queues dst)
+           (equal (1st-complete-under-path (frame->frame frame)
+                                           dst)
+                  0))
+      (b*
+          ((frame1
+            (mv-nth 0
+                    (absfat-oracle-multi-step frame
+                                              (mv-nth 0 (schedule-queues queues o1))
+                                              st))))
+        (equal
+         frame1
+         (put-assoc-equal (abs-find-file-src frame dst)
+                          (change-frame-val
+                           (cdr (assoc-equal (abs-find-file-src frame dst)
+                                             frame))
+                           :dir
+                           (cp-spec-5 frame st o1 queues))
+                          frame))))
+     :hints
+     (("goal"
+       :induct (induction-scheme dst frame fs o1 queues src st)
+       :in-theory (enable schedule-queues
+                          cp-spec-3 absfat-oracle-multi-step
+                          absfat-oracle-single-step)
+       :expand ((:with (:rewrite member-of-nonempty-queues . 1)
+                       (consp (nth (nth (+ -1 (len (nonempty-queues queues)))
+                                        (nonempty-queues queues))
+                                   queues)))
+                (cp-spec-1 frame nil st src fs)
+                (schedule-queues queues o1))))))
+
+  (skip-proofs
+   (defthm
     cp-without-subdirs-helper-correctness-lemma-62
     (implies
      (and
@@ -10630,6 +10671,234 @@
            (abs-find-file-src frame src)
            frame2)))))))))
 
+(skip-proofs
+ (defthm
+   cp-without-subdirs-helper-correctness-lemma-65
+   (abs-fs-p
+    (cp-spec-5 frame st o1 queues))))
+
+(skip-proofs
+ (defthm
+   cp-without-subdirs-helper-correctness-lemma-66
+   (implies
+    (and (cp-spec-3 queues dst)
+         (good-frame-p frame))
+    (absfat-subsetp (cp-spec-5 frame st o1 queues)
+                    (cp-spec-5 frame st o2 queues)))))
+
+(defthm
+  cp-without-subdirs-helper-correctness-lemma-67
+  (implies
+   (and
+    (absfat-subsetp
+     (mv-nth
+      0
+      (collapse
+       (frame-with-root
+        (frame->root frame)
+        (put-assoc-equal
+         (abs-find-file-src frame dst)
+         (frame-val
+          (frame-val->path (cdr (assoc-equal (abs-find-file-src frame dst)
+                                             (frame->frame frame))))
+          (cp-spec-5 frame st o1
+                     (cp-without-subdirs-helper src dst names))
+          (frame-val->src (cdr (assoc-equal (abs-find-file-src frame dst)
+                                            (frame->frame frame)))))
+         (frame->frame frame)))))
+     (mv-nth
+      0
+      (collapse
+       (frame-with-root
+        (frame->root frame)
+        (put-assoc-equal
+         (abs-find-file-src frame dst)
+         (frame-val
+          (frame-val->path (cdr (assoc-equal (abs-find-file-src frame dst)
+                                             (frame->frame frame))))
+          (cp-spec-5 frame st o2
+                     (cp-without-subdirs-helper src dst names))
+          (frame-val->src (cdr (assoc-equal (abs-find-file-src frame dst)
+                                            (frame->frame frame)))))
+         (frame->frame frame))))))
+    (equal
+     (mv-nth
+      0
+      (absfat-oracle-multi-step
+       frame
+       (mv-nth 0
+               (schedule-queues (cp-without-subdirs-helper src dst names)
+                                o1))
+       st))
+     (put-assoc-equal
+      (abs-find-file-src frame dst)
+      (frame-val
+       (frame-val->path (cdr (assoc-equal (abs-find-file-src frame dst)
+                                          frame)))
+       (cp-spec-5 frame st o1
+                  (cp-without-subdirs-helper src dst names))
+       (frame-val->src (cdr (assoc-equal (abs-find-file-src frame dst)
+                                         frame))))
+      frame))
+    (equal
+     (mv-nth
+      0
+      (absfat-oracle-multi-step
+       frame
+       (mv-nth 0
+               (schedule-queues (cp-without-subdirs-helper src dst names)
+                                o2))
+       st))
+     (put-assoc-equal
+      (abs-find-file-src frame dst)
+      (frame-val
+       (frame-val->path (cdr (assoc-equal (abs-find-file-src frame dst)
+                                          frame)))
+       (cp-spec-5 frame st o2
+                  (cp-without-subdirs-helper src dst names))
+       (frame-val->src (cdr (assoc-equal (abs-find-file-src frame dst)
+                                         frame))))
+      frame))
+    (absfat-subsetp (cp-spec-5 frame st o1
+                               (cp-without-subdirs-helper src dst names))
+                    (cp-spec-5 frame st o2
+                               (cp-without-subdirs-helper src dst names)))
+    (absfat-subsetp (cp-spec-5 frame st o2
+                               (cp-without-subdirs-helper src dst names))
+                    (cp-spec-5 frame st o1
+                               (cp-without-subdirs-helper src dst names))))
+   (absfat-subsetp
+    (mv-nth
+     0
+     (collapse
+      (mv-nth
+       0
+       (absfat-oracle-multi-step
+        frame
+        (mv-nth 0
+                (schedule-queues (cp-without-subdirs-helper src dst names)
+                                 o1))
+        st))))
+    (mv-nth
+     0
+     (collapse
+      (mv-nth
+       0
+       (absfat-oracle-multi-step
+        frame
+        (mv-nth 0
+                (schedule-queues (cp-without-subdirs-helper src dst names)
+                                 o2))
+        st))))))
+  :instructions
+  (:promote
+   (:dive 1 2 1)
+   := :top (:dive 2 2 1)
+   := :top
+   (:=
+    (collapse
+     (put-assoc-equal
+      (abs-find-file-src frame dst)
+      (frame-val
+       (frame-val->path (cdr (assoc-equal (abs-find-file-src frame dst)
+                                          frame)))
+       (cp-spec-5 frame st o1
+                  (cp-without-subdirs-helper src dst names))
+       (frame-val->src (cdr (assoc-equal (abs-find-file-src frame dst)
+                                         frame))))
+      frame))
+    (collapse
+     (frame-with-root
+      (frame->root
+       (put-assoc-equal
+        (abs-find-file-src frame dst)
+        (frame-val
+         (frame-val->path (cdr (assoc-equal (abs-find-file-src frame dst)
+                                            frame)))
+         (cp-spec-5 frame st o1
+                    (cp-without-subdirs-helper src dst names))
+         (frame-val->src (cdr (assoc-equal (abs-find-file-src frame dst)
+                                           frame))))
+        frame))
+      (frame->frame
+       (put-assoc-equal
+        (abs-find-file-src frame dst)
+        (frame-val
+         (frame-val->path (cdr (assoc-equal (abs-find-file-src frame dst)
+                                            frame)))
+         (cp-spec-5 frame st o1
+                    (cp-without-subdirs-helper src dst names))
+         (frame-val->src (cdr (assoc-equal (abs-find-file-src frame dst)
+                                           frame))))
+        frame)))))
+   (:=
+    (collapse
+     (put-assoc-equal
+      (abs-find-file-src frame dst)
+      (frame-val
+       (frame-val->path (cdr (assoc-equal (abs-find-file-src frame dst)
+                                          frame)))
+       (cp-spec-5 frame st o2
+                  (cp-without-subdirs-helper src dst names))
+       (frame-val->src (cdr (assoc-equal (abs-find-file-src frame dst)
+                                         frame))))
+      frame))
+    (collapse
+     (frame-with-root
+      (frame->root
+       (put-assoc-equal
+        (abs-find-file-src frame dst)
+        (frame-val
+         (frame-val->path (cdr (assoc-equal (abs-find-file-src frame dst)
+                                            frame)))
+         (cp-spec-5 frame st o2
+                    (cp-without-subdirs-helper src dst names))
+         (frame-val->src (cdr (assoc-equal (abs-find-file-src frame dst)
+                                           frame))))
+        frame))
+      (frame->frame
+       (put-assoc-equal
+        (abs-find-file-src frame dst)
+        (frame-val
+         (frame-val->path (cdr (assoc-equal (abs-find-file-src frame dst)
+                                            frame)))
+         (cp-spec-5 frame st o2
+                    (cp-without-subdirs-helper src dst names))
+         (frame-val->src (cdr (assoc-equal (abs-find-file-src frame dst)
+                                           frame))))
+        frame)))))
+   (:dive 1 2 1 1)
+   (:rewrite frame->root-of-put-assoc)
+   :top (:dive 1 2 1 2)
+   (:rewrite frame->frame-of-put-assoc)
+   :top (:dive 2 2 1 1)
+   (:rewrite frame->root-of-put-assoc)
+   :top (:dive 2 2 1 2)
+   (:rewrite frame->frame-of-put-assoc)
+   :top
+   (:bash ("goal" :in-theory (enable assoc-of-frame->frame)))
+   (:claim
+    (absfat-equiv (cp-spec-5 frame st o1
+                             (cp-without-subdirs-helper src dst names))
+                  (cp-spec-5 frame st o2
+                             (cp-without-subdirs-helper src dst names)))
+    :hints (("goal" :in-theory (enable absfat-equiv))))
+   (:claim
+    (absfat-equiv
+     (mv-nth
+      0
+      (collapse
+       (frame-with-root (cp-spec-5 frame st o1
+                                   (cp-without-subdirs-helper src dst names))
+                        (frame->frame frame))))
+     (mv-nth
+      0
+      (collapse
+       (frame-with-root (cp-spec-5 frame st o2
+                                   (cp-without-subdirs-helper src dst names))
+                        (frame->frame frame))))))
+   (:bash ("goal" :in-theory (enable absfat-equiv)))))
+
 (defthm cp-without-subdirs-helper-correctness-2
   (implies
    (and
@@ -10659,8 +10928,10 @@
       st))))
   :hints (("Goal" :in-theory
            (e/d
-            (collapse-equiv absfat-equiv)
-            (COLLAPSE-CONGRUENCE-2))
+            (collapse-equiv absfat-equiv put-assoc-equal-of-frame-with-root)
+            (collapse-congruence-2
+             (:rewrite cp-without-subdirs-helper-correctness-lemma-64)
+             cp-without-subdirs-helper-correctness-lemma-66))
            :do-not-induct
            t
            :use
@@ -10668,28 +10939,34 @@
              COLLAPSE-CONGRUENCE-2
              (root (frame->root frame))
              (frame (frame->frame frame))
-             (x (abs-find-file-src frame src))
+             (x (abs-find-file-src frame dst))
              (dir1
-              (frame-val->dir
-               (cdr (assoc-equal (abs-find-file-src frame src)
-                                 (mv-nth
-                                  0
-                                  (absfat-oracle-multi-step
-                                   frame
-                                   (mv-nth 0
-                                           (schedule-queues
-                                            queues
-                                            o1))
-                                   st))))))
+              (cp-spec-5 frame st o1
+                         (cp-without-subdirs-helper src dst names)))
              (dir2
-              (frame-val->dir
-               (cdr (assoc-equal (abs-find-file-src frame src)
-                                 (mv-nth
-                                  0
-                                  (absfat-oracle-multi-step
-                                   frame
-                                   (mv-nth 0
-                                           (schedule-queues
-                                            queues
-                                            o2))
-                                   st)))))))))))
+              (cp-spec-5 frame st o2
+                         (cp-without-subdirs-helper src dst names))))
+            (:instance
+             (:rewrite cp-without-subdirs-helper-correctness-lemma-64)
+             (dst dst)
+             (st st)
+             (o1 o1)
+             (queues (cp-without-subdirs-helper src dst names))
+             (frame frame))
+            (:instance
+             (:rewrite cp-without-subdirs-helper-correctness-lemma-64)
+             (dst dst)
+             (st st)
+             (o1 o2)
+             (queues (cp-without-subdirs-helper src dst names))
+             (frame frame))
+            (:instance
+             cp-without-subdirs-helper-correctness-lemma-66
+             (dst dst)
+             (queues (CP-WITHOUT-SUBDIRS-HELPER SRC DST NAMES)))
+            (:instance
+             cp-without-subdirs-helper-correctness-lemma-66
+             (o1 o2)
+             (o2 o1)
+             (dst dst)
+             (queues (CP-WITHOUT-SUBDIRS-HELPER SRC DST NAMES)))))))
