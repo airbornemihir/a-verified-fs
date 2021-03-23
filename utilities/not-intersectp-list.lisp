@@ -10,6 +10,21 @@
                 (no-duplicatesp (flatten lst)))
            (not (member-equal x lst))))
 
+(encapsulate
+  ()
+
+  (local
+   (defthm lemma
+     (equal (len (flatten (update-nth key val nil)))
+            (len val))
+     :hints (("goal" :in-theory (enable update-nth nth flatten)))))
+
+  (defthm len-of-flatten-of-update-nth
+    (equal (len (flatten (update-nth key val l)))
+           (- (+ (len (flatten l)) (len val))
+              (len (nth key l))))
+    :hints (("goal" :in-theory (enable update-nth nth flatten)))))
+
 (defund not-intersectp-list (x l)
   (declare (xargs :guard (and (true-listp x) (true-list-listp l))))
   (or (atom l)
