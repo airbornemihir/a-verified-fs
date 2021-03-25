@@ -1541,33 +1541,6 @@
               path file)))))
   :hints
   (("goal"
-    :in-theory (e/d (abs-place-file-helper absfat-subsetp abs-file-p-alt)))))
-
-(defthm
-  abs-mkdir-correctness-lemma-42
-  (implies
-   (absfat-subsetp
-    (mv-nth
-     0
-     (abs-place-file-helper (abs-file->contents (cdr (assoc-equal name fs1)))
-                            path file))
-    (mv-nth
-     0
-     (abs-place-file-helper (abs-file->contents (cdr (assoc-equal name fs2)))
-                            path file)))
-   (absfat-subsetp
-    (abs-file-contents-fix
-     (mv-nth '0
-             (abs-place-file-helper
-              (abs-file->contents$inline (cdr (assoc-equal name fs1)))
-              path file)))
-    (abs-file-contents-fix
-     (mv-nth '0
-             (abs-place-file-helper
-              (abs-file->contents$inline (cdr (assoc-equal name fs2)))
-              path file)))))
-  :hints
-  (("goal"
     :in-theory (e/d (abs-place-file-helper absfat-subsetp abs-file-p-alt))
     :do-not-induct t)))
 
@@ -2709,7 +2682,6 @@
     :use abs-find-file-src-correctness-2
     :do-not-induct t)))
 
-;; Inductive, hence kept.
 (defthmd
   abs-mkdir-correctness-lemma-4
   (implies
@@ -2985,8 +2957,8 @@
                                      abs-file-p abs-file->contents)
            :induct (abs-file-alist-p fs))))
 
-(defthmd
-  abs-mkdir-correctness-lemma-76
+(defthm
+  abs-mkdir-correctness-lemma-42
   (implies (not (consp (abs-addrs (abs-fs-fix fs))))
            (not (consp (abs-addrs (mv-nth 0 (abs-alloc fs path new-index))))))
   :hints (("goal" :in-theory (enable abs-alloc))))
