@@ -4712,7 +4712,9 @@
 
 ;; This is seriously aggravating to remove. It's used in two lemmas and in
 ;; neither case did I get rid of it by changing the computed-hint
-;; theories. That leaves the possibility of examining subgoal hints, but no.
+;; theories. Nor was it fruitful to try hints on named subgoals - I think it's
+;; one of those things where the simplification just happens to go off in a
+;; different direction when deep inside another simplification.
 (defthm
   lofat-place-file-correctness-lemma-74
   (implies
