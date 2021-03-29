@@ -1700,7 +1700,8 @@
          (if (zp n)
              nil
              (append (take (- n 1) l)
-                     (list (nth (- n 1) l))))))
+                     (list (nth (- n 1) l)))))
+  :rule-classes ((:definition :install-body nil)))
 
 (theory-invariant (incompatible (:rewrite take-as-append-and-nth)
                                 (:rewrite append-of-take-and-cons)))
