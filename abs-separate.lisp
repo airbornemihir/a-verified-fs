@@ -1133,6 +1133,7 @@
                 (intersectp-equal (abs-addrs (abs-fs-fix abs-file-alist))
                                   x)))))
    (:rewrite
+    :corollary
     (implies
      (and (abs-file-alist-p abs-file-alist)
           (atom
