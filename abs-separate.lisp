@@ -1093,7 +1093,7 @@
                  :define t
                  :forward t)
 
-;; This is a hack...
+;; This is a hack, but a long-lived one.
 (defthm
   no-duplicatesp-of-abs-addrs-of-abs-fs-fix-lemma-1
   (implies (abs-file-alist-p abs-file-alist)
@@ -1131,7 +1131,13 @@
                                       x))
                (not
                 (intersectp-equal (abs-addrs (abs-fs-fix abs-file-alist))
-                                  x)))))))
+                                  x)))))
+   (:rewrite
+    (implies
+     (and (abs-file-alist-p abs-file-alist)
+          (atom
+           (abs-addrs abs-file-alist)))
+     (not (consp (abs-addrs (abs-fs-fix abs-file-alist))))))))
 
 ;; The abs-file-alist-p hypothesis is required because otherwise the fixing
 ;; could introduce a lot of (duplicate) zeros.
