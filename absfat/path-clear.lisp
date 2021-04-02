@@ -1817,7 +1817,7 @@
            :in-theory (e/d
                        ((:linear
                          path-clear-partial-collapse-when-zp-src-lemma-6))
-                       (prefixp-when-prefixp)))))
+                       (prefixp-when-prefixp len-when-prefixp)))))
 
 (local
  (defthmd
