@@ -717,7 +717,6 @@
                          (:rewrite put-assoc-equal-without-change . 2)
                          (:type-prescription natp-position-ac)
                          (:definition length)
-                         (:definition atom)
                          (:definition min)))
     :induct
     (hifat-tar-name-list-string fs path name-list fd-table
@@ -940,8 +939,8 @@
     :hints
     (("goal" :in-theory
       (e/d (hifat-tar-name-list-alist hifat-pread hifat-open hifat-lstat)
-           (atom append append-of-cons
-                 (:rewrite prefixp-of-append-arg1)))
+           (append append-of-cons
+                   (:rewrite prefixp-of-append-arg1)))
       :expand (list-equiv (cons name 'nil) (cons (car name-list) 'nil))))
     :rule-classes
     (:rewrite
@@ -1286,7 +1285,7 @@
 
 (defthm
   no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-23
-  (implies (and (not (atom path1))
+  (implies (and (consp path1)
                 (< 0 (mv-nth 1 (hifat-find-file fs path1)))
                 (fat32-filename-list-prefixp path1 path2))
            (not (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2)))))
@@ -1347,7 +1346,6 @@
                            (:linear len-when-hifat-bounded-file-alist-p . 1)
                            (:rewrite m1-regular-file-p-correctness-1)
                            (:definition nthcdr)
-                           (:definition atom)
                            (:definition min)
                            (:definition nfix)
                            (:definition natp))))))
@@ -1399,7 +1397,6 @@
                       len-when-hifat-bounded-file-alist-p . 1)
                      (:rewrite m1-regular-file-p-correctness-1)
                      (:definition nthcdr)
-                     (:definition atom)
                      (:definition min)
                      (:definition nfix)
                      (:definition natp))))))
@@ -1653,7 +1650,6 @@
           (:definition nthcdr)
           ;; It's dubious how much labour is saved by disabling these,
           ;; but it's worth a shot.
-          (:definition atom)
           (:definition min)
           (:definition nfix)
           (:definition natp)))))
@@ -1755,7 +1751,6 @@
                            (:linear len-when-hifat-bounded-file-alist-p . 1)
                            (:rewrite m1-regular-file-p-correctness-1)
                            (:definition nthcdr)
-                           (:definition atom)
                            (:definition min)
                            (:definition nfix)
                            (:definition natp)))))
@@ -1958,7 +1953,6 @@
                      (:linear hifat-tar-name-list-alist-correctness-lemma-1)
                      (:linear hifat-entry-count-when-hifat-subsetp)
                      (:definition hifat-subsetp)
-                     (:definition atom)
                      (:definition min)
                      (:definition nfix)
                      (:definition natp)
@@ -2518,7 +2512,6 @@
           (:linear hifat-entry-count-when-hifat-subsetp)
           ;; it's dubious how much labour is saved by disabling these,
           ;; but it's worth a shot.
-          (:definition atom)
           (:definition min)
           (:definition nfix)
           (:definition natp))))
