@@ -4922,8 +4922,7 @@
                  . 1)
        (:rewrite member-intersectp-is-commutative)
        (:linear nth-when-d-e-p)
-       (:rewrite lofat-place-file-correctness-lemma-83)
-       lofat-remove-file-correctness-lemma-55))
+       (:rewrite lofat-place-file-correctness-lemma-83)))
      (if (not stable-under-simplificationp)
          nil
        '(:do-not-induct t
