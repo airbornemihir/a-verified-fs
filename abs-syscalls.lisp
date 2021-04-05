@@ -637,27 +637,7 @@
                                      abs-file-contents-p abs-fs-fix)
            :do-not-induct t)))
 
-(defthm
-  names-at-of-abs-place-file-helper-lemma-2
-  (implies (m1-regular-file-p file)
-           (not (names-at (m1-file->contents file)
-                          (nthcdr 1 relpath))))
-  :hints (("goal" :in-theory (enable names-at
-                                     abs-directory-file-p m1-regular-file-p
-                                     abs-file-p abs-file->contents
-                                     abs-file-contents-p abs-fs-fix)
-           :do-not-induct t)))
-
-(defthm names-at-of-abs-place-file-helper-lemma-5
-  (implies (m1-regular-file-p file)
-           (equal (strip-cars (abs-fs-fix (m1-file->contents file)))
-                  nil))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable m1-regular-file-p
-                              abs-file-p abs-file->contents
-                              abs-fs-fix abs-file-contents-p))))
-
-(defthmd names-at-of-abs-place-file-helper-lemma-6
+(defthmd names-at-of-abs-place-file-helper-lemma-2
   (implies (not (m1-regular-file-p (abs-no-dups-file-fix file)))
            (abs-directory-file-p (abs-no-dups-file-fix file)))
   :hints
@@ -688,7 +668,7 @@
     (e/d (abs-place-file-helper names-at fat32-filename-list-fix
                                 fat32-filename-list-equiv
                                 fat32-filename-equiv
-                                names-at-of-abs-place-file-helper-lemma-6)
+                                names-at-of-abs-place-file-helper-lemma-2)
          ((:definition put-assoc-equal)
           (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
           (:definition abs-complete)
@@ -3018,6 +2998,7 @@
                                      abs-file-p abs-file->contents)
            :induct (abs-file-alist-p fs))))
 
+;; Inductive, hence kept.
 (defthm
   abs-mkdir-correctness-lemma-42
   (implies (not (consp (abs-addrs (abs-fs-fix fs))))

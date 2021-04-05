@@ -528,16 +528,14 @@
                     (abs-file->contents-when-m1-file-p nfix))))
   :rule-classes :congruence)
 
-;; This is kinda general.
-(defthmd ctx-app-ok-when-absfat-equiv-lemma-6
-  (implies (and (natp x)
-                (absfat-equiv abs-file-alist1 abs-file-alist2)
-                (abs-fs-p abs-file-alist1)
-                (abs-fs-p abs-file-alist2))
-           (iff (member-equal x abs-file-alist1)
-                (member-equal x abs-file-alist2)))
+;; If we're going to keep this, we might as well make it a congruence.
+(defthm ctx-app-ok-when-absfat-equiv-lemma-2
+  (implies (absfat-equiv abs-file-alist1 abs-file-alist2)
+           (iff (member-equal (nfix x) (abs-fs-fix abs-file-alist1))
+                (member-equal (nfix x) (abs-fs-fix abs-file-alist2))))
   :hints (("goal" :in-theory (enable absfat-equiv)
-           :do-not-induct t)))
+           :do-not-induct t))
+  :rule-classes :congruence)
 
 (defthm
   absfat-equiv-of-ctx-app-lemma-1
