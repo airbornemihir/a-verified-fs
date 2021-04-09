@@ -11010,5 +11010,4 @@
                                     (frame-val->dir$inline (cdr (assoc-equal x frame)))
                                     path file))
                            (frame-val->src$inline (cdr (assoc-equal x frame))))
-                frame))))))
-  )
+                frame)))))))

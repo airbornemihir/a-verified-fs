@@ -17,7 +17,7 @@
             (path-clear path (cdr frame)))
         nil)
        (path (mbe :exec path :logic (fat32-filename-list-fix
-                                             path))))
+                                     path))))
     (and
      (or
       (not (prefixp

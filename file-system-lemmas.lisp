@@ -1930,8 +1930,6 @@
          (intersection-equal l1 l2))
   :hints
   (("goal"
-    :induct (intersection-equal l1 l2)
-    :in-theory (e/d nil nil)
     :expand
     (:with
      set-difference$-redefinition
