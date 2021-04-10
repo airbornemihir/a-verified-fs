@@ -1161,14 +1161,18 @@
   consp-of-nonempty-queues-1
   (implies (consp (flatten queues))
            (consp (nonempty-queues queues)))
-  :hints
-  (("goal" :in-theory (e/d (nonempty-queues flatten)
-                           ((:rewrite flattenp-of-append)))
-    :induct (nonempty-queues queues))
-   ("subgoal *1/2" :use (:instance (:rewrite flattenp-of-append)
-                                   (y (list (nth (+ -1 (len queues)) queues)))
-                                   (x (take (+ -1 (len queues)) queues)))
-    :expand (len queues)))
+  :hints (("goal" :in-theory (e/d (nonempty-queues flatten)
+                                  ((:rewrite flattenp-of-append)
+                                   take append-of-take-and-cons))
+           :induct (nonempty-queues queues))
+          ("subgoal *1/2"
+           :use ((:instance (:definition take-as-append-and-nth)
+                            (l queues)
+                            (n (+ (len (cdr queues)) 1)))
+                 (:instance (:rewrite flattenp-of-append)
+                            (y (list (nth (+ -1 (len queues)) queues)))
+                            (x (take (+ -1 (len queues)) queues))))
+           :expand (len queues)))
   :rule-classes :type-prescription)
 
 (assert-event
