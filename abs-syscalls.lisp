@@ -11121,103 +11121,104 @@
         path))
       (t (mv dir frame x path)))))
 
-  (thm
-   (implies
-    (and
-     (m1-file-p file)
-     ;; this should be implied, no?
-     (abs-complete (abs-file->contents$inline (abs-no-dups-file-fix file)))
-     (hifat-no-dups-p (m1-file->contents file))
-     (abs-separate frame)
-     (abs-no-dups-file-p file)
-     (frame-p frame)
-     (no-duplicatesp-equal
-      (strip-cars frame))
-     (subsetp-equal (abs-addrs (frame->root frame))
-                    (frame-addrs-root (frame->frame frame)))
-     (consp (assoc-equal x frame))
-     (atom (frame-val->path (cdr (assoc-equal 0 frame))))
-     (equal (frame-val->src (cdr (assoc-equal 0 frame))) 0)
-     (consp (assoc-equal 0 frame))
-     (atom
-      (abs-addrs
-       (abs-file->contents
-        (mv-nth
-         0
-         (abs-find-file-helper (frame-val->dir (cdr (assoc-equal x frame)))
-                               path)))))
-     ;; I know, I know, I too wanted this to be in the RHS instead of the
-     ;; hypotheses. The problem is, if we allow collapse to fail in arbitrary
-     ;; places, we'll get arbitrary results.
-     (mv-nth 1
-             (collapse frame))
-     (path-clear
-      (append (frame-val->path (cdr (assoc-equal x frame)))
-              (dirname path))
-      (remove-assoc-equal x frame)))
-    (equal
-     (collapse
-      (put-assoc-equal
-       x
-       (frame-val
-        (frame-val->path (cdr (assoc-equal x frame)))
-        (mv-nth
-         0
-         (abs-place-file-helper
-          (frame-val->dir (cdr (assoc-equal x frame)))
-          path file))
-        (frame-val->src (cdr (assoc-equal x frame))))
-       frame))
-     (mv
-      (mv-nth
-       0
-       (abs-place-file-helper
-        (mv-nth 0
-                (collapse frame))
-        (append (frame-val->path (cdr (assoc-equal x frame)))
-                path)
-        file))
-      t)))
-   :hints
-   (("goal" :induct
-     (induction-scheme dir frame x path)
-     :in-theory (e/d
-                 (collapse frame->frame-of-put-assoc
-                           assoc-of-frame->frame
-                           frame->frame-of-put-assoc
-                           assoc-of-frame->frame
-                           hifat-find-file
-                           hifat-place-file)
-                 ((:rewrite collapse-hifat-place-file-lemma-6)
-                  (:rewrite subsetp-of-frame-addrs-root-strip-cars
-                            . 2)
-                  (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
-                            . 1)
-                  (:rewrite hifat-find-file-correctness-1-lemma-1)
-                  (:rewrite prefixp-when-equal-lengths)
-                  (:rewrite prefixp-when-prefixp)
-                  (:definition len)
-                  (:linear len-when-prefixp)
-                  (:rewrite abs-lstat-refinement-lemma-1)
-                  (:definition fat32-filename-list-prefixp)
-                  (:rewrite len-when-prefixp)
-                  (:rewrite ctx-app-ok-when-abs-complete)
-                  (:rewrite consp-of-nthcdr)
-                  (:rewrite abs-mkdir-correctness-lemma-235)
-                  (:rewrite m1-regular-file-p-correctness-1)
-                  (:rewrite m1-directory-file-p-when-m1-file-p)
-                  (:rewrite len-of-nthcdr)
-                  (:rewrite abs-find-file-helper-of-ctx-app)
-                  (:rewrite abs-find-file-correctness-lemma-9)
-                  (:rewrite abs-find-file-correctness-2)
-                  (:rewrite abs-find-file-helper-of-collapse-1 . 2)))
-     :expand ((collapse
-               (put-assoc-equal
-                x
-                (frame-val (frame-val->path$inline (cdr (assoc-equal x frame)))
-                           (mv-nth 0
-                                   (abs-place-file-helper
-                                    (frame-val->dir$inline (cdr (assoc-equal x frame)))
-                                    path file))
-                           (frame-val->src$inline (cdr (assoc-equal x frame))))
-                frame)))))))
+  ;; (thm
+  ;;  (implies
+  ;;   (and
+  ;;    (m1-file-p file)
+  ;;    ;; this should be implied, no?
+  ;;    (abs-complete (abs-file->contents$inline (abs-no-dups-file-fix file)))
+  ;;    (hifat-no-dups-p (m1-file->contents file))
+  ;;    (abs-separate frame)
+  ;;    (abs-no-dups-file-p file)
+  ;;    (frame-p frame)
+  ;;    (no-duplicatesp-equal
+  ;;     (strip-cars frame))
+  ;;    (subsetp-equal (abs-addrs (frame->root frame))
+  ;;                   (frame-addrs-root (frame->frame frame)))
+  ;;    (consp (assoc-equal x frame))
+  ;;    (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+  ;;    (equal (frame-val->src (cdr (assoc-equal 0 frame))) 0)
+  ;;    (consp (assoc-equal 0 frame))
+  ;;    (atom
+  ;;     (abs-addrs
+  ;;      (abs-file->contents
+  ;;       (mv-nth
+  ;;        0
+  ;;        (abs-find-file-helper (frame-val->dir (cdr (assoc-equal x frame)))
+  ;;                              path)))))
+  ;;    ;; I know, I know, I too wanted this to be in the RHS instead of the
+  ;;    ;; hypotheses. The problem is, if we allow collapse to fail in arbitrary
+  ;;    ;; places, we'll get arbitrary results.
+  ;;    (mv-nth 1
+  ;;            (collapse frame))
+  ;;    (path-clear
+  ;;     (append (frame-val->path (cdr (assoc-equal x frame)))
+  ;;             (dirname path))
+  ;;     (remove-assoc-equal x frame)))
+  ;;   (equal
+  ;;    (collapse
+  ;;     (put-assoc-equal
+  ;;      x
+  ;;      (frame-val
+  ;;       (frame-val->path (cdr (assoc-equal x frame)))
+  ;;       (mv-nth
+  ;;        0
+  ;;        (abs-place-file-helper
+  ;;         (frame-val->dir (cdr (assoc-equal x frame)))
+  ;;         path file))
+  ;;       (frame-val->src (cdr (assoc-equal x frame))))
+  ;;      frame))
+  ;;    (mv
+  ;;     (mv-nth
+  ;;      0
+  ;;      (abs-place-file-helper
+  ;;       (mv-nth 0
+  ;;               (collapse frame))
+  ;;       (append (frame-val->path (cdr (assoc-equal x frame)))
+  ;;               path)
+  ;;       file))
+  ;;     t)))
+  ;;  :hints
+  ;;  (("goal" :induct
+  ;;    (induction-scheme dir frame x path)
+  ;;    :in-theory (e/d
+  ;;                (collapse frame->frame-of-put-assoc
+  ;;                          assoc-of-frame->frame
+  ;;                          frame->frame-of-put-assoc
+  ;;                          assoc-of-frame->frame
+  ;;                          hifat-find-file
+  ;;                          hifat-place-file)
+  ;;                ((:rewrite collapse-hifat-place-file-lemma-6)
+  ;;                 (:rewrite subsetp-of-frame-addrs-root-strip-cars
+  ;;                           . 2)
+  ;;                 (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
+  ;;                           . 1)
+  ;;                 (:rewrite hifat-find-file-correctness-1-lemma-1)
+  ;;                 (:rewrite prefixp-when-equal-lengths)
+  ;;                 (:rewrite prefixp-when-prefixp)
+  ;;                 (:definition len)
+  ;;                 (:linear len-when-prefixp)
+  ;;                 (:rewrite abs-lstat-refinement-lemma-1)
+  ;;                 (:definition fat32-filename-list-prefixp)
+  ;;                 (:rewrite len-when-prefixp)
+  ;;                 (:rewrite ctx-app-ok-when-abs-complete)
+  ;;                 (:rewrite consp-of-nthcdr)
+  ;;                 (:rewrite abs-mkdir-correctness-lemma-235)
+  ;;                 (:rewrite m1-regular-file-p-correctness-1)
+  ;;                 (:rewrite m1-directory-file-p-when-m1-file-p)
+  ;;                 (:rewrite len-of-nthcdr)
+  ;;                 (:rewrite abs-find-file-helper-of-ctx-app)
+  ;;                 (:rewrite abs-find-file-correctness-lemma-9)
+  ;;                 (:rewrite abs-find-file-correctness-2)
+  ;;                 (:rewrite abs-find-file-helper-of-collapse-1 . 2)))
+  ;;    :expand ((collapse
+  ;;              (put-assoc-equal
+  ;;               x
+  ;;               (frame-val (frame-val->path$inline (cdr (assoc-equal x frame)))
+  ;;                          (mv-nth 0
+  ;;                                  (abs-place-file-helper
+  ;;                                   (frame-val->dir$inline (cdr (assoc-equal x frame)))
+  ;;                                   path file))
+  ;;                          (frame-val->src$inline (cdr (assoc-equal x frame))))
+  ;;               frame))))))
+  )

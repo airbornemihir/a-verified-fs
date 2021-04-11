@@ -2826,8 +2826,7 @@
 ;;     (make-clusters
 ;;      (implode ac)
 ;;      (cluster-size fat32$c)))))
-;;  :hints (("Goal" :in-theory (enable make-clusters remember-that-time-with-update-nth
-;;                                     append-of-take-and-cons)
+;;  :hints (("Goal" :in-theory (enable make-clusters remember-that-time-with-update-nth)
 ;;           :induct
 ;;           (data-region-string-helper fat32$c len ac))
 ;;          ("Subgoal *1/2.2"
@@ -4289,8 +4288,7 @@
     (("goal"
       :induct (induction-scheme fa-table1 fa-table2 pos str)
       :in-theory (e/d (update-fat-aux take-as-append-and-nth)
-                      (equal-of-append-repeat take
-                       (:rewrite append-of-take-and-cons)))
+                      (equal-of-append-repeat take))
       :expand (update-fat-aux fa-table2 str pos)))))
 
 (defthm len-of-update-fat-aux

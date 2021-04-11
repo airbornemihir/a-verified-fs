@@ -4359,7 +4359,6 @@
                           different-from-own-src-1)
                          (:rewrite
                           m1-file-alist-p-of-final-val-seq-lemma-2)
-                         append-of-take-and-cons
                          take))
         :use
         ((:instance (:rewrite take-of-nthcdr)
@@ -4515,8 +4514,7 @@
                     ((:definition member-equal)
                      (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
                      (:rewrite binary-append-take-nthcdr)
-                     take
-                     append-of-take-and-cons))
+                     take))
     :use ((:instance (:rewrite binary-append-take-nthcdr)
                      (l (take n seq))
                      (i (+ -1 n)))
@@ -5039,8 +5037,7 @@
     :in-theory (e/d (frame-addrs-before-seq take-as-append-and-nth)
                     ((:rewrite binary-append-take-nthcdr)
                      (:rewrite frame-addrs-before-seq-of-append)
-                     take append-of-take-and-cons
-                     subsetp-append1))
+                     take subsetp-append1))
     :use
     ((:instance (:rewrite binary-append-take-nthcdr)
                 (l (take n seq))
@@ -5113,7 +5110,7 @@
                        ((:rewrite binary-append-take-nthcdr)
                         (:rewrite subsetp-append1)
                         valid-seqp-after-collapse-this-lemma-7
-                        take append-of-take-and-cons))
+                        take))
        :use
        ((:instance
          (:rewrite binary-append-take-nthcdr)
@@ -5726,7 +5723,7 @@
              (:rewrite member-equal-nth-take-when-no-duplicatesp)
              (:rewrite ctx-app-ok-of-ctx-app-list-seq)
              ctx-app-ok-of-ctx-app-list-seq-lemma-1
-             take append-of-take-and-cons))
+             take))
        :use ((:instance (:rewrite binary-append-take-nthcdr)
                         (l (take n seq))
                         (i (+ -1 n)))
@@ -5774,7 +5771,7 @@
                                 (frame-addrs-before-seq frame 0 (take n seq))
                                 seq)))
      :instructions
-     ((in-theory (e/d (take-as-append-and-nth) (append-of-take-and-cons take)))
+     ((in-theory (e/d (take-as-append-and-nth) (take)))
       (:bash
        ("goal"
         :do-not-induct t
@@ -7005,8 +7002,7 @@
       :hints
       (("goal" :do-not-induct t
         :in-theory (e/d (take-as-append-and-nth)
-                        (take append-of-take-and-cons
-                              (:rewrite subsetp-append1)))
+                        (take (:rewrite subsetp-append1)))
         :use ((:instance (:rewrite subsetp-append1)
                          (c (cons x (seq-this (collapse-this frame x))))
                          (b (nthcdr (+ -1 n)

@@ -810,12 +810,6 @@
       :use (:instance lemma
                       (ac nil))))))
 
-(defthm append-of-take-and-cons
-  (implies (and (natp n) (equal x (nth n l)))
-           (equal (append (take n l) (cons x y))
-                  (append (take (+ n 1) l) y)))
-  :hints (("Goal" :induct (take n l)) ))
-
 (defthmd take-of-nthcdr
   (equal (take n1 (nthcdr n2 l))
          (nthcdr n2 (take (+ (nfix n1) (nfix n2)) l))))
@@ -1702,9 +1696,6 @@
              (append (take (- n 1) l)
                      (list (nth (- n 1) l)))))
   :rule-classes ((:definition :install-body nil)))
-
-(theory-invariant (incompatible (:rewrite take-as-append-and-nth)
-                                (:rewrite append-of-take-and-cons)))
 
 (defthm consp-of-assoc-of-nth-of-strip-cars
   (implies (not (null (nth n (strip-cars alist))))

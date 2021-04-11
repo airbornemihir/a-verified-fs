@@ -1075,8 +1075,7 @@
                                   good-lofat-oracle-steps-p-helper
                                   absfat-oracle-multi-step-refinement-lemma-2
                                   take-as-append-and-nth)
-        (hifat-mkdir hifat-pwrite
-                     take append-of-take-and-cons))
+        (hifat-mkdir hifat-pwrite take))
        :induct (dec-induct n)
        :do-not-induct t))))
 
@@ -1163,7 +1162,7 @@
            (consp (nonempty-queues queues)))
   :hints (("goal" :in-theory (e/d (nonempty-queues flatten)
                                   ((:rewrite flattenp-of-append)
-                                   take append-of-take-and-cons))
+                                   take))
            :induct (nonempty-queues queues))
           ("subgoal *1/2"
            :use ((:instance (:definition take-as-append-and-nth)
