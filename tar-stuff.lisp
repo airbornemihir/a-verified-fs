@@ -25,7 +25,19 @@
                     (:rewrite fat32-filename-list-p-of-remove)
                     (:linear len-of-member)
                     (:rewrite
-                     remove-duplicates-when-no-duplicatesp)))))
+                     remove-duplicates-when-no-duplicatesp)
+                    (:definition set-difference-equal)
+                    (:rewrite intersect-with-subset . 10)
+                    (:rewrite set-difference$-when-not-intersectp)
+                    (:rewrite intersect-with-subset . 1)
+                    (:rewrite abs-pwrite-correctness-lemma-37)
+                    (:rewrite
+                     member-equal-of-strip-cars-when-member-equal-of-hons-duplicated-members-aux)
+                    (:rewrite subsetp-member . 4)
+                    (:rewrite member-equal-of-hons-duplicated-members-aux)
+                    (:rewrite subsetp-when-atom-right)
+                    (:rewrite subsetp-member . 2)
+                    (:rewrite member-of-nth-when-not-intersectp)))))
 
 (defconst *tar-regtype* #\0)
 (defconst *tar-dirtype* #\5)
@@ -2031,7 +2043,8 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (hifat-find-file)
+    :in-theory (e/d (hifat-find-file
+                     (:rewrite set-difference$-when-not-intersectp))
                     ((:linear hifat-tar-name-list-alist-correctness-lemma-7)))
     :use
     (:instance (:linear hifat-tar-name-list-alist-correctness-lemma-7)
@@ -2349,7 +2362,7 @@
      (m1-file->contents (mv-nth 0
                                 (hifat-find-file fs (list (car name-list))))))))
   :hints (("goal" :do-not-induct t
-           :in-theory (e/d (hifat-find-file) nil)
+           :in-theory (enable hifat-find-file (:rewrite abs-pwrite-correctness-lemma-37))
            :expand (hifat-find-file fs path2))))
 
 (defthm
@@ -2515,6 +2528,11 @@
           (:linear
            hifat-tar-name-list-alist-correctness-lemma-1)
           (:linear hifat-entry-count-when-hifat-subsetp)
+          (:definition remove-assocs-equal)
+          (:rewrite subsetp-of-remove1)
+          (:rewrite hifat-tar-name-list-alist-correctness-lemma-23)
+          (:rewrite fat32-filename-p-when-member-equal-of-fat32-filename-list-p)
+          (:rewrite hifat-file-alist-fix-guard-lemma-1)
           ;; it's dubious how much labour is saved by disabling these,
           ;; but it's worth a shot.
           (:definition atom)

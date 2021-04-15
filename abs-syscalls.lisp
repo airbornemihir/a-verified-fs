@@ -10271,22 +10271,6 @@
                        (:rewrite collapse-hifat-place-file-lemma-16))))))
 
   (defthm
-    path-clear-of-remove-assoc-2
-    (implies (path-clear path (remove-assoc-equal y frame))
-             (path-clear path
-                         (remove-assoc-equal y (remove-assoc-equal x frame))))
-    :hints (("goal" :in-theory (disable path-clear-of-remove-assoc)
-             :use (:instance path-clear-of-remove-assoc
-                             (frame (remove-assoc-equal y frame))))))
-
-  (defthm path-clear-of-remove-assoc-of-frame->frame
-    (implies (path-clear path
-                         (remove-assoc-equal x frame))
-             (path-clear path
-                         (remove-assoc-equal x (frame->frame frame))))
-    :hints (("goal" :in-theory (enable frame->frame))))
-
-  (defthm
     collapse-hifat-place-file-lemma-41
     (implies
      (and
@@ -10665,27 +10649,6 @@
                                      frame->root path-clear)
                       (collapse-hifat-place-file-lemma-27
                        (:rewrite collapse-hifat-place-file-lemma-16))))))
-
-  (defthm
-    path-clear-of-put-assoc-equal
-    (implies
-     (and (no-duplicatesp-equal (strip-cars frame))
-          (frame-p frame))
-     (equal
-      (path-clear path (put-assoc-equal name val frame))
-      (and (path-clear path (remove-assoc-equal name frame))
-           (or (not (fat32-filename-list-prefixp path (frame-val->path val)))
-               (fat32-filename-list-equiv (frame-val->path val)
-                                          path))
-           (or (not (fat32-filename-list-prefixp (frame-val->path val)
-                                                 path))
-               (atom (names-at (frame-val->dir val)
-                               (nthcdr (len (frame-val->path val))
-                                       path)))))))
-    :hints (("goal" :in-theory (enable path-clear put-assoc-equal
-                                       remove-assoc-equal assoc-equal
-                                       strip-cars no-duplicatesp-equal frame-p
-                                       fat32-filename-list-prefixp-alt))))
 
   (defthm
     collapse-hifat-place-file-lemma-52
