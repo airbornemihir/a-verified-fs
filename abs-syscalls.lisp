@@ -9134,8 +9134,8 @@
           (:rewrite abs-find-file-correctness-lemma-12)
           (:rewrite path-clear-partial-collapse-when-zp-src-lemma-3)
           d-e-fix-under-d-e-equiv
-          (:rewrite equal-of-abs-file)
-          (:rewrite equal-of-m1-file)
+          (:rewrite abs-pwrite-correctness-lemma-33)
+          (:rewrite abs-pwrite-correctness-lemma-36)
           (:rewrite path-clear-partial-collapse-lemma-2)
           (:rewrite nthcdr-when->=-n-len-l-under-list-equiv)
           (:linear path-clear-partial-collapse-when-zp-src-lemma-9)))))
