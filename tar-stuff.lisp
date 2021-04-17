@@ -1980,7 +1980,30 @@
                      (:definition min)
                      (:definition nfix)
                      (:definition natp)
-                     nth-under-iff-1)))))
+                     nth-under-iff-1))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and
+      (not (nth 1 path2))
+      (m1-directory-file-p (mv-nth 0
+                                   (hifat-find-file fs (list (car name-list)))))
+      (fat32-filename-list-p path2)
+      (equal (nth 0 path2) (car name-list))
+      (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2))))
+     (consp
+      (assoc-equal
+       path2
+       (hifat-tar-name-list-alist
+        fs (list (car name-list))
+        (<<-sort
+         (strip-cars
+          (m1-file->contents
+           (mv-nth 0
+                   (hifat-find-file fs (list (car name-list)))))))
+        (+ -1 entry-count))))))))
 
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-13
@@ -2031,17 +2054,30 @@
        0 2097152 0 fs '((0 . 0))
        (list (cons 0
                    (file-table-element 0 (list (car name-list))))))))
-    (atom
-     (assoc-equal
-      path2
-      (hifat-tar-name-list-alist
-       fs (list (car name-list))
-       (<<-sort
-        (strip-cars
-         (m1-file->contents
-          (mv-nth 0
-                  (hifat-find-file fs (list (car name-list)))))))
-       (+ -1 entry-count)))))
+    (or
+     (atom
+      (assoc-equal
+       path2
+       (hifat-tar-name-list-alist
+        fs (list (car name-list))
+        (<<-sort
+         (strip-cars
+          (m1-file->contents
+           (mv-nth 0
+                   (hifat-find-file fs (list (car name-list)))))))
+        (+ -1 entry-count))))
+     (not
+      (consp
+       (assoc-equal
+        path2
+        (hifat-tar-name-list-alist
+         fs (list (car name-list))
+         (<<-sort
+          (strip-cars
+           (m1-file->contents
+            (mv-nth 0
+                    (hifat-find-file fs (list (car name-list)))))))
+         (+ -1 entry-count)))))))
    (>= (+ -1 entry-count)
        (hifat-entry-count
         (m1-file->contents
