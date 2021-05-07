@@ -10696,101 +10696,101 @@
           (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs relpath)))))
     :hints (("goal" :in-theory (enable addrs-at abs-find-file-helper))))
 
-  (thm
-   (implies
-    (and
-     (equal
-      (mv-nth
-       1
-       (hifat-find-file
-        (mv-nth 0
-                (collapse (collapse-this frame
-                                         (1st-complete (frame->frame frame)))))
-        (frame-val->path (cdr (assoc-equal x frame)))))
-      0)
-     (not (equal x (1st-complete (frame->frame frame))))
-     (not
-      (equal
-       x
-       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         frame)))))
-     (consp (frame->frame frame))
-     (< 0 (1st-complete (frame->frame frame)))
-     (< 0
-        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                          frame))))
-     (not
-      (equal
-       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         frame)))
-       (1st-complete (frame->frame frame))))
-     (consp
-      (assoc-equal
-       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         frame)))
-       frame))
-     (prefixp
-      (frame-val->path
-       (cdr
-        (assoc-equal
-         (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                           frame)))
-         frame)))
-      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         frame))))
-     (ctx-app-ok
-      (frame-val->dir
-       (cdr
-        (assoc-equal
-         (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                           frame)))
-         frame)))
-      (1st-complete (frame->frame frame))
-      (nthcdr
-       (len
-        (frame-val->path
-         (cdr
-          (assoc-equal
-           (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                             frame)))
-           frame))))
-       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                          frame)))))
-     (m1-file-p file)
-     (hifat-no-dups-p (m1-file->contents file))
-     (abs-separate frame)
-     (abs-no-dups-file-p file)
-     (frame-p frame)
-     (no-duplicatesp-equal (strip-cars frame))
-     (subsetp-equal (abs-addrs (frame->root frame))
-                    (frame-addrs-root (frame->frame frame)))
-     (consp (assoc-equal x frame))
-     (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-     (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-            0)
-     (consp (assoc-equal 0 frame))
-     (mv-nth 1
-             (collapse (collapse-this frame
-                                      (1st-complete (frame->frame frame)))))
-     (path-clear (frame-val->path (cdr (assoc-equal x frame)))
-                 (remove-assoc-equal x frame))
-     (not (equal 0 x))
-     (consp (frame-val->path (cdr (assoc-equal x frame))))
-     (not (consp path)))
-    (path-clear (frame-val->path (cdr (assoc-equal x frame)))
-                (remove-assoc-equal
-                 x
-                 (collapse-this frame
-                                (1st-complete (frame->frame frame))))))
-   :hints
-   (("goal"
-     :do-not '(preprocess)
-     :do-not-induct t
-     :in-theory (e/d (collapse-this assoc-of-frame->frame frame-with-root
-                                    frame->frame-of-put-assoc
-                                    frame->root path-clear)
-                     (collapse-hifat-place-file-lemma-27
-                      (:rewrite collapse-hifat-place-file-lemma-16))))))
+  ;; (thm
+  ;;  (implies
+  ;;   (and
+  ;;    (equal
+  ;;     (mv-nth
+  ;;      1
+  ;;      (hifat-find-file
+  ;;       (mv-nth 0
+  ;;               (collapse (collapse-this frame
+  ;;                                        (1st-complete (frame->frame frame)))))
+  ;;       (frame-val->path (cdr (assoc-equal x frame)))))
+  ;;     0)
+  ;;    (not (equal x (1st-complete (frame->frame frame))))
+  ;;    (not
+  ;;     (equal
+  ;;      x
+  ;;      (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+  ;;                                        frame)))))
+  ;;    (consp (frame->frame frame))
+  ;;    (< 0 (1st-complete (frame->frame frame)))
+  ;;    (< 0
+  ;;       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+  ;;                                         frame))))
+  ;;    (not
+  ;;     (equal
+  ;;      (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+  ;;                                        frame)))
+  ;;      (1st-complete (frame->frame frame))))
+  ;;    (consp
+  ;;     (assoc-equal
+  ;;      (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+  ;;                                        frame)))
+  ;;      frame))
+  ;;    (prefixp
+  ;;     (frame-val->path
+  ;;      (cdr
+  ;;       (assoc-equal
+  ;;        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+  ;;                                          frame)))
+  ;;        frame)))
+  ;;     (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+  ;;                                        frame))))
+  ;;    (ctx-app-ok
+  ;;     (frame-val->dir
+  ;;      (cdr
+  ;;       (assoc-equal
+  ;;        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+  ;;                                          frame)))
+  ;;        frame)))
+  ;;     (1st-complete (frame->frame frame))
+  ;;     (nthcdr
+  ;;      (len
+  ;;       (frame-val->path
+  ;;        (cdr
+  ;;         (assoc-equal
+  ;;          (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+  ;;                                            frame)))
+  ;;          frame))))
+  ;;      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+  ;;                                         frame)))))
+  ;;    (m1-file-p file)
+  ;;    (hifat-no-dups-p (m1-file->contents file))
+  ;;    (abs-separate frame)
+  ;;    (abs-no-dups-file-p file)
+  ;;    (frame-p frame)
+  ;;    (no-duplicatesp-equal (strip-cars frame))
+  ;;    (subsetp-equal (abs-addrs (frame->root frame))
+  ;;                   (frame-addrs-root (frame->frame frame)))
+  ;;    (consp (assoc-equal x frame))
+  ;;    (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+  ;;    (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+  ;;           0)
+  ;;    (consp (assoc-equal 0 frame))
+  ;;    (mv-nth 1
+  ;;            (collapse (collapse-this frame
+  ;;                                     (1st-complete (frame->frame frame)))))
+  ;;    (path-clear (frame-val->path (cdr (assoc-equal x frame)))
+  ;;                (remove-assoc-equal x frame))
+  ;;    (not (equal 0 x))
+  ;;    (consp (frame-val->path (cdr (assoc-equal x frame))))
+  ;;    (not (consp path)))
+  ;;   (path-clear (frame-val->path (cdr (assoc-equal x frame)))
+  ;;               (remove-assoc-equal
+  ;;                x
+  ;;                (collapse-this frame
+  ;;                               (1st-complete (frame->frame frame))))))
+  ;;  :hints
+  ;;  (("goal"
+  ;;    :do-not '(preprocess)
+  ;;    :do-not-induct t
+  ;;    :in-theory (e/d (collapse-this assoc-of-frame->frame frame-with-root
+  ;;                                   frame->frame-of-put-assoc
+  ;;                                   frame->root path-clear)
+  ;;                    (collapse-hifat-place-file-lemma-27
+  ;;                     (:rewrite collapse-hifat-place-file-lemma-16))))))
 
   (local
    (defun
