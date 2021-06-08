@@ -444,6 +444,10 @@
            (list-equiv path nil))
   :rule-classes :forward-chaining)
 
+(defthm nat-equiv-when-zp
+  (implies (zp x) (nat-equiv x 0))
+  :rule-classes :forward-chaining)
+
 (defthm nthcdr-when->=-n-len-l-under-list-equiv
   (implies (>= (nfix n) (len l))
            (list-equiv (nthcdr n l) nil)))

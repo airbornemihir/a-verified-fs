@@ -10847,7 +10847,7 @@
       st))))
   :hints (("Goal" :in-theory
            (e/d
-            (collapse-equiv absfat-equiv put-assoc-equal-of-frame-with-root)
+            (collapse-equiv absfat-equiv put-assoc-of-frame-with-root-1)
             (collapse-congruence-2
              (:rewrite cp-without-subdirs-helper-correctness-lemma-64)
              cp-without-subdirs-helper-correctness-lemma-66))
