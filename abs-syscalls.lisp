@@ -2078,18 +2078,11 @@
                 (ctx-app fs1 fs2 x x-path))
     :do-not-induct t
     :expand
-    (abs-find-file-helper fs1
-                          (cons (car path)
-                                (take (len (cdr x-path)) (cdr path)))))
-   (if
-    (not stable-under-simplificationp)
-    nil
-    '(:expand
-      ((abs-find-file-helper fs1
-                             (cons (car path)
-                                   (take (len (cdr x-path)) (cdr path))))
-       (:free (fs1)
-              (abs-place-file-helper fs1 path file)))))))
+    ((abs-find-file-helper fs1
+                           (cons (car path)
+                                 (take (len (cdr x-path)) (cdr path))))
+     (:free (fs1)
+            (abs-place-file-helper fs1 path file))))))
 
 ;; Here's the problem with this theorem: it doesn't work for the arbitrary
 ;; place-file because it can literally dump a number of names in different
