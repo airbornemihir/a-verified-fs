@@ -683,6 +683,95 @@
                 (names-at fs relpath))
     :expand (abs-place-file-helper fs path file))))
 
+;; Probably rename later.
+(defthm abs-place-file-helper-of-ctx-app-lemma-1
+  (implies (<= (len y) (len x))
+           (equal (fat32-filename-list-prefixp x y)
+                  (fat32-filename-list-equiv x y)))
+  :hints (("goal" :in-theory (enable fat32-filename-list-equiv))))
+(defthm abs-place-file-helper-of-ctx-app-lemma-2
+  (equal (consp (cdr (nthcdr i x)))
+         (< (nfix i) (len (cdr x))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable nthcdr-of-cdr)
+           :use nthcdr-of-cdr
+           :expand (len (cdr x)))))
+
+(defthm
+  abs-place-file-helper-of-ctx-app-2
+  (equal
+   (mv-nth 1
+           (abs-place-file-helper (ctx-app fs1 fs2 x x-path)
+                                  path file))
+   (cond
+    ((or (not (fat32-filename-list-prefixp x-path path))
+         (not (ctx-app-ok fs1 x x-path)))
+     (mv-nth 1
+             (abs-place-file-helper fs1 path file)))
+    ((atom x-path)
+     (mv-nth 1
+             (abs-place-file-helper
+              (abs-fs-fix (append (remove-equal (nfix x) (abs-fs-fix fs1))
+                                  (abs-fs-fix fs2)))
+              path file)))
+    ((consp (nthcdr (len x-path) path))
+     (mv-nth
+      1
+      (abs-place-file-helper
+       (append
+        (remove-equal
+         (nfix x)
+         (abs-file->contents (mv-nth 0 (abs-find-file-helper fs1 x-path))))
+        (abs-fs-fix fs2))
+       (nthcdr (len x-path) path)
+       file)))
+    ((m1-regular-file-p (abs-no-dups-file-fix file))
+     *enoent*)
+    (t 0)))
+  :hints
+  (("goal" :in-theory
+    (e/d (abs-place-file-helper ctx-app abs-find-file-helper
+                                ctx-app-ok addrs-at)
+         ((:rewrite abs-fs-p-correctness-1)
+          (:rewrite abs-addrs-when-m1-file-alist-p)
+          (:rewrite abs-directory-file-p-correctness-1)
+          (:rewrite abs-file-alist-p-correctness-1)
+          (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
+          (:definition put-assoc-equal)
+          (:rewrite abs-fs-p-when-hifat-no-dups-p)
+          (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+          (:rewrite hifat-equiv-when-absfat-equiv . 1)
+          (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-4)
+          (:rewrite prefixp-when-prefixp)
+          (:rewrite partial-collapse-correctness-lemma-2)
+          (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
+          (:definition remove-assoc-equal)
+          (:rewrite remove-assoc-when-absent-1)
+          (:rewrite path-clear-partial-collapse-when-zp-src-lemma-15)
+          (:rewrite absfat-subsetp-of-put-assoc-3)
+          (:rewrite absfat-subsetp-of-put-assoc-1)
+          (:rewrite abs-find-file-helper-when-m1-file-alist-p)
+          (:type-prescription prefixp)
+          (:type-prescription assoc-when-zp-len)
+          (:rewrite abs-complete-correctness-1)
+          (:rewrite hifat-equiv-when-absfat-equiv . 2)
+          (:rewrite m1-file-alist-p-when-not-consp)
+          (:rewrite m1-file-contents-p-correctness-1)
+          (:rewrite equal-of-abs-file)
+          (:rewrite fat32-filename-list-prefixp-transitive
+                    . 1)
+          (:linear len-when-prefixp)
+          (:linear len-of-member)))
+    :induct (mv (fat32-filename-list-prefixp x-path path)
+                (ctx-app fs1 fs2 x x-path))
+    :do-not-induct t
+    :expand
+    ((abs-find-file-helper fs1
+                           (cons (car path)
+                                 (take (len (cdr x-path)) (cdr path))))
+     (:free (fs1)
+            (abs-place-file-helper fs1 path file))))))
+
 ;; This is based on collapse-hifat-place-file-2, which relies on the lemma
 ;; collapse-congruence-lemma-6. That lemma would probably have to be tweaked to
 ;; deal with all the path appending stuff, which I'm skipping over for now.
@@ -2052,37 +2141,6 @@
                                     path file)
              (abs-place-file-helper (frame->root frame2)
                                     path file)))))
-
-(defthm
-  abs-place-file-helper-of-ctx-app-2
-  (implies
-   (or
-    (not (fat32-filename-list-prefixp x-path path))
-    (and (atom (assoc-equal (fat32-filename-fix (nth (len x-path) path))
-                            (abs-fs-fix fs2)))
-         (abs-fs-p (ctx-app fs1 fs2 x x-path))))
-   (equal
-    (mv-nth 1 (abs-place-file-helper
-               (ctx-app fs1 fs2 x x-path)
-               path file))
-    (mv-nth 1 (abs-place-file-helper
-               fs1
-               path file))))
-  :hints
-  (("goal" :in-theory (e/d (abs-place-file-helper ctx-app)
-                           ((:rewrite abs-fs-p-correctness-1)
-                            (:rewrite abs-addrs-when-m1-file-alist-p)
-                            (:rewrite abs-directory-file-p-correctness-1)
-                            (:rewrite abs-file-alist-p-correctness-1)))
-    :induct (mv (fat32-filename-list-prefixp x-path path)
-                (ctx-app fs1 fs2 x x-path))
-    :do-not-induct t
-    :expand
-    ((abs-find-file-helper fs1
-                           (cons (car path)
-                                 (take (len (cdr x-path)) (cdr path))))
-     (:free (fs1)
-            (abs-place-file-helper fs1 path file))))))
 
 ;; Here's the problem with this theorem: it doesn't work for the arbitrary
 ;; place-file because it can literally dump a number of names in different
@@ -9415,99 +9473,6 @@
                               (file-table-p file-table))))
   (hifat-close fd fd-table file-table))
 
-;; Probably rename later.
-(defthm abs-place-file-helper-of-ctx-app-lemma-1
-  (implies (<= (len y) (len x))
-           (equal (fat32-filename-list-prefixp x y)
-                  (fat32-filename-list-equiv x y)))
-  :hints (("goal" :in-theory (enable fat32-filename-list-equiv))))
-(defthm abs-place-file-helper-of-ctx-app-lemma-2
-  (equal (consp (cdr (nthcdr i x)))
-         (< (nfix i) (len (cdr x))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable nthcdr-of-cdr)
-           :use nthcdr-of-cdr
-           :expand (len (cdr x)))))
-
-(defthm
-  abs-place-file-helper-of-ctx-app-3
-  (equal
-   (mv-nth 1
-           (abs-place-file-helper (ctx-app fs1 fs2 x x-path)
-                                  path file))
-   (cond
-    ((or (not (fat32-filename-list-prefixp x-path path))
-         (not (ctx-app-ok fs1 x x-path)))
-     (mv-nth 1
-             (abs-place-file-helper fs1 path file)))
-    ((atom x-path)
-     (mv-nth 1
-             (abs-place-file-helper
-              (abs-fs-fix (append (remove-equal (nfix x) (abs-fs-fix fs1))
-                                  (abs-fs-fix fs2)))
-              path file)))
-    ((consp (nthcdr (len x-path) path))
-     (mv-nth
-      1
-      (abs-place-file-helper
-       (append
-        (remove-equal
-         (nfix x)
-         (abs-file->contents (mv-nth 0 (abs-find-file-helper fs1 x-path))))
-        (abs-fs-fix fs2))
-       (nthcdr (len x-path) path)
-       file)))
-    ((m1-regular-file-p (abs-no-dups-file-fix file))
-     *enoent*)
-    (t 0)))
-  :hints
-  (("goal" :in-theory
-    (e/d (abs-place-file-helper ctx-app abs-find-file-helper
-                                ctx-app-ok addrs-at)
-         ((:rewrite abs-fs-p-correctness-1)
-          (:rewrite abs-addrs-when-m1-file-alist-p)
-          (:rewrite abs-directory-file-p-correctness-1)
-          (:rewrite abs-file-alist-p-correctness-1)
-          (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
-          (:definition put-assoc-equal)
-          (:rewrite abs-fs-p-when-hifat-no-dups-p)
-          (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-          (:rewrite hifat-equiv-when-absfat-equiv . 1)
-          (:rewrite abs-place-file-helper-correctness-2)
-          (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-4)
-          (:rewrite prefixp-when-prefixp)
-          (:rewrite partial-collapse-correctness-lemma-2)
-          (:rewrite abs-file-p-when-m1-file-p)
-          (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
-          (:definition remove-assoc-equal)
-          (:rewrite remove-assoc-when-absent-1)
-          (:rewrite abs-place-file-helper-of-ctx-app-2)
-          (:rewrite path-clear-partial-collapse-when-zp-src-lemma-15)
-          (:rewrite absfat-subsetp-of-put-assoc-3)
-          (:rewrite absfat-subsetp-of-put-assoc-1)
-          (:rewrite abs-find-file-helper-when-m1-file-alist-p)
-          (:type-prescription prefixp)
-          (:type-prescription assoc-when-zp-len)
-          (:rewrite abs-complete-correctness-1)
-          (:rewrite hifat-equiv-when-absfat-equiv . 2)
-          (:rewrite abs-mkdir-correctness-lemma-157)
-          (:rewrite m1-file-alist-p-when-not-consp)
-          (:rewrite m1-file-contents-p-correctness-1)
-          (:rewrite equal-of-abs-file)
-          (:rewrite fat32-filename-list-prefixp-transitive
-                    . 1)
-          (:linear len-when-prefixp)
-          (:linear len-of-member)))
-    :induct (mv (fat32-filename-list-prefixp x-path path)
-                (ctx-app fs1 fs2 x x-path))
-    :do-not-induct t
-    :expand
-    ((abs-find-file-helper fs1
-                           (cons (car path)
-                                 (take (len (cdr x-path)) (cdr path))))
-     (:free (fs1)
-            (abs-place-file-helper fs1 path file))))))
-
 (encapsulate
   ()
 
@@ -11126,132 +11091,6 @@
                     (collapse frame)))
     :hints (("goal" :in-theory (enable collapse))))
 
-  ;; (thm
-  ;;  (implies
-  ;;   (and
-  ;;    (equal
-  ;;     (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                                       frame)))
-  ;;     0)
-  ;;    (consp (frame->frame frame))
-  ;;    (< 0 (1st-complete (frame->frame frame)))
-  ;;    (ctx-app-ok
-  ;;     (frame->root frame)
-  ;;     (1st-complete (frame->frame frame))
-  ;;     (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                                        frame))))
-  ;;    (mv-nth 1
-  ;;            (collapse (collapse-this frame
-  ;;                                     (1st-complete (frame->frame frame)))))
-  ;;    (equal
-  ;;     (collapse
-  ;;      (frame-with-root
-  ;;       (mv-nth
-  ;;        0
-  ;;        (abs-place-file-helper
-  ;;         (ctx-app
-  ;;          (frame->root frame)
-  ;;          (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                                            frame)))
-  ;;          (1st-complete (frame->frame frame))
-  ;;          (frame-val->path
-  ;;           (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                             frame))))
-  ;;         path file))
-  ;;       (frame->frame (collapse-this frame
-  ;;                                    (1st-complete (frame->frame frame))))))
-  ;;     (cons
-  ;;      (mv-nth
-  ;;       0
-  ;;       (hifat-place-file
-  ;;        (mv-nth 0
-  ;;                (collapse (collapse-this frame
-  ;;                                         (1st-complete (frame->frame frame)))))
-  ;;        path file))
-  ;;      '(t)))
-  ;;    (m1-file-p file)
-  ;;    (hifat-no-dups-p (m1-file->contents file))
-  ;;    (abs-separate frame)
-  ;;    (abs-no-dups-file-p file)
-  ;;    (frame-p frame)
-  ;;    (no-duplicatesp-equal (strip-cars frame))
-  ;;    (subsetp-equal (abs-addrs (frame->root frame))
-  ;;                   (frame-addrs-root (frame->frame frame)))
-  ;;    (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-  ;;           0)
-  ;;    (consp (assoc-equal 0 frame))
-  ;;    (not
-  ;;     (consp
-  ;;      (abs-addrs
-  ;;       (abs-file->contents
-  ;;        (mv-nth
-  ;;         0
-  ;;         (abs-find-file-helper (frame-val->dir (cdr (assoc-equal 0 frame)))
-  ;;                               path))))))
-  ;;    (path-clear (dirname path)
-  ;;                (remove-assoc-equal 0 frame))
-  ;;    (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-  ;;    (< 0
-  ;;       (mv-nth 1
-  ;;               (abs-place-file-helper (frame->root frame)
-  ;;                                      path file))))
-  ;;   (equal
-  ;;    (collapse (collapse-this frame
-  ;;                             (1st-complete (frame->frame frame))))
-  ;;    (cons
-  ;;     (mv-nth
-  ;;      0
-  ;;      (hifat-place-file
-  ;;       (mv-nth 0
-  ;;               (collapse (collapse-this frame
-  ;;                                        (1st-complete (frame->frame frame)))))
-  ;;       path file))
-  ;;     '(t)))) :hints (("goal" :do-not-induct t
-  ;;    :in-theory (e/d
-  ;;                (collapse collapse-this frame->frame-of-put-assoc
-  ;;                          assoc-of-frame->frame
-  ;;                          frame->frame-of-put-assoc
-  ;;                          assoc-of-frame->frame
-  ;;                          hifat-find-file
-  ;;                          hifat-place-file)
-  ;;                ((:rewrite collapse-hifat-place-file-lemma-6)
-  ;;                 (:rewrite subsetp-of-frame-addrs-root-strip-cars
-  ;;                           . 2)
-  ;;                 (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
-  ;;                           . 1)
-  ;;                 (:rewrite hifat-find-file-correctness-1-lemma-1)
-  ;;                 (:rewrite prefixp-when-equal-lengths)
-  ;;                 (:rewrite prefixp-when-prefixp)
-  ;;                 (:definition len)
-  ;;                 (:linear len-when-prefixp)
-  ;;                 (:rewrite abs-lstat-refinement-lemma-1)
-  ;;                 (:definition fat32-filename-list-prefixp)
-  ;;                 (:rewrite len-when-prefixp)
-  ;;                 (:rewrite ctx-app-ok-when-abs-complete)
-  ;;                 (:rewrite consp-of-nthcdr)
-  ;;                 (:rewrite abs-mkdir-correctness-lemma-235)
-  ;;                 (:rewrite m1-regular-file-p-correctness-1)
-  ;;                 (:rewrite m1-directory-file-p-when-m1-file-p)
-  ;;                 (:rewrite len-of-nthcdr)
-  ;;                 (:rewrite abs-find-file-helper-of-ctx-app)
-  ;;                 (:rewrite abs-find-file-correctness-lemma-9)
-  ;;                 (:rewrite abs-find-file-correctness-2)
-  ;;                 (:rewrite abs-find-file-helper-of-collapse-1 . 2)
-  ;;                 (:rewrite abs-place-file-helper-of-ctx-app-2))) :use (:instance
-  ;;                (:rewrite abs-place-file-helper-of-ctx-app-2) (file file)
-  ;;                (path path)
-  ;;                (x-path
-  ;;                 (frame-val->path
-  ;;                  (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                                    frame))))
-  ;;                (x (1st-complete (frame->frame frame)))
-  ;;                (fs2
-  ;;                 (frame-val->dir
-  ;;                  (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                                    frame))))
-  ;;                (fs1 (frame->root frame)))))
-  ;;  :otf-flg t)
-
   (thm
    (implies
     (and
@@ -11333,7 +11172,6 @@
                   (:definition fat32-filename-list-prefixp)
                   (:rewrite len-when-prefixp)
                   (:rewrite ctx-app-ok-when-abs-complete)
-                  (:rewrite consp-of-nthcdr)
                   (:rewrite abs-mkdir-correctness-lemma-235)
                   (:rewrite m1-regular-file-p-correctness-1)
                   (:rewrite m1-directory-file-p-when-m1-file-p)
