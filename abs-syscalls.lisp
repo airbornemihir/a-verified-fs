@@ -683,20 +683,6 @@
                 (names-at fs relpath))
     :expand (abs-place-file-helper fs path file))))
 
-;; Probably rename later.
-(defthm abs-place-file-helper-of-ctx-app-lemma-1
-  (implies (<= (len y) (len x))
-           (equal (fat32-filename-list-prefixp x y)
-                  (fat32-filename-list-equiv x y)))
-  :hints (("goal" :in-theory (enable fat32-filename-list-equiv))))
-(defthm abs-place-file-helper-of-ctx-app-lemma-2
-  (equal (consp (cdr (nthcdr i x)))
-         (< (nfix i) (len (cdr x))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable nthcdr-of-cdr)
-           :use nthcdr-of-cdr
-           :expand (len (cdr x)))))
-
 (defthm
   abs-place-file-helper-of-ctx-app-2
   (equal
