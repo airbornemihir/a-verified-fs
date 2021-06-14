@@ -9431,35 +9431,35 @@
 
 (defthm
   abs-place-file-helper-of-ctx-app-3
-  (implies
-   (and (fat32-filename-list-prefixp x-path path)
-        (ctx-app-ok fs1 x x-path))
-   (equal
-    (mv-nth 1
-            (abs-place-file-helper (ctx-app fs1 fs2 x x-path)
-                                   path file))
-    (cond
-     ((atom x-path)
-      (mv-nth
-       1
-       (abs-place-file-helper
-        (abs-fs-fix (append (remove-equal (nfix x) (abs-fs-fix fs1))
-                            (abs-fs-fix fs2)))
-        path file)))
-     ((consp (nthcdr (len x-path) path))
-      (mv-nth
-       1
-       (abs-place-file-helper
-        (append
-         (remove-equal
-          (nfix x)
-          (abs-file->contents (mv-nth 0 (abs-find-file-helper fs1 x-path))))
-         (abs-fs-fix fs2))
-        (nthcdr (len x-path) path)
-        file)))
-     ((m1-regular-file-p (abs-no-dups-file-fix file))
-      *enoent*)
-     (t 0))))
+  (equal
+   (mv-nth 1
+           (abs-place-file-helper (ctx-app fs1 fs2 x x-path)
+                                  path file))
+   (cond
+    ((or (not (fat32-filename-list-prefixp x-path path))
+         (not (ctx-app-ok fs1 x x-path)))
+     (mv-nth 1
+             (abs-place-file-helper fs1 path file)))
+    ((atom x-path)
+     (mv-nth 1
+             (abs-place-file-helper
+              (abs-fs-fix (append (remove-equal (nfix x) (abs-fs-fix fs1))
+                                  (abs-fs-fix fs2)))
+              path file)))
+    ((consp (nthcdr (len x-path) path))
+     (mv-nth
+      1
+      (abs-place-file-helper
+       (append
+        (remove-equal
+         (nfix x)
+         (abs-file->contents (mv-nth 0 (abs-find-file-helper fs1 x-path))))
+        (abs-fs-fix fs2))
+       (nthcdr (len x-path) path)
+       file)))
+    ((m1-regular-file-p (abs-no-dups-file-fix file))
+     *enoent*)
+    (t 0)))
   :hints
   (("goal" :in-theory
     (e/d (abs-place-file-helper ctx-app abs-find-file-helper
