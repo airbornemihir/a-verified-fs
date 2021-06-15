@@ -11230,11 +11230,12 @@
                     (collapse frame)))
     :hints (("goal" :in-theory (enable collapse))))
 
-  (defthm collapse-hifat-place-file-lemma-57
-    (equal (path-clear path (remove-assoc-equal 0 frame))
-           (path-clear path (frame->frame frame)))
-    :hints (("goal" :do-not-induct t
-             :in-theory (enable frame->frame))))
+  ;; ;; More trouble than it's worth.
+  ;; (defthm collapse-hifat-place-file-lemma-57
+  ;;   (equal (path-clear path (remove-assoc-equal 0 frame))
+  ;;          (path-clear path (frame->frame frame)))
+  ;;   :hints (("goal" :do-not-induct t
+  ;;            :in-theory (enable frame->frame))))
 
   (thm
    (implies
