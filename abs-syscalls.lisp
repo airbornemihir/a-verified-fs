@@ -9459,6 +9459,139 @@
                               (file-table-p file-table))))
   (hifat-close fd fd-table file-table))
 
+(defthm abs-place-file-helper-of-append-lemma-1
+  (implies (abs-file-alist-p contents)
+           (equal (abs-no-dups-file-fix (abs-file d-e contents))
+                  (abs-file d-e (abs-fs-fix contents))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-no-dups-file-fix))))
+
+(defthm abs-place-file-helper-of-append-lemma-2
+  (not (stringp (mv-nth 0
+                        (abs-place-file-helper fs path file))))
+  :hints (("goal" :in-theory (enable abs-place-file-helper)))
+  :rule-classes :type-prescription)
+
+(defthm
+  abs-place-file-helper-of-append-1
+  (equal
+   (abs-place-file-helper fs (append x y)
+                          file)
+   (cond
+    ((and (< 0
+             (mv-nth 1 (abs-find-file-helper fs x)))
+          (not (equal (mv-nth 1 (abs-find-file-helper fs x))
+                      2)))
+     (mv (abs-fs-fix fs) *enotdir*))
+    ((atom x)
+     (abs-place-file-helper fs y file))
+    ((atom y)
+     (abs-place-file-helper fs x file))
+    ((equal (mv-nth 1 (abs-find-file-helper fs x))
+            *enoent*)
+     (mv (abs-fs-fix fs) *enoent*))
+    ((not (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs x))))
+     (mv (abs-fs-fix fs) *enotdir*))
+    (t
+     (mv
+      (mv-nth
+       0
+       (abs-place-file-helper
+        fs x
+        (change-abs-file
+         (mv-nth 0 (abs-find-file-helper fs x))
+         :contents
+         (mv-nth
+          0
+          (abs-place-file-helper
+           (abs-file->contents (mv-nth 0 (abs-find-file-helper fs x)))
+           y file)))))
+      (mv-nth 1
+              (abs-place-file-helper
+               (abs-file->contents (mv-nth 0 (abs-find-file-helper fs x)))
+               y file))))))
+  :hints
+  (("goal"
+    :in-theory (enable abs-place-file-helper
+                       abs-find-file-helper hifat-find-file)
+    :induct
+    (mv
+     (mv-nth
+      0
+      (abs-place-file-helper
+       fs x
+       (change-abs-file
+        (mv-nth 0 (abs-find-file-helper fs x))
+        :contents
+        (mv-nth
+         0
+         (abs-place-file-helper
+          (abs-file->contents (mv-nth 0 (abs-find-file-helper fs x)))
+          y file)))))
+     (append x y)
+     (mv-nth 0 (abs-find-file-helper fs x))))))
+
+(defthmd
+  collapse-hifat-place-file-lemma-56
+  (implies
+   (consp path)
+   (equal
+    (abs-place-file-helper fs path file)
+    (cond
+     ((and (< 0
+              (mv-nth 1
+                      (abs-find-file-helper fs (dirname path))))
+           (not (equal (mv-nth 1
+                               (abs-find-file-helper fs (dirname path)))
+                       2)))
+      (cons (abs-fs-fix fs) '(20)))
+     ((atom (dirname path))
+      (abs-place-file-helper fs (list (basename path))
+                             file))
+     ((atom (list (basename path)))
+      (abs-place-file-helper fs (dirname path)
+                             file))
+     ((equal (mv-nth 1
+                     (abs-find-file-helper fs (dirname path)))
+             2)
+      (cons (abs-fs-fix fs) '(2)))
+     ((not (abs-directory-file-p
+            (mv-nth 0
+                    (abs-find-file-helper fs (dirname path)))))
+      (cons (abs-fs-fix fs) '(20)))
+     (t
+      (list
+       (mv-nth
+        0
+        (abs-place-file-helper
+         fs (dirname path)
+         (let
+          ((change-abs-file (mv-nth 0
+                                    (abs-find-file-helper fs (dirname path))))
+           (abs-file->contents
+            (mv-nth
+             0
+             (abs-place-file-helper
+              (abs-file->contents
+               (mv-nth 0
+                       (abs-find-file-helper fs (dirname path))))
+              (list (basename path))
+              file))))
+          (abs-file (abs-file->d-e change-abs-file)
+                    abs-file->contents))))
+       (mv-nth 1
+               (abs-place-file-helper
+                (abs-file->contents
+                 (mv-nth 0
+                         (abs-find-file-helper fs (dirname path))))
+                (list (basename path))
+                file)))))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable abs-place-file-helper-of-append-1)
+           :use (:instance abs-place-file-helper-of-append-1
+                           (x (dirname path))
+                           (y (list (basename path)))))))
+
 (encapsulate
   ()
 
