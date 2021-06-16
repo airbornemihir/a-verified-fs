@@ -10072,7 +10072,7 @@
       (implies
        (and (not (fat32-filename-list-prefixp x-path path))
             (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
-            (> (len path) (len x-path)))
+            (not (fat32-filename-list-prefixp path x-path)))
        (equal (mv-nth 0
                       (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
                                              path file))
@@ -10080,36 +10080,31 @@
                                (abs-place-file-helper abs-file-alist1 path file))
                        fs x x-path)))
       :hints
-      (("goal"
-        :induct (induction-scheme abs-file-alist1 path x-path)
-        :in-theory (e/d (ctx-app fat32-filename-list-prefixp
-                                 abs-place-file-helper
-                                 ctx-app-ok addrs-at
-                                 names-at)
-                        ((:rewrite abs-file-alist-p-correctness-1)
-                         (:rewrite
-                          ctx-app-ok-when-absfat-equiv-lemma-3)
-                         (:rewrite hifat-equiv-when-absfat-equiv . 1)
-                         (:rewrite
-                          m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-                         (:rewrite
-                          absfat-equiv-implies-set-equiv-names-at-1-lemma-4)
-                         (:rewrite abs-directory-file-p-correctness-1)
-                         (:rewrite abs-mkdir-correctness-lemma-228)
-                         (:rewrite abs-place-file-helper-correctness-2)
-                         (:rewrite abs-fs-p-correctness-1)
-                         (:rewrite
-                          subsetp-of-abs-addrs-of-put-assoc-lemma-1)
-                         (:rewrite hifat-equiv-when-absfat-equiv . 2)
-                         (:definition remove-assoc-equal)
-                         (:rewrite remove-assoc-when-absent-1)
-                         (:rewrite abs-mkdir-correctness-lemma-235)
-                         (:rewrite abs-complete-correctness-1)
-                         (:rewrite
-                          absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
-                         (:rewrite remove-when-absent)
-                         (:rewrite abs-addrs-of-ctx-app-2)
-                         (:rewrite consp-of-append)))
+      (("goal" :induct (induction-scheme abs-file-alist1 path x-path)
+        :do-not-induct t
+        :in-theory
+        (e/d (ctx-app fat32-filename-list-prefixp
+                      abs-place-file-helper
+                      ctx-app-ok addrs-at names-at)
+             ((:rewrite abs-file-alist-p-correctness-1)
+              (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
+              (:rewrite hifat-equiv-when-absfat-equiv . 1)
+              (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+              (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-4)
+              (:rewrite abs-directory-file-p-correctness-1)
+              (:rewrite abs-mkdir-correctness-lemma-228)
+              (:rewrite abs-place-file-helper-correctness-2)
+              (:rewrite abs-fs-p-correctness-1)
+              (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
+              (:rewrite hifat-equiv-when-absfat-equiv . 2)
+              (:definition remove-assoc-equal)
+              (:rewrite remove-assoc-when-absent-1)
+              (:rewrite abs-mkdir-correctness-lemma-235)
+              (:rewrite abs-complete-correctness-1)
+              (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
+              (:rewrite remove-when-absent)
+              (:rewrite abs-addrs-of-ctx-app-2)
+              (:rewrite consp-of-append)))
         :expand ((:free (abs-file-alist1)
                         (abs-place-file-helper abs-file-alist1 path file))
                  (:free (abs-file-alist1)
@@ -11230,7 +11225,7 @@
                     (collapse frame)))
     :hints (("goal" :in-theory (enable collapse))))
 
-  ;; ;; More trouble than it's worth.
+  ;; More trouble than it's worth.
   ;; (defthm collapse-hifat-place-file-lemma-57
   ;;   (equal (path-clear path (remove-assoc-equal 0 frame))
   ;;          (path-clear path (frame->frame frame)))
