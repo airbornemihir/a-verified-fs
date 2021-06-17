@@ -272,9 +272,17 @@
 
 (defthm
   abs-directory-file-p-of-abs-file
-  (implies (abs-file-alist-p contents)
-           (abs-directory-file-p (abs-file d-e contents)))
+  (equal (abs-directory-file-p (abs-file d-e contents))
+         (abs-file-alist-p (abs-file-contents-fix contents)))
   :hints (("goal" :in-theory (enable abs-directory-file-p))))
+
+(defthm collapse-hifat-place-file-lemma-58
+  (implies (and (member-equal n contents)
+                (abs-file-contents-p contents))
+           (abs-file-alist-p contents))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (abs-file-contents-p) nil)))
+  :rule-classes (:forward-chaining :rewrite))
 
 (defthm
   abs-directory-file-p-when-m1-file-p-lemma-1

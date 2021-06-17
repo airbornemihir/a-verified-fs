@@ -345,122 +345,6 @@
   :rule-classes
   :congruence)
 
-(defthm
-  absfat-place-file-correctness-lemma-2
-  (implies
-   (subsetp-equal
-    (abs-addrs root)
-    (frame-addrs-root
-     (cons (cons x
-                 (frame-val nil
-                            (put-assoc-equal (car (last path))
-                                             file dir)
-                            src))
-           frame)))
-   (subsetp-equal (abs-addrs root)
-                  (frame-addrs-root (cons (cons x (frame-val 'nil dir src))
-                                          frame))))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory
-    (e/d (hifat-equiv-when-absfat-equiv dist-names
-                                        abs-separate frame-addrs-root)
-         nil)))
-  :otf-flg t)
-
-(defthm
-  absfat-place-file-correctness-lemma-5
-  (implies
-   (and
-    (hifat-equiv
-     (mv-nth
-      0
-      (collapse
-       (frame-with-root
-        root
-        (cons (cons x
-                    (frame-val nil
-                               (put-assoc-equal (car (last path))
-                                                file dir)
-                               src))
-              frame))))
-     (mv-nth
-      0
-      (hifat-place-file
-       fs nil
-       (m1-file
-        (m1-file->d-e
-         (mv-nth
-          0
-          (hifat-find-file
-           (mv-nth
-            0
-            (collapse (frame-with-root root
-                                       (cons (cons x (frame-val nil dir src))
-                                             frame))))
-           nil)))
-        (put-assoc-equal (car (last path))
-                         file dir)))))
-    (equal (mv-nth 1
-                   (hifat-place-file fs nil
-                                     (put-assoc-equal (car (last path))
-                                                      file dir)))
-           0))
-   (hifat-equiv
-    (mv-nth
-     0
-     (collapse
-      (frame-with-root
-       root
-       (cons (cons x
-                   (frame-val nil
-                              (put-assoc-equal (car (last path))
-                                               file dir)
-                              src))
-             frame))))
-    (mv-nth 0 (hifat-place-file fs path file))))
-  :instructions
-  (:promote
-   (:=
-    (mv-nth
-     0
-     (collapse
-      (frame-with-root
-       root
-       (cons (cons x
-                   (frame-val nil
-                              (put-assoc-equal (car (last path))
-                                               file dir)
-                              src))
-             frame))))
-    (mv-nth
-     0
-     (hifat-place-file
-      fs nil
-      (m1-file
-       (m1-file->d-e
-        (mv-nth
-         0
-         (hifat-find-file
-          (mv-nth
-           0
-           (collapse (frame-with-root root
-                                      (cons (cons x (frame-val nil dir src))
-                                            frame))))
-          nil)))
-       (put-assoc-equal (car (last path))
-                        file dir))))
-    :equiv hifat-equiv)
-   (:bash ("goal" :in-theory (enable hifat-place-file)))))
-
-(defthm absfat-place-file-correctness-lemma-6
-  (implies (and (abs-fs-p dir)
-                (not (member-equal (car (last path))
-                                   (names-at dir nil))))
-           (not (consp (assoc-equal (car (last path))
-                                    dir))))
-  :hints (("goal" :in-theory (enable names-at))))
-
 (defthm abs-file-p-when-m1-file-p
   (implies (m1-file-p file)
            (abs-file-p file))
@@ -1613,6 +1497,38 @@
     (absfat-subsetp-of-true-list-fix-1
      (:instance absfat-subsetp-of-true-list-fix-1
                 (abs-file-alist1 abs-file-alist1-equiv))))))
+
+(defthm
+  abs-mkdir-correctness-lemma-48
+  (implies (and (abs-fs-p fs2) (consp fs2))
+           (abs-file-alist-p (cons (car fs2) 'nil)))
+  :hints (("goal" :in-theory (enable abs-fs-p
+                                     abs-file-alist-p absfat-subsetp)
+           :do-not-induct t
+           :expand (abs-file-alist-p (list (car fs2))))))
+
+;; Move later.
+(defthm
+  abs-mkdir-correctness-lemma-46
+  (implies (abs-fs-p x)
+           (absfat-subsetp (cdr x) x))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (absfat-subsetp abs-file-alist-p abs-fs-p)
+                           (absfat-subsetp-of-append-2))
+           :use (:instance absfat-subsetp-of-append-2 (x (cdr x))
+                           (y (list (car x)))
+                           (z (cdr x)))
+           :expand (abs-file-alist-p x)))
+  :rule-classes ((:rewrite :corollary (implies (and (abs-fs-p x)
+                                                    (absfat-subsetp x y)
+                                                    (abs-file-alist-p y))
+                                               (absfat-subsetp (cdr x) y)))))
+
+(defthm abs-place-file-helper-of-append-lemma-2
+  (not (stringp (mv-nth 0
+                        (abs-place-file-helper fs path file))))
+  :hints (("goal" :in-theory (enable abs-place-file-helper)))
+  :rule-classes :type-prescription)
 
 (encapsulate
   ()
@@ -3314,8 +3230,6 @@
           (:rewrite
            hifat-file-alist-fix-when-hifat-no-dups-p)
           (:rewrite fat32-filename-list-p-of-append)
-          (:rewrite
-           absfat-place-file-correctness-lemma-6)
           (:rewrite 1st-complete-of-put-assoc-lemma-1)
           (:rewrite list-fix-when-len-zero)
           (:rewrite len-of-nthcdr)
@@ -9466,12 +9380,6 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable abs-no-dups-file-fix))))
 
-(defthm abs-place-file-helper-of-append-lemma-2
-  (not (stringp (mv-nth 0
-                        (abs-place-file-helper fs path file))))
-  :hints (("goal" :in-theory (enable abs-place-file-helper)))
-  :rule-classes :type-prescription)
-
 (defthm
   abs-place-file-helper-of-append-1
   (equal
@@ -10066,22 +9974,6 @@
           (cdr path) (cdr x-path)))
         (t
          (mv abs-file-alist1 path x-path)))))
-
-    ;; Replace abs-directory-file-p-of-abs-file with this later.
-    (defthm
-      abs-directory-file-p-of-abs-file-replacement
-      (equal (abs-directory-file-p (abs-file d-e contents))
-             (abs-file-alist-p (abs-file-contents-fix contents)))
-      :hints (("goal" :in-theory (e/d (abs-directory-file-p)
-                                      (abs-directory-file-p-of-abs-file)))))
-
-    (defthm collapse-hifat-place-file-lemma-58
-      (implies (and (member-equal n contents)
-                    (abs-file-contents-p contents))
-               (abs-file-alist-p contents))
-      :hints (("goal" :do-not-induct t
-               :in-theory (e/d (abs-file-contents-p) nil)))
-      :rule-classes (:forward-chaining :rewrite))
 
     (defthm
       abs-place-file-helper-of-ctx-app-4
