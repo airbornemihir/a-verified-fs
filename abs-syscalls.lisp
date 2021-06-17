@@ -10087,27 +10087,17 @@
       abs-place-file-helper-of-ctx-app-4
       (implies
        (and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
-            (ctx-app-ok abs-file-alist1 x x-path)
-            (consp x-path)
-            (not (fat32-filename-list-prefixp path x-path)))
+            (not (fat32-filename-list-prefixp path x-path))
+            (not (fat32-filename-list-prefixp x-path path)))
        (equal (mv-nth 0
                       (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
                                              path file))
-              (cond ((fat32-filename-list-prefixp x-path path)
-                     (ctx-app
-                      abs-file-alist1
-                      (mv-nth 0
-                              (abs-place-file-helper fs
-                                                     (nthcdr
-                                                      (len x-path) path)
-                                                     file))
-                      x x-path))
-                    (t
-                     (ctx-app (mv-nth 0
-                                      (abs-place-file-helper abs-file-alist1 path file))
-                              fs x x-path)))))
+              (ctx-app (mv-nth 0
+                               (abs-place-file-helper abs-file-alist1 path file))
+                       fs x x-path)))
       :hints
       (("goal" :induct (induction-scheme abs-file-alist1 path x-path)
+        :do-not-induct t
         :in-theory
         (e/d (ctx-app fat32-filename-list-prefixp
                       abs-place-file-helper
