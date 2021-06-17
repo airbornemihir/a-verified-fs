@@ -9978,15 +9978,33 @@
     (defthm
       abs-place-file-helper-of-ctx-app-4
       (implies
-       (and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
-            (not (fat32-filename-list-prefixp path x-path))
-            (not (fat32-filename-list-prefixp x-path path)))
+       (or (not (ctx-app-ok abs-file-alist1 x x-path))
+           (and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
+                (not (fat32-filename-list-prefixp path x-path))
+                (not (fat32-filename-list-prefixp x-path path)))
+           (atom path)
+           (fat32-filename-list-prefixp path x-path))
        (equal (mv-nth 0
                       (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
                                              path file))
-              (ctx-app (mv-nth 0
-                               (abs-place-file-helper abs-file-alist1 path file))
-                       fs x x-path)))
+              (cond
+               ((not (ctx-app-ok abs-file-alist1 x x-path))
+                (mv-nth 0
+                        (abs-place-file-helper abs-file-alist1 path file)))
+               ((and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
+                     (not (fat32-filename-list-prefixp path x-path))
+                     (not (fat32-filename-list-prefixp x-path path)))
+                (ctx-app (mv-nth 0
+                                 (abs-place-file-helper abs-file-alist1 path file))
+                         fs x x-path))
+               ((atom path)
+                (abs-fs-fix (ctx-app abs-file-alist1 fs x x-path)))
+               ((and (fat32-filename-list-prefixp path x-path)
+                     (m1-regular-file-p (abs-no-dups-file-fix file)))
+                (abs-fs-fix (ctx-app abs-file-alist1 fs x x-path)))
+               ((fat32-filename-list-prefixp path x-path)
+                (mv-nth 0
+                        (abs-place-file-helper abs-file-alist1 path file))))))
       :hints
       (("goal" :induct (induction-scheme abs-file-alist1 path x-path)
         :do-not-induct t
