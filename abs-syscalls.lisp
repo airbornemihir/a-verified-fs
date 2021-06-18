@@ -9979,52 +9979,44 @@
       abs-place-file-helper-of-ctx-app-4
       (implies
        (or (not (ctx-app-ok abs-file-alist1 x x-path))
-           (and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
-                (not (fat32-filename-list-prefixp x-path path)))
+           (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
            (atom path)
-           (fat32-filename-list-prefixp path x-path)
-           (and (ctx-app-ok abs-file-alist1 x x-path)
-                (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
-                (fat32-filename-list-prefixp x-path path)
-                (not (fat32-filename-list-prefixp path x-path))))
+           (fat32-filename-list-prefixp path x-path))
        (equal
         (mv-nth 0
                 (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
                                        path file))
-        (cond ((not (ctx-app-ok abs-file-alist1 x x-path))
-               (mv-nth 0
-                       (abs-place-file-helper abs-file-alist1 path file)))
-              ((and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
-                    (not (fat32-filename-list-prefixp path x-path))
-                    (not (fat32-filename-list-prefixp x-path path)))
-               (ctx-app (mv-nth 0
-                                (abs-place-file-helper abs-file-alist1 path file))
-                        fs x x-path))
-              ((or (atom path)
-                   (and (fat32-filename-list-prefixp path x-path)
-                        (m1-regular-file-p (abs-no-dups-file-fix file))))
-               (abs-fs-fix (ctx-app abs-file-alist1 fs x x-path)))
-              ((fat32-filename-list-prefixp path x-path)
-               (mv-nth 0
-                       (abs-place-file-helper abs-file-alist1 path file)))
-              ((and (ctx-app-ok abs-file-alist1 x x-path)
-                    (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
-                    (fat32-filename-list-prefixp x-path path)
-                    (not (fat32-filename-list-prefixp path x-path))
-                    (member-equal (fat32-filename-fix (nth (len x-path) path))
-                                  (names-at abs-file-alist1 x-path)))
-               (ctx-app (mv-nth 0
-                                (abs-place-file-helper abs-file-alist1 path file))
-                        fs x x-path))
-              ((and (ctx-app-ok abs-file-alist1 x x-path)
-                    (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
-                    (fat32-filename-list-prefixp x-path path)
-                    (not (fat32-filename-list-prefixp path x-path)))
-               (ctx-app abs-file-alist1
-                        (mv-nth 0
-                                (abs-place-file-helper fs (nthcdr (len x-path) path)
-                                                       file))
-                        x x-path)))))
+        (cond
+         ((not (ctx-app-ok abs-file-alist1 x x-path))
+          (mv-nth 0
+                  (abs-place-file-helper abs-file-alist1 path file)))
+         ((and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
+               (not (fat32-filename-list-prefixp path x-path))
+               (or (not (fat32-filename-list-prefixp x-path path))
+                   (member-equal (fat32-filename-fix (nth (len x-path) path))
+                                 (names-at abs-file-alist1 x-path))))
+          (ctx-app (mv-nth 0
+                           (abs-place-file-helper abs-file-alist1 path file))
+                   fs x x-path))
+         ((or (atom path)
+              (and (fat32-filename-list-prefixp path x-path)
+                   (m1-regular-file-p (abs-no-dups-file-fix file))))
+          (abs-fs-fix (ctx-app abs-file-alist1 fs x x-path)))
+         ((fat32-filename-list-prefixp path x-path)
+          (mv-nth 0
+                  (abs-place-file-helper abs-file-alist1 path file)))
+         ((and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
+               (fat32-filename-list-prefixp x-path path)
+               (member-equal (fat32-filename-fix (nth (len x-path) path))
+                             (names-at abs-file-alist1 x-path)))
+          (ctx-app (mv-nth 0
+                           (abs-place-file-helper abs-file-alist1 path file))
+                   fs x x-path))
+         (t (ctx-app abs-file-alist1
+                     (mv-nth 0
+                             (abs-place-file-helper fs (nthcdr (len x-path) path)
+                                                    file))
+                     x x-path)))))
       :hints
       (("goal"
         :induct (induction-scheme abs-file-alist1 path x-path)
@@ -10052,7 +10044,120 @@
               (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
               (:rewrite remove-when-absent)
               (:rewrite abs-addrs-of-ctx-app-2)
-              (:rewrite consp-of-append)))
+              (:rewrite consp-of-append)
+              (:rewrite collapse-hifat-place-file-lemma-5)
+              (:rewrite len-when-prefixp)
+              (:rewrite collapse-hifat-place-file-lemma-6)
+              (:rewrite abs-place-file-helper-correctness-1)
+              (:rewrite partial-collapse-correctness-lemma-2)
+              (:rewrite abs-complete-when-atom-abs-addrs)
+              (:rewrite equal-of-abs-file)
+              (:rewrite m1-file-contents-p-correctness-1)
+              (:rewrite default-car)
+              (:rewrite abs-file-contents-p-when-m1-file-contents-p)
+              (:rewrite m1-file-alist-p-when-not-consp)
+              (:type-prescription fat32-filename-fix)
+              (:rewrite abs-mkdir-correctness-lemma-52)
+              (:rewrite abs-fs-p-when-hifat-no-dups-p)
+              (:linear len-of-member)
+              (:rewrite abs-mkdir-correctness-lemma-157)
+              (:rewrite abs-addrs-when-m1-file-alist-p)
+              (:rewrite abs-addrs-when-m1-file-contents-p)
+              (:linear len-when-prefixp)
+              (:rewrite m1-file-alist-p-of-abs-place-file-helper)))
+        :expand
+        ((:free (abs-file-alist1)
+                (abs-place-file-helper abs-file-alist1 path file))
+         (:free (abs-file-alist1)
+                (ctx-app abs-file-alist1 fs x x-path))
+         (:with abs-fs-fix-when-abs-fs-p
+                (abs-fs-fix (append (remove-equal 0 (abs-fs-fix abs-file-alist1))
+                                    (abs-fs-fix fs)))))))))
+
+
+    (defthm
+      abs-place-file-helper-of-ctx-app-4
+      (implies
+       (or (not (ctx-app-ok abs-file-alist1 x x-path))
+           (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
+           (atom path)
+           (fat32-filename-list-prefixp path x-path))
+       (equal
+        (mv-nth 0
+                (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
+                                       path file))
+        (cond
+         ((not (ctx-app-ok abs-file-alist1 x x-path))
+          (mv-nth 0
+                  (abs-place-file-helper abs-file-alist1 path file)))
+         ((and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
+               (not (fat32-filename-list-prefixp path x-path))
+               (or (not (fat32-filename-list-prefixp x-path path))
+                   (member-equal (fat32-filename-fix (nth (len x-path) path))
+                                 (names-at abs-file-alist1 x-path))))
+          (ctx-app (mv-nth 0
+                           (abs-place-file-helper abs-file-alist1 path file))
+                   fs x x-path))
+         ((or (atom path)
+              (and (fat32-filename-list-prefixp path x-path)
+                   (m1-regular-file-p (abs-no-dups-file-fix file))))
+          (abs-fs-fix (ctx-app abs-file-alist1 fs x x-path)))
+         ((fat32-filename-list-prefixp path x-path)
+          (mv-nth 0
+                  (abs-place-file-helper abs-file-alist1 path file)))
+         (t (ctx-app abs-file-alist1
+                     (mv-nth 0
+                             (abs-place-file-helper fs (nthcdr (len x-path) path)
+                                                    file))
+                     x x-path)))))
+      :hints
+      (("goal"
+        :induct (induction-scheme abs-file-alist1 path x-path)
+        :do-not-induct t
+        :in-theory
+        (e/d (ctx-app fat32-filename-list-prefixp
+                      abs-place-file-helper
+                      ctx-app-ok addrs-at
+                      names-at nth put-assoc-of-remove)
+             ((:rewrite abs-file-alist-p-correctness-1)
+              (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
+              (:rewrite hifat-equiv-when-absfat-equiv . 1)
+              (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+              (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-4)
+              (:rewrite abs-directory-file-p-correctness-1)
+              (:rewrite abs-mkdir-correctness-lemma-228)
+              (:rewrite abs-place-file-helper-correctness-2)
+              (:rewrite abs-fs-p-correctness-1)
+              (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
+              (:rewrite hifat-equiv-when-absfat-equiv . 2)
+              (:definition remove-assoc-equal)
+              (:rewrite remove-assoc-when-absent-1)
+              (:rewrite abs-mkdir-correctness-lemma-235)
+              (:rewrite abs-complete-correctness-1)
+              (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
+              (:rewrite remove-when-absent)
+              (:rewrite abs-addrs-of-ctx-app-2)
+              (:rewrite consp-of-append)
+              (:rewrite collapse-hifat-place-file-lemma-5)
+              (:rewrite len-when-prefixp)
+              (:rewrite collapse-hifat-place-file-lemma-6)
+              (:rewrite abs-place-file-helper-correctness-1)
+              (:rewrite partial-collapse-correctness-lemma-2)
+              (:rewrite abs-complete-when-atom-abs-addrs)
+              (:rewrite equal-of-abs-file)
+              (:rewrite m1-file-contents-p-correctness-1)
+              (:rewrite default-car)
+              (:rewrite abs-file-contents-p-when-m1-file-contents-p)
+              (:rewrite m1-file-alist-p-when-not-consp)
+              (:type-prescription fat32-filename-fix)
+              (:rewrite abs-mkdir-correctness-lemma-52)
+              (:rewrite abs-fs-p-when-hifat-no-dups-p)
+              (:linear len-of-member)
+              (:rewrite abs-mkdir-correctness-lemma-157)
+              (:rewrite abs-addrs-when-m1-file-alist-p)
+              (:rewrite abs-addrs-when-m1-file-contents-p)
+              (:linear len-when-prefixp)
+              (:rewrite m1-file-alist-p-of-abs-place-file-helper)))
         :expand
         ((:free (abs-file-alist1)
                 (abs-place-file-helper abs-file-alist1 path file))
