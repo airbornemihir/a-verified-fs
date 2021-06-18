@@ -9980,38 +9980,60 @@
       (implies
        (or (not (ctx-app-ok abs-file-alist1 x x-path))
            (and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
-                (not (fat32-filename-list-prefixp path x-path))
                 (not (fat32-filename-list-prefixp x-path path)))
            (atom path)
-           (fat32-filename-list-prefixp path x-path))
-       (equal (mv-nth 0
-                      (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                                             path file))
-              (cond
-               ((not (ctx-app-ok abs-file-alist1 x x-path))
-                (mv-nth 0
-                        (abs-place-file-helper abs-file-alist1 path file)))
-               ((and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
-                     (not (fat32-filename-list-prefixp path x-path))
-                     (not (fat32-filename-list-prefixp x-path path)))
-                (ctx-app (mv-nth 0
-                                 (abs-place-file-helper abs-file-alist1 path file))
-                         fs x x-path))
-               ((atom path)
-                (abs-fs-fix (ctx-app abs-file-alist1 fs x x-path)))
-               ((and (fat32-filename-list-prefixp path x-path)
-                     (m1-regular-file-p (abs-no-dups-file-fix file)))
-                (abs-fs-fix (ctx-app abs-file-alist1 fs x x-path)))
-               ((fat32-filename-list-prefixp path x-path)
-                (mv-nth 0
-                        (abs-place-file-helper abs-file-alist1 path file))))))
+           (fat32-filename-list-prefixp path x-path)
+           (and (ctx-app-ok abs-file-alist1 x x-path)
+                (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
+                (fat32-filename-list-prefixp x-path path)
+                (not (fat32-filename-list-prefixp path x-path))))
+       (equal
+        (mv-nth 0
+                (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
+                                       path file))
+        (cond ((not (ctx-app-ok abs-file-alist1 x x-path))
+               (mv-nth 0
+                       (abs-place-file-helper abs-file-alist1 path file)))
+              ((and (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
+                    (not (fat32-filename-list-prefixp path x-path))
+                    (not (fat32-filename-list-prefixp x-path path)))
+               (ctx-app (mv-nth 0
+                                (abs-place-file-helper abs-file-alist1 path file))
+                        fs x x-path))
+              ((or (atom path)
+                   (and (fat32-filename-list-prefixp path x-path)
+                        (m1-regular-file-p (abs-no-dups-file-fix file))))
+               (abs-fs-fix (ctx-app abs-file-alist1 fs x x-path)))
+              ((fat32-filename-list-prefixp path x-path)
+               (mv-nth 0
+                       (abs-place-file-helper abs-file-alist1 path file)))
+              ((and (ctx-app-ok abs-file-alist1 x x-path)
+                    (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
+                    (fat32-filename-list-prefixp x-path path)
+                    (not (fat32-filename-list-prefixp path x-path))
+                    (member-equal (fat32-filename-fix (nth (len x-path) path))
+                                  (names-at abs-file-alist1 x-path)))
+               (ctx-app (mv-nth 0
+                                (abs-place-file-helper abs-file-alist1 path file))
+                        fs x x-path))
+              ((and (ctx-app-ok abs-file-alist1 x x-path)
+                    (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
+                    (fat32-filename-list-prefixp x-path path)
+                    (not (fat32-filename-list-prefixp path x-path)))
+               (ctx-app abs-file-alist1
+                        (mv-nth 0
+                                (abs-place-file-helper fs (nthcdr (len x-path) path)
+                                                       file))
+                        x x-path)))))
       :hints
-      (("goal" :induct (induction-scheme abs-file-alist1 path x-path)
+      (("goal"
+        :induct (induction-scheme abs-file-alist1 path x-path)
         :do-not-induct t
         :in-theory
         (e/d (ctx-app fat32-filename-list-prefixp
                       abs-place-file-helper
-                      ctx-app-ok addrs-at names-at)
+                      ctx-app-ok addrs-at
+                      names-at nth put-assoc-of-remove)
              ((:rewrite abs-file-alist-p-correctness-1)
               (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
               (:rewrite hifat-equiv-when-absfat-equiv . 1)
@@ -10031,10 +10053,14 @@
               (:rewrite remove-when-absent)
               (:rewrite abs-addrs-of-ctx-app-2)
               (:rewrite consp-of-append)))
-        :expand ((:free (abs-file-alist1)
-                        (abs-place-file-helper abs-file-alist1 path file))
-                 (:free (abs-file-alist1)
-                        (ctx-app abs-file-alist1 fs x x-path)))))))
+        :expand
+        ((:free (abs-file-alist1)
+                (abs-place-file-helper abs-file-alist1 path file))
+         (:free (abs-file-alist1)
+                (ctx-app abs-file-alist1 fs x x-path))
+         (:with abs-fs-fix-when-abs-fs-p
+                (abs-fs-fix (append (remove-equal 0 (abs-fs-fix abs-file-alist1))
+                                    (abs-fs-fix fs)))))))))
 
   (theory-invariant (not (and (active-runep '(:rewrite abs-place-file-helper-of-ctx-app-1))
                               (active-runep '(:rewrite abs-place-file-helper-of-ctx-app-4)))))
