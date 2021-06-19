@@ -11703,23 +11703,26 @@
 
   (defthm
     collapse-hifat-place-file-lemma-84
-    (implies (and (integerp n1)
-                  (integerp n2)
-                  (<= 0 n1)
-                  (>= n2 n1)
-                  (<= n1 (len l1))
-                  (<= n1 (len (nthcdr (+ n2 (- n1)) l2)))
-                  (fat32-filename-list-equiv (take n1 l1)
-                                             (take n1 (nthcdr (- n2 n1) l2))))
-             (equal (fat32-filename-list-equiv (nthcdr n1 l1)
-                                               (nthcdr n2 l2))
-                    (fat32-filename-list-equiv l1 (nthcdr (- n2 n1) l2))))
+    (implies
+     (and
+      (>= (nfix (nfix n2)) (nfix n1))
+      (<= (nfix n1) (len l1))
+      (<= (nfix n1)
+          (len (nthcdr (- (nfix n2) (nfix n1)) l2)))
+      (fat32-filename-list-equiv (take (nfix n1) l1)
+                                 (take (nfix n1)
+                                       (nthcdr (- (nfix n2) (nfix n1)) l2))))
+     (equal (fat32-filename-list-equiv (nthcdr n1 l1)
+                                       (nthcdr n2 l2))
+            (fat32-filename-list-equiv l1
+                                       (nthcdr (- (nfix n2) (nfix n1)) l2))))
     :hints (("goal" :do-not-induct t
              :in-theory (e/d (painful-debugging-lemma-21)
                              (collapse-hifat-place-file-lemma-83))
              :use ((:instance collapse-hifat-place-file-lemma-83
                               (n n1)
-                              (l2 (nthcdr (- n2 n1) l2)))))))
+                              (l2 (nthcdr (- (nfix n2) (nfix n1))
+                                          l2)))))))
 
   (thm
    (implies
