@@ -11705,12 +11705,13 @@
     collapse-hifat-place-file-lemma-84
     (implies
      (and
-      (>= (nfix (nfix n2)) (nfix n1))
+      (>= (nfix n2) (nfix n1))
       (<= (nfix n1) (len l1))
       (<= (nfix n1)
-          (len (nthcdr (- (nfix n2) (nfix n1)) l2)))
-      (fat32-filename-list-equiv (take (nfix n1) l1)
-                                 (take (nfix n1)
+          (nfix (- (len l2)
+                   (nfix (- (nfix n2) (nfix n1))))))
+      (fat32-filename-list-equiv (take n1 l1)
+                                 (take n1
                                        (nthcdr (- (nfix n2) (nfix n1)) l2))))
      (equal (fat32-filename-list-equiv (nthcdr n1 l1)
                                        (nthcdr n2 l2))
@@ -11723,6 +11724,18 @@
                               (n n1)
                               (l2 (nthcdr (- (nfix n2) (nfix n1))
                                           l2)))))))
+
+  (defthm painful-debugging-lemma-19
+    (equal (< (+ v z) (+ w x y z))
+           (< v (+ w x y)))
+    :hints (("goal" :in-theory (disable painful-debugging-lemma-18)
+             :use (:instance painful-debugging-lemma-18 (x v)
+                             (y (+ w x y))))))
+
+  (defthm collapse-hifat-place-file-lemma-85
+    (implies (fat32-filename-list-equiv y (take n x))
+             (equal (fat32-filename-list-prefixp x y)
+                    (>= (nfix n) (len x)))))
 
   (thm
    (implies
