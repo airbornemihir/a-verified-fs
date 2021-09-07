@@ -11610,10 +11610,11 @@
     (implies (fat32-filename-list-prefixp x y)
              (equal (< (len y) (len x)) nil))
     :rule-classes
-    ((:rewrite)
+    (:rewrite
      (:linear
       :corollary (implies (fat32-filename-list-prefixp x y)
-                          (<= (len x) (len y)))))
+                          (<= (len x) (len y))))
+     :forward-chaining)
     :hints
     (("goal" :in-theory (enable fat32-filename-list-prefixp))))
 
@@ -11689,53 +11690,99 @@
              :use (:instance collapse-hifat-place-file-lemma-81
                              (x (fat32-filename-list-fix x))))))
 
-  (defthm collapse-hifat-place-file-lemma-83
-    (implies (and (<= (nfix n) (len l1))
-                  (<= (nfix n) (len l2))
-                  (fat32-filename-list-equiv (take n l1)
-                                             (take n l2)))
-             (equal (fat32-filename-list-equiv (nthcdr n l1)
-                                               (nthcdr n l2))
-                    (fat32-filename-list-equiv l1 l2)))
-    :hints (("goal" :in-theory (enable fat32-filename-list-equiv
-                                       fat32-filename-list-fix)
-             :induct (mv (take n l1) (take n l2)))))
+  (encapsulate
+    ()
 
-  (defthm
-    collapse-hifat-place-file-lemma-84
-    (implies
-     (and
-      (>= (nfix n2) (nfix n1))
-      (<= (nfix n1) (len l1))
-      (<= (nfix n1)
-          (nfix (- (len l2)
-                   (nfix (- (nfix n2) (nfix n1))))))
-      (fat32-filename-list-equiv (take n1 l1)
-                                 (take n1
-                                       (nthcdr (- (nfix n2) (nfix n1)) l2))))
-     (equal (fat32-filename-list-equiv (nthcdr n1 l1)
-                                       (nthcdr n2 l2))
-            (fat32-filename-list-equiv l1
-                                       (nthcdr (- (nfix n2) (nfix n1)) l2))))
-    :hints (("goal" :do-not-induct t
-             :in-theory (e/d (painful-debugging-lemma-21)
-                             (collapse-hifat-place-file-lemma-83))
-             :use ((:instance collapse-hifat-place-file-lemma-83
-                              (n n1)
-                              (l2 (nthcdr (- (nfix n2) (nfix n1))
-                                          l2)))))))
+    (defthmd lemma
+      (implies (and (<= (nfix n) (len l1))
+                    (<= (nfix n) (len l2))
+                    (fat32-filename-list-equiv (take n l1)
+                                               (take n l2)))
+               (equal (fat32-filename-list-equiv (nthcdr n l1)
+                                                 (nthcdr n l2))
+                      (fat32-filename-list-equiv l1 l2)))
+      :hints (("goal" :in-theory (enable fat32-filename-list-equiv
+                                         fat32-filename-list-fix)
+               :induct (mv (take n l1) (take n l2)))))
+
+    (defthm
+      collapse-hifat-place-file-lemma-83
+      (implies
+       (and
+        (>= (nfix n2) (nfix n1))
+        (<= (nfix n1) (len l1))
+        (<= (nfix n1)
+            (nfix (- (len l2)
+                     (nfix (- (nfix n2) (nfix n1))))))
+        (fat32-filename-list-equiv (take n1 l1)
+                                   (take n1
+                                         (nthcdr (- (nfix n2) (nfix n1)) l2))))
+       (and
+        (equal (fat32-filename-list-equiv (nthcdr n1 l1)
+                                          (nthcdr n2 l2))
+               (fat32-filename-list-equiv l1 (nthcdr (- (nfix n2) (nfix n1)) l2)))
+        (equal (fat32-filename-list-equiv (nthcdr n2 l2)
+                                          (nthcdr n1 l1))
+               (fat32-filename-list-equiv (nthcdr (- (nfix n2) (nfix n1)) l2)
+                                          l1))))
+      :hints
+      (("goal"
+        :do-not-induct t
+        :in-theory (e/d (painful-debugging-lemma-21 fat32-filename-list-equiv)
+                        (lemma))
+        :use ((:instance lemma (n n1)
+                         (l2 (nthcdr (- (nfix n2) (nfix n1))
+                                     l2))))))))
 
   (defthm painful-debugging-lemma-19
-    (equal (< (+ v z) (+ w x y z))
-           (< v (+ w x y)))
-    :hints (("goal" :in-theory (disable painful-debugging-lemma-18)
-             :use (:instance painful-debugging-lemma-18 (x v)
-                             (y (+ w x y))))))
+    (iff (< (+ y x) x) (< y 0))
+    :rule-classes ((:rewrite :corollary (equal (< (+ y x) x) (< y 0)))))
 
   (defthm collapse-hifat-place-file-lemma-85
     (implies (fat32-filename-list-equiv y (take n x))
              (equal (fat32-filename-list-prefixp x y)
                     (>= (nfix n) (len x)))))
+
+  ;; This seems like a general and dangerous rule. We've kept the rewriting
+  ;; order such that it keeps moving towards smaller terms, but that might not
+  ;; be helpful if two terms are list-equiv and the type-alist includes both of
+  ;; the resulting prefix relationships.
+  (defthmd collapse-hifat-place-file-lemma-86
+    (implies (and (prefixp x y)
+                  (<= (nfix n) (len x)))
+             (equal (take n y) (take n x))))
+
+  (defthmd collapse-hifat-place-file-lemma-87
+    (implies (and (fat32-filename-list-prefixp x y)
+                  (<= (nfix n) (len x)))
+             (fat32-filename-list-equiv (take n y)
+                                        (take n x))))
+
+  (defthm collapse-hifat-place-file-lemma-88
+    (implies (and (fat32-filename-list-prefixp (nthcdr n1 l1)
+                                               l2)
+                  (<= (- (nfix n2) (nfix n1))
+                      (len (nthcdr n1 l1))))
+             (fat32-filename-list-equiv (nthcdr n1 (take n2 l1))
+                                        (take (- (nfix n2) (nfix n1)) l2)))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable take-of-nthcdr)
+             :use ((:theorem (= (+ n1 (- n1) n2) (fix n2)))
+                   (:instance collapse-hifat-place-file-lemma-87
+                              (x (nthcdr n1 l1))
+                              (y l2)
+                              (n (- (nfix n2) (nfix n1))))))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-89
+    (implies (and (< (nfix n) (- (len path) 1))
+                  (not (member-equal (nth n (fat32-filename-list-fix path))
+                                     (names-at fs (take n path)))))
+             (> (mv-nth 1 (abs-place-file-helper fs path file))
+                0))
+    :hints (("goal" :in-theory (enable names-at
+                                       nth take abs-place-file-helper)))
+    :rule-classes :linear)
 
   (thm
    (implies
