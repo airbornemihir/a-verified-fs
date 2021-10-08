@@ -10683,25 +10683,17 @@
 
   (defthm
     collapse-hifat-place-file-lemma-50
-    (implies
-     (and
-      (equal
-       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         frame)))
-       0)
-      (< 0 (1st-complete (frame->frame frame)))
-      (not (equal (1st-complete (frame->frame frame))
-                  x))
-      (abs-separate frame)
-      (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-      (consp (assoc-equal 0 frame))
-      (path-clear path (remove-assoc-equal x frame))
-      (not (equal 0 x)))
-     (path-clear
-      path
-      (remove-assoc-equal x
-                          (collapse-this frame
-                                         (1st-complete (frame->frame frame))))))
+    (implies (and (equal (frame-val->src (cdr (assoc-equal y frame)))
+                         0)
+                  (< 0 y)
+                  (not (equal y x))
+                  (abs-separate frame)
+                  (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+                  (consp (assoc-equal 0 frame))
+                  (path-clear path (remove-assoc-equal x frame))
+                  (not (equal 0 x)))
+             (path-clear path
+                         (remove-assoc-equal x (collapse-this frame y))))
     :hints
     (("goal"
       :do-not '(preprocess)
@@ -11982,6 +11974,554 @@
   ;;                 (:rewrite abs-find-file-correctness-2)
   ;;                 (:rewrite abs-find-file-helper-of-collapse-1 . 2)))))
   ;;  :otf-flg t)
+
+  ;; Kinda redundant with cp-without-subdirs-helper-correctness-lemma-19.
+  (defthm collapse-hifat-place-file-lemma-91
+    (implies (good-frame-p frame)
+             (and
+              (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+                     0)
+              (list-equiv (frame-val->path (cdr (assoc-equal 0 frame)))
+                          nil)
+              (mv-nth 1 (collapse frame))))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable good-frame-p list-equiv))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-92
+    (implies
+     (and
+      (mv-nth 1 (collapse frame))
+      (not (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))))
+     (prefixp
+      (frame-val->path
+       (cdr (assoc-equal (frame-val->src (cdr (assoc-equal x frame)))
+                         frame)))
+      (frame-val->path (cdr (assoc-equal x frame)))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory (e/d (frame->frame)
+                      (abs-separate-of-frame->frame-of-collapse-this-lemma-8))
+      :use abs-separate-of-frame->frame-of-collapse-this-lemma-8)))
+
+  (defthm
+    collapse-hifat-place-file-lemma-93
+    (implies
+     (good-frame-p frame)
+     (prefixp
+      (frame-val->path
+       (cdr (assoc-equal (frame-val->src (cdr (assoc-equal x frame)))
+                         frame)))
+      (frame-val->path (cdr (assoc-equal x frame)))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory (e/d (frame->frame)
+                      (abs-separate-of-frame->frame-of-collapse-this-lemma-8))
+      :use abs-separate-of-frame->frame-of-collapse-this-lemma-8)))
+
+  (defthm collapse-hifat-place-file-lemma-94
+    (implies (and (equal (1st-complete (frame->frame frame))
+                         0)
+                  (good-frame-p frame))
+             (not (consp (frame->frame frame))))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable good-frame-p collapse))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-95
+    (implies
+     (and
+      (equal
+       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                         frame)))
+       0)
+      (not
+       (ctx-app-ok
+        (frame->root frame)
+        (1st-complete (frame->frame frame))
+        (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           frame)))))
+      (good-frame-p frame))
+     (not (consp (frame->frame frame))))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable good-frame-p
+                                collapse assoc-of-frame->frame))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-96
+    (implies
+     (and
+      (< 0
+         (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           frame))))
+      (good-frame-p frame))
+     (consp
+      (assoc-equal
+       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                         frame)))
+       frame)))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable collapse
+                                good-frame-p frame->frame-of-put-assoc
+                                assoc-of-frame->frame
+                                frame->frame-of-put-assoc
+                                assoc-of-frame->frame))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-97
+    (implies
+     (and
+      (equal
+       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                         frame)))
+       (1st-complete (frame->frame frame)))
+      (good-frame-p frame))
+     (not (consp (frame->frame frame))))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable collapse
+                                good-frame-p frame->frame-of-put-assoc
+                                assoc-of-frame->frame
+                                frame->frame-of-put-assoc
+                                assoc-of-frame->frame))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-98
+    (implies
+     (and
+      (not
+       (consp
+        (assoc-equal
+         (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           frame)))
+         frame)))
+      (good-frame-p frame))
+     (ctx-app-ok
+      (frame->root frame)
+      (1st-complete (frame->frame frame))
+      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                         frame)))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (enable collapse good-frame-p frame->frame-of-put-assoc
+              assoc-of-frame->frame
+              frame->frame-of-put-assoc
+              assoc-of-frame->frame))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-99
+    (implies
+     (and
+      (not
+       (equal
+        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          frame)))
+        0))
+      (good-frame-p frame))
+     (ctx-app-ok
+      (frame-val->dir
+       (cdr
+        (assoc-equal
+         (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           frame)))
+         frame)))
+      (1st-complete (frame->frame frame))
+      (nthcdr
+       (len
+        (frame-val->path
+         (cdr (assoc-equal
+               (frame-val->src
+                (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                  frame)))
+               frame))))
+       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          frame))))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (enable collapse good-frame-p frame->frame-of-put-assoc
+              assoc-of-frame->frame
+              frame->frame-of-put-assoc
+              assoc-of-frame->frame))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-100
+    (implies
+     (and (< 0 (1st-complete (frame->frame frame)))
+          (m1-file-p file)
+          (abs-no-dups-file-p file)
+          (good-frame-p frame)
+          (not (equal 0 x)))
+     (>
+      (1st-complete
+       (put-assoc-equal
+        x
+        (frame-val
+         (frame-val->path (cdr (assoc-equal x frame)))
+         (mv-nth
+          0
+          (abs-place-file-helper (frame-val->dir (cdr (assoc-equal x frame)))
+                                 nil file))
+         (frame-val->src (cdr (assoc-equal x frame))))
+        (frame->frame frame)))
+      0))
+    :rule-classes :linear
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (collapse good-frame-p frame->frame-of-put-assoc
+                     assoc-of-frame->frame
+                     frame->frame-of-put-assoc
+                     assoc-of-frame->frame)
+           ((:rewrite collapse-hifat-place-file-lemma-6)
+            (:rewrite abs-place-file-helper-of-ctx-app-lemma-1)
+            (:definition fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-equal-lengths)
+            (:linear abs-separate-of-frame->frame-of-collapse-this-lemma-12)
+            (:rewrite abs-fs-p-of-ctx-app)
+            (:rewrite 1st-complete-under-path-of-put-assoc-lemma-1)
+            (:definition no-duplicatesp-equal)
+            (:rewrite subsetp-when-subsetp)
+            (:rewrite len-when-prefixp)
+            (:rewrite subsetp-car-member)
+            (:rewrite collapse-hifat-place-file-lemma-53)
+            (:rewrite collapse-hifat-place-file-lemma-5)
+            (:definition len)
+            (:rewrite abs-find-file-helper-of-collapse-2 . 1)
+            (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
+                      . 1)
+            (:rewrite consp-of-cdr-of-nthcdr)
+            (:rewrite len-when-fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-prefixp)
+            (:rewrite collapse-hifat-place-file-lemma-97)
+            (:type-prescription len-when-consp)
+            (:rewrite collapse-hifat-place-file-lemma-78)
+            (:rewrite frame-p-when-not-consp)
+            (:rewrite abs-find-file-helper-of-collapse-1 . 1)
+            (:rewrite subsetp-of-remove1)
+            (:rewrite collapse-hifat-place-file-lemma-13))))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-101
+    (implies
+     (and (m1-file-p file)
+          (abs-no-dups-file-p file)
+          (good-frame-p frame))
+     (equal
+      (abs-complete
+       (mv-nth 0
+               (abs-place-file-helper
+                (frame-val->dir$inline (cdr (assoc-equal x frame)))
+                nil file)))
+      (abs-complete (frame-val->dir$inline (cdr (assoc-equal x frame))))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (collapse good-frame-p frame->frame-of-put-assoc
+                     assoc-of-frame->frame
+                     frame->frame-of-put-assoc
+                     assoc-of-frame->frame)
+           ((:rewrite collapse-hifat-place-file-lemma-6)
+            (:rewrite abs-place-file-helper-of-ctx-app-lemma-1)
+            (:definition fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-equal-lengths)
+            (:linear abs-separate-of-frame->frame-of-collapse-this-lemma-12)
+            (:rewrite abs-fs-p-of-ctx-app)
+            (:rewrite 1st-complete-under-path-of-put-assoc-lemma-1)
+            (:definition no-duplicatesp-equal)
+            (:rewrite subsetp-when-subsetp)
+            (:rewrite len-when-prefixp)
+            (:rewrite subsetp-car-member)
+            (:rewrite collapse-hifat-place-file-lemma-53)
+            (:rewrite collapse-hifat-place-file-lemma-5)
+            (:definition len)
+            (:rewrite abs-find-file-helper-of-collapse-2 . 1)
+            (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
+                      . 1)
+            (:rewrite consp-of-cdr-of-nthcdr)
+            (:rewrite len-when-fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-prefixp)
+            (:rewrite collapse-hifat-place-file-lemma-97)
+            (:type-prescription len-when-consp)
+            (:rewrite collapse-hifat-place-file-lemma-78)
+            (:rewrite frame-p-when-not-consp)
+            (:rewrite abs-find-file-helper-of-collapse-1 . 1)
+            (:rewrite subsetp-of-remove1)
+            (:rewrite collapse-hifat-place-file-lemma-13))))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-102
+    (implies
+     (and
+      (good-frame-p frame)
+      (consp
+       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          frame)))))
+     (good-frame-p (collapse-this frame
+                                  (1st-complete (frame->frame frame)))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (collapse good-frame-p frame->frame-of-put-assoc
+                     assoc-of-frame->frame
+                     frame->frame-of-put-assoc
+                     assoc-of-frame->frame)
+           ((:rewrite collapse-hifat-place-file-lemma-6)
+            (:rewrite abs-place-file-helper-of-ctx-app-lemma-1)
+            (:definition fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-equal-lengths)
+            (:linear abs-separate-of-frame->frame-of-collapse-this-lemma-12)
+            (:rewrite 1st-complete-under-path-of-put-assoc-lemma-1)
+            (:definition no-duplicatesp-equal)
+            (:rewrite subsetp-when-subsetp)
+            (:rewrite len-when-prefixp)
+            (:rewrite subsetp-car-member)
+            (:rewrite collapse-hifat-place-file-lemma-53)
+            (:rewrite collapse-hifat-place-file-lemma-5)
+            (:definition len)
+            (:rewrite abs-find-file-helper-of-collapse-2 . 1)
+            (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
+                      . 1)
+            (:rewrite consp-of-cdr-of-nthcdr)
+            (:rewrite len-when-fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-prefixp)
+            (:rewrite collapse-hifat-place-file-lemma-97)
+            (:type-prescription len-when-consp)
+            (:rewrite collapse-hifat-place-file-lemma-78)
+            (:rewrite frame-p-when-not-consp)
+            (:rewrite abs-find-file-helper-of-collapse-1 . 1)
+            (:rewrite collapse-hifat-place-file-lemma-13))))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-103
+    (implies
+     (and
+      (equal
+       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                         frame)))
+       0)
+      (ctx-app-ok
+       (frame->root frame)
+       (1st-complete (frame->frame frame))
+       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          frame))))
+      (good-frame-p frame))
+     (good-frame-p (collapse-this frame
+                                  (1st-complete (frame->frame frame)))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (collapse good-frame-p frame->frame-of-put-assoc
+                     assoc-of-frame->frame
+                     frame->frame-of-put-assoc
+                     assoc-of-frame->frame)
+           ((:rewrite collapse-hifat-place-file-lemma-6)
+            (:rewrite abs-place-file-helper-of-ctx-app-lemma-1)
+            (:definition fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-equal-lengths)
+            (:linear abs-separate-of-frame->frame-of-collapse-this-lemma-12)
+            (:rewrite 1st-complete-under-path-of-put-assoc-lemma-1)
+            (:definition no-duplicatesp-equal)
+            (:rewrite subsetp-when-subsetp)
+            (:rewrite len-when-prefixp)
+            (:rewrite subsetp-car-member)
+            (:rewrite collapse-hifat-place-file-lemma-53)
+            (:rewrite collapse-hifat-place-file-lemma-5)
+            (:definition len)
+            (:rewrite abs-find-file-helper-of-collapse-2 . 1)
+            (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
+                      . 1)
+            (:rewrite consp-of-cdr-of-nthcdr)
+            (:rewrite len-when-fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-prefixp)
+            (:rewrite collapse-hifat-place-file-lemma-97)
+            (:type-prescription len-when-consp)
+            (:rewrite collapse-hifat-place-file-lemma-78)
+            (:rewrite frame-p-when-not-consp)
+            (:rewrite abs-find-file-helper-of-collapse-1 . 1)
+            (:rewrite collapse-hifat-place-file-lemma-13))))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-104
+    (implies
+     (and
+      (ctx-app-ok
+       (frame->root frame)
+       (1st-complete (frame->frame frame))
+       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          frame))))
+      (not (equal (1st-complete (frame->frame frame))
+                  x))
+      (good-frame-p frame)
+      (path-clear (frame-val->path (cdr (assoc-equal x frame)))
+                  (remove-assoc-equal x frame))
+      (consp (frame-val->path (cdr (assoc-equal x frame)))))
+     (path-clear (frame-val->path (cdr (assoc-equal x frame)))
+                 (remove-assoc-equal
+                  x
+                  (collapse-this frame
+                                 (1st-complete (frame->frame frame))))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (collapse good-frame-p frame->frame-of-put-assoc
+                     assoc-of-frame->frame
+                     frame->frame-of-put-assoc
+                     assoc-of-frame->frame)
+           ((:rewrite collapse-hifat-place-file-lemma-6)
+            (:rewrite abs-place-file-helper-of-ctx-app-lemma-1)
+            (:definition fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-equal-lengths)
+            (:linear abs-separate-of-frame->frame-of-collapse-this-lemma-12)
+            (:rewrite 1st-complete-under-path-of-put-assoc-lemma-1)
+            (:definition no-duplicatesp-equal)
+            (:rewrite subsetp-when-subsetp)
+            (:rewrite len-when-prefixp)
+            (:rewrite subsetp-car-member)
+            (:rewrite collapse-hifat-place-file-lemma-53)
+            (:rewrite collapse-hifat-place-file-lemma-5)
+            (:definition len)
+            (:rewrite abs-find-file-helper-of-collapse-2 . 1)
+            (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
+                      . 1)
+            (:rewrite consp-of-cdr-of-nthcdr)
+            (:rewrite len-when-fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-prefixp)
+            (:rewrite collapse-hifat-place-file-lemma-97)
+            (:type-prescription len-when-consp)
+            (:rewrite collapse-hifat-place-file-lemma-78)
+            (:rewrite frame-p-when-not-consp)
+            (:rewrite abs-find-file-helper-of-collapse-1 . 1)
+            (:rewrite collapse-hifat-place-file-lemma-13))))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-105
+    (implies
+     (and
+      (equal
+       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                         frame)))
+       0)
+      (ctx-app-ok
+       (frame->root frame)
+       (1st-complete (frame->frame frame))
+       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          frame))))
+      (not (equal (1st-complete (frame->frame frame))
+                  x))
+      (good-frame-p frame)
+      (path-clear (append (frame-val->path (cdr (assoc-equal x frame)))
+                          (dirname path))
+                  (remove-assoc-equal x frame))
+      (not (equal 0 x)))
+     (path-clear (append (frame-val->path (cdr (assoc-equal x frame)))
+                         (dirname path))
+                 (remove-assoc-equal
+                  x
+                  (collapse-this frame
+                                 (1st-complete (frame->frame frame))))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (collapse good-frame-p frame->frame-of-put-assoc
+                     assoc-of-frame->frame
+                     frame->frame-of-put-assoc
+                     assoc-of-frame->frame)
+           ((:rewrite collapse-hifat-place-file-lemma-6)
+            (:rewrite abs-place-file-helper-of-ctx-app-lemma-1)
+            (:definition fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-equal-lengths)
+            (:linear abs-separate-of-frame->frame-of-collapse-this-lemma-12)
+            (:rewrite 1st-complete-under-path-of-put-assoc-lemma-1)
+            (:definition no-duplicatesp-equal)
+            (:rewrite subsetp-when-subsetp)
+            (:rewrite len-when-prefixp)
+            (:rewrite subsetp-car-member)
+            (:rewrite collapse-hifat-place-file-lemma-53)
+            (:rewrite collapse-hifat-place-file-lemma-5)
+            (:definition len)
+            (:rewrite abs-find-file-helper-of-collapse-2 . 1)
+            (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
+                      . 1)
+            (:rewrite consp-of-cdr-of-nthcdr)
+            (:rewrite len-when-fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-prefixp)
+            (:rewrite collapse-hifat-place-file-lemma-97)
+            (:type-prescription len-when-consp)
+            (:rewrite collapse-hifat-place-file-lemma-78)
+            (:rewrite frame-p-when-not-consp)
+            (:rewrite abs-find-file-helper-of-collapse-1 . 1)
+            (:rewrite collapse-hifat-place-file-lemma-13))))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-106
+    (implies
+     (and
+      (equal
+       (frame-val->src (cdr (assoc-equal y
+                                         frame)))
+       0)
+      (< 0 y)
+      (ctx-app-ok
+       (frame->root frame)
+       y
+       (frame-val->path (cdr (assoc-equal y
+                                          frame))))
+      (not (equal y
+                  x))
+      (good-frame-p frame)
+      (consp (assoc-equal x frame))
+      (path-clear path
+                  (remove-assoc-equal x frame))
+      (not (equal 0 x)))
+     (path-clear path
+                 (remove-assoc-equal
+                  x
+                  (collapse-this frame
+                                 y))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (collapse good-frame-p frame->frame-of-put-assoc
+                     assoc-of-frame->frame
+                     frame->frame-of-put-assoc
+                     assoc-of-frame->frame)
+           ((:rewrite collapse-hifat-place-file-lemma-6)
+            (:rewrite abs-place-file-helper-of-ctx-app-lemma-1)
+            (:definition fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-equal-lengths)
+            (:linear abs-separate-of-frame->frame-of-collapse-this-lemma-12)
+            (:rewrite 1st-complete-under-path-of-put-assoc-lemma-1)
+            (:definition no-duplicatesp-equal)
+            (:rewrite subsetp-when-subsetp)
+            (:rewrite len-when-prefixp)
+            (:rewrite subsetp-car-member)
+            (:rewrite collapse-hifat-place-file-lemma-53)
+            (:rewrite collapse-hifat-place-file-lemma-5)
+            (:definition len)
+            (:rewrite abs-find-file-helper-of-collapse-2 . 1)
+            (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
+                      . 1)
+            (:rewrite consp-of-cdr-of-nthcdr)
+            (:rewrite len-when-fat32-filename-list-prefixp)
+            (:rewrite prefixp-when-prefixp)
+            (:rewrite collapse-hifat-place-file-lemma-97)
+            (:type-prescription len-when-consp)
+            (:rewrite collapse-hifat-place-file-lemma-78)
+            (:rewrite frame-p-when-not-consp)
+            (:rewrite abs-find-file-helper-of-collapse-1 . 1)
+            (:rewrite collapse-hifat-place-file-lemma-13))))))
 
   (thm
    (implies
