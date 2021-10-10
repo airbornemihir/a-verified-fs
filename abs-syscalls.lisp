@@ -11689,17 +11689,18 @@
   (encapsulate
     ()
 
-    (defthmd lemma
-      (implies (and (<= (nfix n) (len l1))
-                    (<= (nfix n) (len l2))
-                    (fat32-filename-list-equiv (take n l1)
-                                               (take n l2)))
-               (equal (fat32-filename-list-equiv (nthcdr n l1)
-                                                 (nthcdr n l2))
-                      (fat32-filename-list-equiv l1 l2)))
-      :hints (("goal" :in-theory (enable fat32-filename-list-equiv
-                                         fat32-filename-list-fix)
-               :induct (mv (take n l1) (take n l2)))))
+    (local
+     (defthmd lemma
+       (implies (and (<= (nfix n) (len l1))
+                     (<= (nfix n) (len l2))
+                     (fat32-filename-list-equiv (take n l1)
+                                                (take n l2)))
+                (equal (fat32-filename-list-equiv (nthcdr n l1)
+                                                  (nthcdr n l2))
+                       (fat32-filename-list-equiv l1 l2)))
+       :hints (("goal" :in-theory (enable fat32-filename-list-equiv
+                                          fat32-filename-list-fix)
+                :induct (mv (take n l1) (take n l2))))))
 
     (defthm
       collapse-hifat-place-file-lemma-83
