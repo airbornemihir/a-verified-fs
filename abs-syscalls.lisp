@@ -2607,15 +2607,6 @@
   :hints (("goal" :in-theory (enable names-at abs-find-file-helper (:DEFINITION
                                                                     BINARY-APPEND)))))
 
-(defthmd
-  abs-mkdir-correctness-lemma-5
-  (implies (consp (assoc-equal (basename path)
-                               (frame-val->dir (cdr (assoc-equal 0 frame)))))
-           (consp (assoc-equal (basename path)
-                               (frame->root frame))))
-  :hints (("goal" :in-theory (e/d (frame->root)
-                                  (frame->root-normalisation)))))
-
 (defthm abs-mkdir-correctness-lemma-50
   (implies (not (consp path))
            (equal (dirname path) nil))
@@ -9197,15 +9188,6 @@
                            (dirname path)))
      (root (frame->root (partial-collapse frame (dirname path))))))))
 
-;; This lemma could come into conflict with the definition of frame->root as
-;; and when it is enabled...
-(defthmd abs-pwrite-correctness-lemma-40
-  (equal (assoc-equal name
-                      (frame-val->dir (cdr (assoc-equal 0 frame))))
-         (assoc-equal name (frame->root frame)))
-  :hints (("goal" :in-theory (e/d (frame->root)
-                                  (frame->root-normalisation)))))
-
 (encapsulate
   ()
 
@@ -10468,28 +10450,6 @@
                          assoc-of-frame->frame frame-with-root
                          frame->frame-of-put-assoc))))
 
-  ;; Things are starting to crack because we didn't choose to normalise
-  ;; frame->root.
-  (defthm
-    collapse-hifat-place-file-lemma-27
-    (equal
-     (ctx-app-ok
-      (frame-val->dir (cdr (assoc-equal 0 frame)))
-      (1st-complete (frame->frame frame))
-      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         frame))))
-     (ctx-app-ok
-      (frame->root frame)
-      (1st-complete (frame->frame frame))
-      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         frame)))))
-    :hints (("goal" :do-not-induct t
-             :in-theory (e/d (frame->root)
-                             (frame->root-normalisation)))))
-
-  (theory-invariant (not (and (active-runep '(:rewrite collapse-hifat-place-file-lemma-27))
-                              (active-runep '(:definition frame->root)))))
-
   (defthm
     collapse-hifat-place-file-lemma-28
     (implies
@@ -10539,8 +10499,7 @@
       :do-not-induct t
       :in-theory (e/d (frame->root)
                       (frame->root-normalisation
-                       (:rewrite collapse-hifat-place-file-lemma-28)
-                       collapse-hifat-place-file-lemma-27))
+                       (:rewrite collapse-hifat-place-file-lemma-28)))
       :use
       (:instance
        (:rewrite collapse-hifat-place-file-lemma-28)
@@ -10752,8 +10711,7 @@
       :do-not-induct t
       :in-theory (e/d (frame->root)
                       (frame->root-normalisation
-                       abs-separate-of-frame->frame-of-collapse-this-lemma-3
-                       collapse-hifat-place-file-lemma-27))
+                       abs-separate-of-frame->frame-of-collapse-this-lemma-3))
       :use (:instance abs-separate-of-frame->frame-of-collapse-this-lemma-3
                       (y 0))))
     :rule-classes
@@ -10796,8 +10754,7 @@
     (local
      (in-theory (e/d (collapse-this assoc-of-frame->frame frame-with-root
                                     frame->frame-of-put-assoc frame->root)
-                     (collapse-hifat-place-file-lemma-27
-                      (:rewrite collapse-hifat-place-file-lemma-16)
+                     ((:rewrite collapse-hifat-place-file-lemma-16)
                       frame->root-normalisation))))
 
     (defthm
@@ -11073,8 +11030,7 @@
       :in-theory (e/d (collapse-this assoc-of-frame->frame frame-with-root
                                      frame->frame-of-put-assoc
                                      frame->root path-clear)
-                      (collapse-hifat-place-file-lemma-27
-                       (:rewrite collapse-hifat-place-file-lemma-16)
+                      ( (:rewrite collapse-hifat-place-file-lemma-16)
                        frame->root-normalisation)))))
 
   (defthm
@@ -11109,8 +11065,7 @@
       :in-theory (e/d (collapse-this assoc-of-frame->frame frame-with-root
                                      frame->frame-of-put-assoc
                                      frame->root path-clear)
-                      (collapse-hifat-place-file-lemma-27
-                       (:rewrite collapse-hifat-place-file-lemma-16)
+                      ( (:rewrite collapse-hifat-place-file-lemma-16)
                        frame->root-normalisation)))))
 
   (defthm
@@ -11144,8 +11099,7 @@
       :in-theory (e/d (collapse-this assoc-of-frame->frame frame-with-root
                                      frame->frame-of-put-assoc
                                      frame->root path-clear len)
-                      (collapse-hifat-place-file-lemma-27
-                       (:rewrite collapse-hifat-place-file-lemma-16)
+                      ( (:rewrite collapse-hifat-place-file-lemma-16)
                        frame->root-normalisation))
       :use (:theorem (equal (equal (len path) 0)
                             (atom path))))))
@@ -11179,8 +11133,7 @@
       :do-not-induct t
       :in-theory (e/d (frame->frame frame->root)
                       ((:rewrite dist-names-of-frame->root-and-frame->frame)
-                       frame->root-normalisation
-                       collapse-hifat-place-file-lemma-27))
+                       frame->root-normalisation))
       :use (:rewrite dist-names-of-frame->root-and-frame->frame))))
 
   (defthm
@@ -11263,8 +11216,7 @@
                                      frame->frame-of-put-assoc
                                      abs-separate frame->root path-clear
                                      collapse abs-find-file frame-addrs-root)
-                      (collapse-hifat-place-file-lemma-27
-                       (:rewrite collapse-hifat-place-file-lemma-16)
+                      ( (:rewrite collapse-hifat-place-file-lemma-16)
                        (:rewrite abs-find-file-correctness-2)
                        frame->root-normalisation))
       :use
@@ -11312,8 +11264,7 @@
       :in-theory (e/d (collapse-this assoc-of-frame->frame frame-with-root
                                      frame->frame-of-put-assoc
                                      frame->root frame->frame path-clear)
-                      (collapse-hifat-place-file-lemma-27
-                       (:rewrite collapse-hifat-place-file-lemma-16)
+                      ( (:rewrite collapse-hifat-place-file-lemma-16)
                        frame->root-normalisation)))))
 
   (defthm
@@ -11336,8 +11287,7 @@
       :in-theory (e/d (collapse-this assoc-of-frame->frame frame-with-root
                                      frame->frame-of-put-assoc
                                      frame->root path-clear)
-                      (collapse-hifat-place-file-lemma-27
-                       (:rewrite collapse-hifat-place-file-lemma-16)
+                      ( (:rewrite collapse-hifat-place-file-lemma-16)
                        frame->root-normalisation)))))
 
   (defthm
@@ -11384,8 +11334,7 @@
       :in-theory (e/d (collapse-this assoc-of-frame->frame frame-with-root
                                      frame->frame-of-put-assoc
                                      frame->root path-clear)
-                      (collapse-hifat-place-file-lemma-27
-                       (:rewrite collapse-hifat-place-file-lemma-16)
+                      ((:rewrite collapse-hifat-place-file-lemma-16)
                        frame->root-normalisation)))))
 
   (defthm
@@ -11420,8 +11369,7 @@
            (abs-separate-of-collapse-this-lemma-7
             abs-separate-of-frame->frame-of-collapse-this-lemma-15
             (:rewrite dist-names-of-frame->root-and-frame->frame)
-            frame->root-normalisation
-            collapse-hifat-place-file-lemma-27))
+            frame->root-normalisation))
       :use (abs-separate-of-collapse-this-lemma-7
             abs-separate-of-frame->frame-of-collapse-this-lemma-15
             (:rewrite dist-names-of-frame->root-and-frame->frame)))))
@@ -11816,8 +11764,7 @@
      (equal (names-at (frame->root frame) path)
             nil))
     :hints (("goal" :in-theory (e/d (frame->root path-clear)
-                                    (frame->root-normalisation
-                                     collapse-hifat-place-file-lemma-27)))))
+                                    (frame->root-normalisation)))))
 
   (defthm
     collapse-hifat-place-file-lemma-60
@@ -12454,170 +12401,6 @@
                        (> (mv-nth 1 (hifat-place-file fs path file))
                           0)))))
 
-  ;; (thm
-  ;;  (implies
-  ;;   (and
-  ;;    (equal
-  ;;     (mv-nth
-  ;;      1
-  ;;      (hifat-find-file
-  ;;       (mv-nth
-  ;;        0
-  ;;        (collapse (collapse-this frame
-  ;;                                 (1st-complete (frame->frame frame)))))
-  ;;       (frame-val->path (cdr (assoc-equal x frame)))))
-  ;;     0)
-  ;;    (not (equal x (1st-complete (frame->frame frame))))
-  ;;    (not
-  ;;     (equal x
-  ;;            (frame-val->src
-  ;;             (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                               frame)))))
-  ;;    (consp (frame->frame frame))
-  ;;    (< 0 (1st-complete (frame->frame frame)))
-  ;;    (< 0
-  ;;       (frame-val->src
-  ;;        (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                          frame))))
-  ;;    (not
-  ;;     (equal (frame-val->src
-  ;;             (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                               frame)))
-  ;;            (1st-complete (frame->frame frame))))
-  ;;    (consp
-  ;;     (assoc-equal
-  ;;      (frame-val->src
-  ;;       (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                         frame)))
-  ;;      frame))
-  ;;    (prefixp
-  ;;     (frame-val->path
-  ;;      (cdr
-  ;;       (assoc-equal
-  ;;        (frame-val->src
-  ;;         (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                           frame)))
-  ;;        frame)))
-  ;;     (frame-val->path
-  ;;      (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                        frame))))
-  ;;    (not
-  ;;     (equal
-  ;;      (collapse
-  ;;       (put-assoc-equal
-  ;;        x
-  ;;        (frame-val
-  ;;         (frame-val->path (cdr (assoc-equal x frame)))
-  ;;         (mv-nth 0
-  ;;                 (abs-place-file-helper
-  ;;                  (frame-val->dir (cdr (assoc-equal x frame)))
-  ;;                  path file))
-  ;;         (frame-val->src (cdr (assoc-equal x frame))))
-  ;;        (collapse-this frame
-  ;;                       (1st-complete (frame->frame frame)))))
-  ;;      (collapse (collapse-this frame
-  ;;                               (1st-complete (frame->frame frame))))))
-  ;;    (m1-file-p file)
-  ;;    (hifat-no-dups-p (m1-file->contents file))
-  ;;    (abs-separate frame)
-  ;;    (abs-no-dups-file-p file)
-  ;;    (frame-p frame)
-  ;;    (no-duplicatesp-equal (strip-cars frame))
-  ;;    (subsetp-equal (abs-addrs (frame->root frame))
-  ;;                   (frame-addrs-root (frame->frame frame)))
-  ;;    (consp (assoc-equal x frame))
-  ;;    (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-  ;;    (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-  ;;           0)
-  ;;    (consp (assoc-equal 0 frame))
-  ;;    (not
-  ;;     (consp
-  ;;      (abs-addrs
-  ;;       (abs-file->contents
-  ;;        (mv-nth 0
-  ;;                (abs-find-file-helper
-  ;;                 (frame-val->dir (cdr (assoc-equal x frame)))
-  ;;                 path))))))
-  ;;    (ctx-app-ok
-  ;;     (frame-val->dir
-  ;;      (cdr
-  ;;       (assoc-equal
-  ;;        (frame-val->src
-  ;;         (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                           frame)))
-  ;;        frame)))
-  ;;     (1st-complete (frame->frame frame))
-  ;;     (nthcdr
-  ;;      (len
-  ;;       (frame-val->path
-  ;;        (cdr
-  ;;         (assoc-equal
-  ;;          (frame-val->src
-  ;;           (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                             frame)))
-  ;;          frame))))
-  ;;      (frame-val->path
-  ;;       (cdr (assoc-equal (1st-complete (frame->frame frame))
-  ;;                         frame)))))
-  ;;    (mv-nth
-  ;;     1
-  ;;     (collapse (collapse-this frame
-  ;;                              (1st-complete (frame->frame frame)))))
-  ;;    (path-clear (append (frame-val->path (cdr (assoc-equal x frame)))
-  ;;                        (dirname path))
-  ;;                (remove-assoc-equal x frame))
-  ;;    (not (equal 0 x))
-  ;;    (consp (frame-val->path (cdr (assoc-equal x frame))))
-  ;;    (consp path)
-  ;;    (not
-  ;;     (m1-directory-file-p
-  ;;      (mv-nth
-  ;;       0
-  ;;       (hifat-find-file
-  ;;        (mv-nth
-  ;;         0
-  ;;         (collapse (collapse-this frame
-  ;;                                  (1st-complete (frame->frame frame)))))
-  ;;        (frame-val->path (cdr (assoc-equal x frame))))))))
-  ;;   (path-clear (append (frame-val->path (cdr (assoc-equal x frame)))
-  ;;                       (dirname path))
-  ;;               (remove-assoc-equal
-  ;;                x
-  ;;                (collapse-this frame
-  ;;                               (1st-complete (frame->frame frame))))))
-  ;;  :hints
-  ;;  (("goal" :do-not-induct
-  ;;    t
-  ;;    :in-theory (e/d
-  ;;                (collapse collapse-this frame->frame-of-put-assoc
-  ;;                          assoc-of-frame->frame
-  ;;                          frame->frame-of-put-assoc
-  ;;                          assoc-of-frame->frame
-  ;;                          hifat-find-file
-  ;;                          hifat-place-file take-of-nthcdr)
-  ;;                ((:rewrite collapse-hifat-place-file-lemma-6)
-  ;;                 (:rewrite subsetp-of-frame-addrs-root-strip-cars
-  ;;                           . 2)
-  ;;                 (:rewrite path-clear-partial-collapse-when-zp-src-lemma-22
-  ;;                           . 1)
-  ;;                 (:rewrite hifat-find-file-correctness-1-lemma-1)
-  ;;                 (:rewrite prefixp-when-equal-lengths)
-  ;;                 (:rewrite prefixp-when-prefixp)
-  ;;                 (:definition len)
-  ;;                 (:rewrite abs-lstat-refinement-lemma-1)
-  ;;                 (:definition fat32-filename-list-prefixp)
-  ;;                 (:rewrite len-when-prefixp)
-  ;;                 (:rewrite ctx-app-ok-when-abs-complete)
-  ;;                 (:rewrite abs-mkdir-correctness-lemma-235)
-  ;;                 (:rewrite m1-regular-file-p-correctness-1)
-  ;;                 (:rewrite m1-directory-file-p-when-m1-file-p)
-  ;;                 (:rewrite abs-find-file-helper-of-ctx-app)
-  ;;                 (:rewrite abs-find-file-correctness-lemma-9)
-  ;;                 (:rewrite abs-find-file-correctness-2)
-  ;;                 (:rewrite abs-find-file-helper-of-collapse-1 . 2)))))
-  ;;  :otf-flg t)
-
-  ;; Kinda redundant with cp-without-subdirs-helper-correctness-lemma-19.
   (defthm collapse-hifat-place-file-lemma-91
     (implies (good-frame-p frame)
              (and
