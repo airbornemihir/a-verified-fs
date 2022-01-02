@@ -12857,6 +12857,42 @@
     :hints (("Goal" :in-theory (enable fat32-filename-list-prefixp-alt)
              :do-not-induct t)))
 
+  (defthm
+    collapse-hifat-place-file-lemma-114
+    (implies
+     (and
+      (fat32-filename-list-prefixp x y)
+      (not
+       (consp
+        (abs-addrs
+         (abs-file->contents (mv-nth 0 (abs-find-file-helper fs x))))))
+      (consp x))
+     (not (consp (addrs-at fs y))))
+    :hints (("goal" :in-theory (enable addrs-at fat32-filename-list-prefixp
+                                       abs-addrs abs-find-file-helper))))
+
+  (defthm
+    collapse-hifat-place-file-lemma-115
+    (implies
+     (and
+      (ctx-app-ok
+       (frame->root frame)
+       (1st-complete (frame->frame frame))
+       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          frame))))
+      (fat32-filename-list-prefixp
+       path
+       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          frame))))
+      (consp path))
+     (consp
+      (abs-addrs
+       (abs-file->contents (mv-nth 0
+                                   (abs-find-file-helper (frame->root frame)
+                                                         path))))))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable ctx-app-ok member-equal))))
+
   (thm
    (implies
     (and
