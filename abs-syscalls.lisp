@@ -10740,17 +10740,6 @@
     :hints (("goal" :in-theory (disable abs-addrs-of-ctx-app-2)
              :use abs-addrs-of-ctx-app-2)))
 
-  (defthm
-    collapse-hifat-place-file-lemma-34
-    (implies (and (abs-file-contents-p abs-file-alist)
-                  (atom (abs-addrs abs-file-alist)))
-             (not (consp (abs-addrs (abs-fs-fix abs-file-alist)))))
-    :hints
-    (("goal"
-      :in-theory (e/d (abs-file-contents-p abs-fs-fix)
-                      (no-duplicatesp-of-abs-addrs-of-abs-fs-fix-lemma-1))
-      :use no-duplicatesp-of-abs-addrs-of-abs-fs-fix-lemma-1)))
-
   (encapsulate
     ()
 
