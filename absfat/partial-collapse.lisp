@@ -2675,8 +2675,8 @@
     :hints
     (("goal"
       :in-theory
-      (e/d (fat32-filename-list-equiv$inline fat32-filename-list-prefixp-alt)
-           ((:rewrite names-at-of-ctx-app) collapse-hifat-place-file-lemma-113))
+      (e/d (fat32-filename-list-equiv$inline)
+           ((:rewrite names-at-of-ctx-app)))
       :use
       (:instance
        (:rewrite names-at-of-ctx-app)
@@ -8093,11 +8093,11 @@
     :hints
     (("goal"
       :in-theory
-      (e/d (fat32-filename-list-prefixp-alt fat32-filename-list-equiv)
-           (prefixp-nthcdr-nthcdr collapse-hifat-place-file-lemma-113))
+      (e/d (fat32-filename-list-equiv)
+           (fat32-filename-list-prefixp-nthcdr-nthcdr))
       :use
       ((:instance
-        prefixp-nthcdr-nthcdr
+        fat32-filename-list-prefixp-nthcdr-nthcdr
         (n
          (len
           (frame-val->path
@@ -8109,7 +8109,7 @@
                                                (frame->frame frame)))))
         (l2 (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
        (:instance
-        prefixp-nthcdr-nthcdr
+        fat32-filename-list-prefixp-nthcdr-nthcdr
         (n
          (len
           (frame-val->path
