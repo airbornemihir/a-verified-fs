@@ -53,7 +53,6 @@
     len-of-remove-assoc-2 nth-of-take
     no-duplicatesp-of-abs-addrs-of-remove-assoc-lemma-3
     hifat-no-dups-p-of-m1-file-contents-of-cdar
-    abs-find-file-correctness-1-lemma-18
     (:rewrite abs-complete-when-stringp)
     (:rewrite
      fat32-filename-list-p-of-cdr-when-fat32-filename-list-p)
@@ -2525,7 +2524,7 @@
                             (:rewrite abs-file-alist-p-correctness-1)
                             (:rewrite consp-of-nthcdr)
                             (:rewrite
-                             abs-find-file-correctness-1-lemma-18)
+                             abs-find-file-correctness-lemma-40)
                             (:definition no-duplicatesp-equal)
                             (:rewrite abs-fs-p-correctness-1)
                             (:definition len)))
@@ -3074,7 +3073,7 @@
           (:rewrite m1-directory-file-p-when-m1-file-p)
           (:rewrite consp-of-assoc-of-abs-fs-fix)
           (:rewrite
-           abs-find-file-correctness-1-lemma-18)
+           abs-find-file-correctness-lemma-40)
           (:rewrite
            abs-find-file-correctness-1-lemma-40)
           (:rewrite
@@ -12117,18 +12116,6 @@
     :hints (("goal" :in-theory (enable fat32-filename-list-prefixp
                                        fat32-filename-list-equiv))))
 
-  ;; Move later.
-  (defthm
-    take-of-fat32-filename-list-fix-replacement
-    (implies (<= (nfix n) (len x))
-             (equal (take n (fat32-filename-list-fix x))
-                    (fat32-filename-list-fix (take n x))))
-    :hints
-    (("goal"
-      :in-theory (e/d (fat32-filename-list-fix)
-                      (take-of-too-many take-when-atom take-of-cons
-                                        take-of-fat32-filename-list-fix)))))
-
   (defthmd
     collapse-hifat-place-file-lemma-76
     (equal (list-equiv x (append y z))
@@ -12760,17 +12747,6 @@
                (subsetp-equal (abs-addrs (frame->root frame))
                               y)))))
 
-  ;; Make this a corollary later.
-  (defthm abs-find-file-correctness-1-lemma-18-corollary
-    (implies (and (not (equal (mv-nth 1 (abs-find-file-helper fs path))
-                              0))
-                  (not (equal (mv-nth 1 (abs-find-file-helper fs path))
-                              *enoent*)))
-             (equal (mv-nth 1 (abs-find-file-helper fs path))
-                    *enotdir*))
-    :rule-classes :forward-chaining
-    :hints (("Goal" :use abs-find-file-correctness-1-lemma-18)))
-
   ;; Rename and move later.
   (defthm collapse-hifat-place-file-lemma-109
     (implies (not (zp (mv-nth 1 (abs-find-file-helper fs path))))
@@ -12811,15 +12787,6 @@
                     *enotdir*))
     :hints (("goal" :in-theory (enable hifat-find-file
                                        hifat-place-file))))
-
-  (defthm collapse-hifat-place-file-lemma-113
-    (implies (fat32-filename-list-p y)
-             (equal (prefixp x y)
-                    (and (fat32-filename-list-p (true-list-fix x))
-                         (fat32-filename-list-prefixp x y))))
-    :hints (("goal" :in-theory (enable fat32-filename-list-prefixp
-                                       fat32-filename-list-p
-                                       prefixp fat32-filename-equiv))))
 
   (defthm
     collapse-hifat-place-file-lemma-114

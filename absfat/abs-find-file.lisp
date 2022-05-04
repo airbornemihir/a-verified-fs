@@ -1203,7 +1203,7 @@
 
 ;; Kinda general
 (defthm
-  abs-find-file-correctness-1-lemma-18
+  abs-find-file-correctness-lemma-40
   (implies
    (and (not (equal (mv-nth 1 (abs-find-file-helper fs path))
                     0))
@@ -1211,7 +1211,8 @@
                     *enoent*)))
    (equal (mv-nth 1 (abs-find-file-helper fs path))
           *enotdir*))
-  :hints (("goal" :in-theory (enable abs-find-file-helper))))
+  :hints (("goal" :in-theory (enable abs-find-file-helper)))
+  :rule-classes (:rewrite :forward-chaining))
 
 (defthm abs-find-file-correctness-1-lemma-6
   (implies (and (fat32-filename-list-p path)
@@ -1249,7 +1250,7 @@
     (e/d
      (abs-find-file-helper)
      (abs-find-file-correctness-1-lemma-6
-      (:rewrite abs-find-file-correctness-1-lemma-18)
+      (:rewrite abs-find-file-correctness-lemma-40)
       (:congruence
        fat32-filename-list-equiv-implies-fat32-filename-list-equiv-take-2)
       intersectp-member))
@@ -1297,7 +1298,7 @@
                                                  frame)))))
       (path (fat32-filename-list-fix path)))
      (:instance
-      (:rewrite abs-find-file-correctness-1-lemma-18)
+      (:rewrite abs-find-file-correctness-lemma-40)
       (path
        (nthcdr (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
                                                        frame))))
@@ -1949,11 +1950,11 @@
     :in-theory (e/d (take-of-nthcdr abs-find-file-helper
                                     len-of-fat32-filename-list-fix)
                     (nthcdr-of-fat32-filename-list-fix
-                     (:rewrite abs-find-file-correctness-1-lemma-18)
+                     (:rewrite abs-find-file-correctness-lemma-40)
                      (:rewrite abs-find-file-correctness-lemma-21)))
     :use
     ((:instance
-      (:rewrite abs-find-file-correctness-1-lemma-18)
+      (:rewrite abs-find-file-correctness-lemma-40)
       (path
        (nthcdr
         (len
