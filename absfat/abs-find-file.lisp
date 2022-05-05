@@ -27,7 +27,8 @@
                      nfix
                      (:rewrite abs-complete-correctness-1)
                      (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
-                               . 1))))
+                               . 1)
+                     (:rewrite partial-collapse-correctness-lemma-2))))
 
 (local
  (in-theory
@@ -1125,7 +1126,8 @@
   (("goal"
     :do-not-induct t
     :in-theory (e/d (abs-find-file-helper abs-addrs-of-ctx-app-lemma-2
-                                          len-of-fat32-filename-list-fix)
+                                          len-of-fat32-filename-list-fix
+                                          (:rewrite partial-collapse-correctness-lemma-2))
                     (abs-find-file-helper-of-collapse-lemma-2
                      collapse-hifat-place-file-lemma-113))
     :use
@@ -3717,7 +3719,9 @@
       (:rewrite abs-find-file-correctness-1-lemma-45)
       (:rewrite abs-find-file-of-frame->frame-1)
       (:rewrite abs-complete-when-m1-file-alist-p)
-      (:rewrite true-listp-of-put-assoc)))))
+      (:rewrite true-listp-of-put-assoc)
+      (:rewrite fat32-filename-list-prefixp-transitive . 1)
+      abs-find-file-correctness-lemma-16))))
 
   (defthm
     abs-find-file-correctness-lemma-39
@@ -3781,6 +3785,8 @@
                       (path path)
                       (frame (frame->frame frame))
                       (x (1st-complete (frame->frame frame)))))))
+
+  (local (in-theory (enable (:rewrite partial-collapse-correctness-lemma-2))))
 
   (defthm
     abs-find-file-correctness-lemma-32
