@@ -2019,27 +2019,15 @@
 (defthm fat32-filename-list-prefixp-of-self
   (fat32-filename-list-prefixp x x))
 
-(defthmd fat32-filename-list-prefixp-alt
-  (equal
-   (fat32-filename-list-prefixp x y)
-   (prefixp (fat32-filename-list-fix x) (fat32-filename-list-fix y)))
-  :hints (("Goal" :in-theory (enable fat32-filename-list-prefixp prefixp))))
+(defcong
+  fat32-filename-list-equiv
+  equal (fat32-filename-list-prefixp x y)
+  1)
 
 (defcong
   fat32-filename-list-equiv
   equal (fat32-filename-list-prefixp x y)
-  1
-  :hints
-  (("goal"
-    :in-theory (enable fat32-filename-list-prefixp-alt))))
-
-(defcong
-  fat32-filename-list-equiv
-  equal (fat32-filename-list-prefixp x y)
-  2
-  :hints
-  (("goal"
-    :in-theory (enable fat32-filename-list-prefixp-alt))))
+  2)
 
 (defthm
   fat32-filename-list-prefixp-transitive
@@ -2070,13 +2058,10 @@
              (fat32-filename-list-equiv (append x (nthcdr (len x) y))
                                         y))
     :hints
-    (("goal" :do-not-induct t
+    (("goal"
       :in-theory
-      (e/d (fat32-filename-list-prefixp-alt fat32-filename-list-equiv)
-           (append-when-prefixp))
-      :use (:instance append-when-prefixp
-                      (x (fat32-filename-list-fix x))
-                      (y (fat32-filename-list-fix y)))))))
+      (e/d (fat32-filename-list-equiv)
+           (append-when-prefixp))))))
 
 (defthm abs-place-file-helper-of-ctx-app-lemma-1
   (implies (<= (len y) (len x))
@@ -2092,9 +2077,6 @@
   :hints (("goal" :in-theory (enable fat32-filename-list-prefixp
                                      fat32-filename-list-p
                                      prefixp fat32-filename-equiv))))
-
-(theory-invariant (incompatible (:rewrite fat32-filename-list-prefixp-alt)
-                                (:rewrite collapse-hifat-place-file-lemma-113)))
 
 ;; There is a more general approach in prefixp-nthcdr-nthcdr.
 (defthm collapse-hifat-place-file-lemma-65

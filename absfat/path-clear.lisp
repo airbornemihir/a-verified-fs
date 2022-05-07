@@ -117,10 +117,8 @@
                   0))
   :hints
   (("goal" :in-theory (e/d (frame-p path-clear
-                                    1st-complete-under-path names-at
-                                    fat32-filename-list-prefixp-alt list-equiv)
-                           (prefixp-when-equal-lengths len-when-prefixp
-                                                       collapse-hifat-place-file-lemma-113)))))
+                                    1st-complete-under-path names-at list-equiv)
+                           (prefixp-when-equal-lengths len-when-prefixp)))))
 
 ;; I suspect this might be useful later.
 (defthm partial-collapse-when-path-clear-of-prefix
