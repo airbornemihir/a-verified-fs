@@ -3131,6 +3131,81 @@
   :hints (("goal" :in-theory (enable collapse-this)))
   :rule-classes :type-prescription)
 
+(defund
+  collapse-iter-can-progress (frame)
+  (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame)))))
+  (b*
+      ((head-index (1st-complete (frame->frame frame)))
+       ((when (zp head-index))
+        nil)
+       (head-frame-val
+        (cdr (assoc-equal head-index (frame->frame frame))))
+       (src
+        (frame-val->src
+         (cdr (assoc-equal (1st-complete (frame->frame frame))
+                           (frame->frame frame))))))
+    (if
+        (zp src)
+        (ctx-app-ok (frame->root frame)
+                    head-index
+                    (frame-val->path head-frame-val))
+      (b*
+          ((path (frame-val->path head-frame-val))
+           ((when (or (equal src head-index)
+                      (atom (assoc-equal src (frame->frame frame)))))
+            nil)
+           (src-path
+            (frame-val->path
+             (cdr (assoc-equal src (frame->frame frame)))))
+           (src-dir
+            (frame-val->dir
+             (cdr (assoc-equal src (frame->frame frame))))))
+        (and (fat32-filename-list-prefixp src-path path)
+             (ctx-app-ok src-dir head-index
+                         (nthcdr (len src-path) path)))))))
+
+(defthm
+  different-from-own-src-1
+  (implies
+   (and
+    (ctx-app-ok
+     (frame-val->dir
+      (cdr
+       (assoc-equal
+        (frame-val->src (cdr (assoc-equal (1st-complete frame)
+                                          frame)))
+        frame)))
+     (1st-complete frame)
+     (nthcdr
+      (len
+       (frame-val->path
+        (cdr (assoc-equal
+              (frame-val->src
+               (cdr (assoc-equal (1st-complete frame)
+                                 frame)))
+              frame))))
+      (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                         frame)))))
+    (equal
+     (frame-val->src (cdr (assoc-equal x frame)))
+     (frame-val->src (cdr (assoc-equal (1st-complete frame)
+                                       frame))))
+    (not
+     (consp
+      (abs-addrs
+       (frame-val->dir (cdr (assoc-equal x frame)))))))
+   (not
+    (equal
+     x
+     (frame-val->src$inline (cdr (assoc-equal x frame))))))
+  :hints
+  (("goal" :in-theory
+    (e/d (abs-addrs-of-ctx-app-lemma-2)
+         ((:definition remove-assoc-equal)
+          (:rewrite remove-assoc-when-absent-1)
+          (:definition member-equal)
+          (:definition len))))))
+
 ;; I've tried - more than once - to replace this formulation with one where the
 ;; root is treated just like the rest of the variables, except that it's never
 ;; allowed to be 1st-complete. That approach, though, is terrible because the
@@ -3141,47 +3216,16 @@
   collapse-iter (frame n)
   (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame))
                               (natp n))
-                  :measure (nfix n)))
+                  :measure (nfix n)
+                  :guard-hints (("Goal" :in-theory (enable assoc-of-frame->frame)))))
   (b*
-      (((when (or (zp n) (atom (frame->frame frame))))
+      (((when (zp n))
         frame)
-       (head-index (1st-complete (frame->frame frame)))
-       ((when (zp head-index))
-        frame)
-       (head-frame-val
-        (cdr (assoc-equal head-index (frame->frame frame))))
-       (src
-        (frame-val->src
-         (cdr (assoc-equal (1st-complete (frame->frame frame))
-                           (frame->frame frame))))))
-    (if
-        (zp src)
-        (b*
-            (((unless (ctx-app-ok (frame->root frame)
-                                  head-index
-                                  (frame-val->path head-frame-val)))
-              frame))
-          (collapse-iter (collapse-this frame
-                                        (1st-complete (frame->frame frame)))
-                         (- n 1)))
-      (b*
-          ((path (frame-val->path head-frame-val))
-           ((when (or (equal src head-index)
-                      (atom (assoc-equal src (frame->frame frame)))))
-            frame)
-           (src-path
-            (frame-val->path
-             (cdr (assoc-equal src (frame->frame frame)))))
-           (src-dir
-            (frame-val->dir
-             (cdr (assoc-equal src (frame->frame frame)))))
-           ((unless (and (prefixp src-path path)
-                         (ctx-app-ok src-dir head-index
-                                     (nthcdr (len src-path) path))))
-            frame))
-        (collapse-iter (collapse-this frame
-                                      (1st-complete (frame->frame frame)))
-                       (- n 1))))))
+       ((unless (collapse-iter-can-progress frame))
+        frame))
+    (collapse-iter (collapse-this frame
+                                  (1st-complete frame))
+                   (- n 1))))
 
 (defthmd collapse-iter-of-nfix
   (equal (collapse-iter frame (nfix n))
@@ -5864,48 +5908,6 @@
               (mutual-dist-names frame1 frame2)))
   :hints (("goal" :in-theory (enable abs-separate
                                      mutual-dist-names))))
-
-(defthm
-  different-from-own-src-1
-  (implies
-   (and
-    (ctx-app-ok
-     (frame-val->dir
-      (cdr
-       (assoc-equal
-        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                          (frame->frame frame))))
-        (frame->frame frame))))
-     (1st-complete (frame->frame frame))
-     (nthcdr
-      (len
-       (frame-val->path
-        (cdr (assoc-equal
-              (frame-val->src
-               (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                 (frame->frame frame))))
-              (frame->frame frame)))))
-      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         (frame->frame frame))))))
-    (equal
-     (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-     (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                       (frame->frame frame)))))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))))
-   (not
-    (equal
-     x
-     (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame)))))))
-  :hints
-  (("goal" :in-theory
-    (e/d (collapse abs-separate abs-addrs-of-ctx-app-lemma-2)
-         ((:definition remove-assoc-equal)
-          (:rewrite remove-assoc-when-absent-1)
-          (:definition member-equal)
-          (:definition len))))))
 
 (defund
   collapse-1st-index (frame x)
