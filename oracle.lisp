@@ -45,7 +45,13 @@
                             acl2-number-listp-of-cdr-when-acl2-number-listp)
                            (:rewrite
                             fat32-masked-entry-list-p-when-not-consp)
-                           collapse-hifat-place-file-lemma-13)))
+                           collapse-hifat-place-file-lemma-13
+                           path-clear-partial-collapse-lemma-2
+                           (:linear
+                            abs-separate-of-frame->frame-of-collapse-this-lemma-12)
+                           absfat-equiv-implies-set-equiv-names-at-1-lemma-1
+                           consp-of-assoc-when-hifat-equiv-lemma-1
+                           abs-separate-of-frame->frame-of-collapse-this-lemma-10)))
 
 (defund
   abs-pwrit1
